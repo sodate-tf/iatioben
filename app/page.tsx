@@ -12,13 +12,11 @@ export default function Home() {
   const [lastAskedQuestion, setLastAskedQuestion] = useState("");
   const [lastQuestionResult, setLastQuestionResult] = useState("");
 
-  const [showInterstitial, setShowInterstitial] = useState(false);
+  //const [showInterstitial, setShowInterstitial] = useState(false);
 
   
-
-  const webHook = "http://localhost:5678/webhook-test/pergunta-tio-ben";
   const navigateToAnswer = () => {
-    setShowInterstitial(false);
+    //setShowInterstitial(false);
     console.log("Pergunta:", lastAskedQuestion);
     console.log("Resposta:", lastQuestionResult);
   };
@@ -66,7 +64,7 @@ export default function Home() {
 
           // Lógica de interstitial
           if (questionCount.current % 2 === 0) {        
-            setShowInterstitial(true);
+            //setShowInterstitial(true);
           } else {
             navigateToAnswer();
           }

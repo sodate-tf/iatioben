@@ -23,10 +23,12 @@ export async function POST(req: Request) {
     const data = await response.json();
 
     return NextResponse.json({ success: true, data });
-  } catch (error: any) {
-    console.error("Erro na API /sheets:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
-  }
+  } catch (error) {
+  // TypeScript ainda não sabe que error é um Error, então verificamos
+  const message = error instanceof Error ? error.message : "Erro desconhecido";
+  console.error("Erro na API /sheets:", message);
+  return NextResponse.json({ success: false, error: message }, { status: 500 });
+}
 }
 
 // bloqueia GET

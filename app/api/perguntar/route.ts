@@ -12,8 +12,9 @@ export async function POST(req: NextRequest) {
 
     const resposta = await askTioBen(pergunta);
     return NextResponse.json({ resposta });
-  } catch (err: any) {
-    console.error("Erro na API:", err);
-    return NextResponse.json({ error: "Erro ao gerar resposta" }, { status: 500 });
+  } catch (error) {
+   const message = error instanceof Error ? error.message : "Erro desconhecido";
+  console.error("Erro na API /sheets:", message);
+  return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
