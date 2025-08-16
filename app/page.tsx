@@ -1,103 +1,205 @@
+"use client";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+import Spinner from "@/components/SpinnerLoading";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [question, setQuestion] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const questionCount = useRef(0);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+  const [lastAskedQuestion, setLastAskedQuestion] = useState("");
+  const [lastQuestionResult, setLastQuestionResult] = useState("");
+
+  const [showInterstitial, setShowInterstitial] = useState(false);
+
+  
+
+  const webHook = "http://localhost:5678/webhook-test/pergunta-tio-ben";
+  const navigateToAnswer = () => {
+    setShowInterstitial(false);
+    console.log("Pergunta:", lastAskedQuestion);
+    console.log("Resposta:", lastQuestionResult);
+  };
+
+  const handleAskQuestion = async () => {
+    if (!question.trim()) return;
+
+    setIsLoading(true);
+    setLastAskedQuestion(question);
+    let tempResultado = "Desculpe, não consegui obter resposta do Tio Ben.";
+  
+    try {
+        questionCount.current += 1;
+        const res = await fetch("/api/perguntar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pergunta: question }),
+      });
+        const data = await res.json();
+        tempResultado =data.resposta
+        setLastQuestionResult(data.resposta); // mostra a resposta do Tio Ben
+      } catch (err) {
+        console.error(err);
+      } finally {
+          setIsLoading(false);
+
+          // Armazena a resposta recebida do Gemini (já com emojis e sugestões)
+          const formattedAnswer = tempResultado; // tempResultado já vem da API
+          fetch("/api/sheets", {
+            method: "POST",
+            body: JSON.stringify({
+              pergunta: question,
+              resposta: tempResultado
+            }),
+            headers: {
+              "Content-Type": "application/json"
+            }
+          })
+          .then(r => r.text())
+          .then(console.log);
+
+          setModalQuestion(question);
+          setModalAnswer(formattedAnswer);
+          setShowAnswerModal(true);
+
+          // Lógica de interstitial
+          if (questionCount.current % 2 === 0) {        
+            setShowInterstitial(true);
+          } else {
+            navigateToAnswer();
+          }
+        }
+  };
+const [showAnswerModal, setShowAnswerModal] = useState(false);
+const [modalQuestion, setModalQuestion] = useState("");
+const [modalAnswer, setModalAnswer] = useState("");
+
+
+  return (
+    <>
+    <div className="flex flex-col min-h-screen bg-amber-400">
+      <div className="flex-1 flex flex-col items-center px-4 py-8">
+        <motion.h1
+          className="text-3xl md:text-4xl font-extrabold text-gray-800 text-center mb-6"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+          Pergunte para o Tio Ben
+        </motion.h1>        
+        <AnimatePresence mode="wait">
+            {isLoading ? (
+              <motion.div
+                key="loading"
+                className="flex items-center justify-center min-h-screen bg-amber-400"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                <Spinner />
+              </motion.div>
+            ) : (
+                 <>
+                  <div className="relative flex flex-col items-center">
+                    <motion.div
+                      className="bg-amber-100 max-w-[80%] p-4 rounded-xl shadow-md relative z-10"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.3, duration: 0.5 }}
+                    >
+                      <p className="text-amber-950 text-lg">
+                        👋 Oi! Eu sou o Tio Ben. Pode mandar sua pergunta que eu respondo com alegria!
+                      </p>
+                      <div className="absolute bottom-[-10px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[10px] border-r-[10px] border-t-[15px] border-transparent border-t-amber-100"></div>
+                    </motion.div>
+                    <motion.div
+                      className="mt-4 relative z-20"
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5, duration: 0.5 }}
+                    >
+                      <Image
+                        src="/images/ben-transparente.png"
+                        alt="Tio Ben"
+                        width={350}
+                        height={350}
+                        priority
+                      />
+                    </motion.div>
+                  </div>
+                  <motion.div
+                    className="flex w-full max-w-2xl bg-white rounded-lg shadow-lg p-4"
+                    initial={{ opacity: 0, y: 40 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6, duration: 0.5 }}
+                  >
+                      <textarea
+                        className="flex-1 p-2 border border-gray-300 rounded-lg text-lg text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        rows={4}
+                        placeholder="Digite sua pergunta aqui..."
+                        value={question}
+                        onChange={(e) => setQuestion(e.target.value)}
+                        disabled={isLoading}
+                      />
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={handleAskQuestion}
+                      disabled={isLoading}
+                      className="ml-2 bg-amber-700 text-white px-4 py-2 rounded-lg font-semibold hover:cursor-pointer hover:bg-amber-800 disabled:opacity-50"
+                    >
+                      {isLoading ? "Carregando..." : "Perguntar"}
+                    </motion.button>
+                  </motion.div>
+                 </>
+        )}        
+      </AnimatePresence>  
+      <AnimatePresence>
+          {showAnswerModal && (
+            <motion.div
+              className="fixed inset-0 flex items-center overflow-auto justify-center bg-black/50 z-50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <motion.div
+                className="bg-white rounded-xl p-6 max-w-lg w-full shadow-xl flex flex-col items-center"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                {/* Cabeçalho: pergunta */}
+                <h2 className="text-xl font-bold text-amber-900 mb-4 text-center">{modalQuestion}</h2>
+
+                {/* Corpo: resposta */}
+                <div className="text-gray-700 text-base mb-6 whitespace-pre-line">
+                  {modalAnswer}
+                </div>
+
+                {/* Botão fechar */}
+                <button
+                  className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700"
+                  onClick={() => setShowAnswerModal(false)}
+                >
+                  Fechar
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+    
+      </div> 
+      <footer className="bg-amber-100 text-center py-4 mt-6">
+        <p className="text-gray-600 text-sm">
+          Desenvolvido por 4U Develops - Todos os direitos reservados
+        </p>
       </footer>
     </div>
+  </>
   );
 }
