@@ -1,9 +1,37 @@
 // app/api/perguntar/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { GoogleGenAI } from "@google/genai";
+import { GoogleAuth } from "google-auth-library";
 
-export async function POST(req: Request) {
+let client: GoogleGenAI | null = null;
+
+async function getClient() {
+  if (!client) {
+    if (!process.env.GEMINI_SERVICE_ACCOUNT_JSON) {
+      throw new Error(
+        "Service Account JSON não encontrado em GEMINI_SERVICE_ACCOUNT_JSON"
+      );
+    }
+
+    const credentials = JSON.parse(process.env.GEMINI_SERVICE_ACCOUNT_JSON);
+
+    const auth = new GoogleAuth({
+      credentials,
+      scopes: ["https://www.googleapis.com/auth/cloud-platform"],
+    });
+
+    const accessToken = await auth.getAccessToken(); // retorna string
+    if (!accessToken) throw new Error("Não foi possível obter access token");
+    
+    client = new GoogleGenAI({ apiKey: accessToken });
+  }
+  return client;
+}
+
+export async function POST(req: NextRequest) {
   try {
-    const { pergunta } = await req.json();
+    const body = await req.json();
+    const pergunta = body.pergunta?.trim();
 
     if (!pergunta) {
       return NextResponse.json(
@@ -23,39 +51,14 @@ procure apoio de profissional de saúde, catequista ou pessoa de confiança.
 Aja como se já conhecesse a pessoa, fale sempre com ela na primeira pessoa e responda como se fosse um fluxo natural de conversa.
 `;
 
-    console.log("Chave Gemini:", process.env.GEMINI_API_KEY);
-    console.log("Pergunta:", pergunta);
+    const client = await getClient();
 
-    // Chamada REST ao Gemini
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateText",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.GEMINI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "gemini-2.5-flash",
-          prompt: `${systemInstruction}\n\nPergunta: ${pergunta}`,
-        }),
-      }
-    );
+    const response = await client.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `${systemInstruction}\n\nPergunta: ${pergunta}`,
+    });
 
-    const responseText = await response.text();
-    console.log("Resposta bruta do Gemini:", responseText);
-
-    let resposta = "Desculpe, não consegui obter resposta do Tio Ben.";
-
-    try {
-      const data = JSON.parse(responseText);
-      resposta = data?.candidates?.[0]?.content?.[0]?.text || resposta;
-    } catch(error) {
-      
-      const message = error instanceof Error ? error.message : "Erro desconhecido";
-      console.error("Erro na API /perguntar:", message);
-      return NextResponse.json({ success: false, error: message }, { status: 500 });;
-    }
+    const resposta = response.text || "Desculpe, não consegui obter resposta do Tio Ben.";
 
     return NextResponse.json({ resposta });
   } catch (error) {
