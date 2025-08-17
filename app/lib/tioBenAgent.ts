@@ -1,24 +1,5 @@
-// app/api/perguntar/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
-
-export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const pergunta = body.pergunta;
-
-    if (!pergunta) {
-      return NextResponse.json(
-        { error: "Pergunta é obrigatória" },
-        { status: 400 }
-      );
-    }
-
-    const client = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY, // Certifique-se de ter configurado no Vercel
-    });
-
-    const systemInstruction = `
+export async function askTioBen(pergunta: string): Promise<string> {
+      const systemInstruction = `
 Você é o Tio Ben. Catequista jovem (20–30 anos), responde única e exclusivamente
 com base na fé Católica: Bíblia, Catecismo, documentos oficiais, Tradição.
 Responde de forma simples e objetiva, acessível a todos.
@@ -29,17 +10,20 @@ procure apoio de profissional de saúde, catequista ou pessoa de confiança.
 Aja como se já conhecesse a pessoa, fale sempre com ela na primeira pessoa e responda como se fosse um fluxo natural de conversa.
 `;
 
-    const response = await client.responses.create({
+  const response = await fetch("https://gemini.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${process.env.GEMINI_API_KEY}`,
+    },
+    body: JSON.stringify({
       model: "gemini-2.5-flash",
-      input: `${systemInstruction}\n\nPergunta: ${pergunta}`,
-    });
+      contents: [
+        { role: "user", parts: [{ text: `${systemInstruction}\n\nPergunta: ${pergunta}` }] }
+      ]
+    })
+  });
 
-    const resposta = response.output_text || "Desculpe, não consegui obter resposta do Tio Ben.";
-
-    return NextResponse.json({ resposta });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Erro desconhecido";
-    console.error("Erro na API /perguntar:", message);
-    return NextResponse.json({ success: false, error: message }, { status: 500 });
-  }
+  const data = await response.json();
+  return data.text || "Desculpe, não consegui obter resposta do Tio Ben.";
 }
