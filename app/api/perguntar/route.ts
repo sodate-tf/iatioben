@@ -50,8 +50,11 @@ Aja como se já conhecesse a pessoa, fale sempre com ela na primeira pessoa e re
     try {
       const data = JSON.parse(responseText);
       resposta = data?.candidates?.[0]?.content?.[0]?.text || resposta;
-    } catch {
-      console.warn("Resposta do Gemini não era JSON, retornando mensagem padrão.");
+    } catch(error) {
+      
+      const message = error instanceof Error ? error.message : "Erro desconhecido";
+      console.error("Erro na API /perguntar:", message);
+      return NextResponse.json({ success: false, error: message }, { status: 500 });;
     }
 
     return NextResponse.json({ resposta });
