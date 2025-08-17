@@ -1,10 +1,9 @@
 // app/api/perguntar/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const pergunta = body.pergunta?.trim();
+    const { pergunta } = await req.json();
 
     if (!pergunta) {
       return NextResponse.json(
