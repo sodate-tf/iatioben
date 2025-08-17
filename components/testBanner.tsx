@@ -14,8 +14,8 @@ export default function TestFooterBanner() {
              height: "90px",    // desktop
            }}>
         <p className="text-center">
-          <Link href="http://wa.me/5518997095270" target="_blank">
-            <Image src={banner} alt="Noite do Espetinho Acampabento - 23/08/2025"  />           
+          <Link href="http://wa.me/5518997095270" target="_blank" >
+            <Image src={banner} alt="Noite do Espetinho Acampabento - 23/08/2025"  height={90} />           
           </Link>
         </p>
       </div>
