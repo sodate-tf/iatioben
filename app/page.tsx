@@ -34,7 +34,7 @@ export default function Home() {
     try {
       questionCount.current += 1;
 
-      const res = await fetch("/api/perguntar", {
+      const res = await fetch("https://www.iatioben.com.br/api/perguntar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pergunta: question }),
@@ -49,12 +49,12 @@ export default function Home() {
       setIsLoading(false);
 
       // Salva no Google Sheets
-      // /*
-      //fetch("/api/sheets", {
-      //  method: "POST",
-      //  headers: { "Content-Type": "application/json" },
-      ///  body: JSON.stringify({ pergunta: question, resposta: tempResultado }),
-      //}).then(r => r.text()).then(console.log);*/
+      // 
+      fetch("https://www.iatioben.com.br/api/sheets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pergunta: question, resposta: tempResultado }),
+      }).then(r => r.text()).then(console.log);
 
       // Define modal
       setModalQuestion(question);

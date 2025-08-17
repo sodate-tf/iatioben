@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,7 +61,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">      
+    <html lang="en">    
+      
         <head>
           <title>Pergunte ao Tio Ben - Respostas Católicas com IA</title>
           <meta name="description" content="Faça perguntas ao Tio Ben, nosso catequista virtual, e receba respostas baseadas na Bíblia, Catecismo e tradição da Igreja Católica. Aprenda e aprofunde sua fé com simplicidade e clareza." />
@@ -78,7 +80,18 @@ export default function RootLayout({
           <meta property="og:site_name" content="Pergunte ao Tio Ben" />
 
           <meta name="google-adsense-account" content="ca-pub-8819996017476509"></meta>
-          
+          <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-17GKJ4F1Q8"
+        />
+        <Script id="google-analytics">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-17GKJ4F1Q8');
+          `}
+        </Script>
       </head>
       
       <body
