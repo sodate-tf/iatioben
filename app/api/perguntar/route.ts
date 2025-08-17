@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Pergunta é obrigatória" },
         { status: 400 }
+        
       );
     }
 
