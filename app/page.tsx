@@ -164,14 +164,14 @@ export default function Home() {
           <AnimatePresence>
             {showAnswerModal && (
               <motion.div
-                className="fixed inset-0 flex items-start overflow-auto justify-center bg-black/50 z-50 pt-16 pb-16"
+                className="fixed inset-0 flex items-start overflow-auto justify-center bg-black/50 z-51 pt-16 pb-16"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
               >
                 <motion.div
-                  className="bg-white rounded-xl p-6 max-w-lg w-full shadow-xl flex flex-col items-center relative z-50"
+                  className="bg-white rounded-xl p-6 max-w-lg w-full shadow-xl flex flex-col items-center relative z-51"
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.8, opacity: 0 }}
