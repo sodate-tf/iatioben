@@ -25,6 +25,7 @@ procure apoio de profissional de saúde, catequista ou pessoa de confiança.
 Aja como se já conhecesse a pessoa, fale sempre com ela na primeira pessoa e responda como se fosse um fluxo natural de conversa.
 `;
 
+console.log(process.env.GEMINI_API_KEY)
     // Chamada REST ao Gemini
     const response = await fetch(
       "https://gemini.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
