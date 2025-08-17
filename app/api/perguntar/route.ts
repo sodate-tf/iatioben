@@ -13,7 +13,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Instruções do Tio Ben
     const systemInstruction = `
 Você é o Tio Ben. Catequista jovem (20–30 anos), responde única e exclusivamente
 com base na fé Católica: Bíblia, Catecismo, documentos oficiais, Tradição.
@@ -25,11 +24,12 @@ procure apoio de profissional de saúde, catequista ou pessoa de confiança.
 Aja como se já conhecesse a pessoa, fale sempre com ela na primeira pessoa e responda como se fosse um fluxo natural de conversa.
 `;
 
-console.log("chave gemini: "+process.env.GEMINI_API_KEY)
-console.log("pergunta: "+pergunta)
+    console.log("Chave Gemini:", process.env.GEMINI_API_KEY);
+    console.log("Pergunta:", pergunta);
+
     // Chamada REST ao Gemini
     const response = await fetch(
-      "https://gemini.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateText",
       {
         method: "POST",
         headers: {
@@ -38,17 +38,22 @@ console.log("pergunta: "+pergunta)
         },
         body: JSON.stringify({
           model: "gemini-2.5-flash",
-          contents: [
-            { role: "user", parts: [{ text: `${systemInstruction}\n\nPergunta: ${pergunta}` }] }
-          ],
+          prompt: `${systemInstruction}\n\nPergunta: ${pergunta}`,
         }),
       }
     );
 
-    const data = await response.json();
+    const responseText = await response.text();
+    console.log("Resposta bruta do Gemini:", responseText);
 
-    // Retorna o texto da resposta
-    const resposta = data?.candidates?.[0]?.content?.[0]?.text || "Desculpe, não consegui obter resposta do Tio Ben.";
+    let resposta = "Desculpe, não consegui obter resposta do Tio Ben.";
+
+    try {
+      const data = JSON.parse(responseText);
+      resposta = data?.candidates?.[0]?.content?.[0]?.text || resposta;
+    } catch {
+      console.warn("Resposta do Gemini não era JSON, retornando mensagem padrão.");
+    }
 
     return NextResponse.json({ resposta });
   } catch (error) {
