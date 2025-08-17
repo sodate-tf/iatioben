@@ -125,8 +125,8 @@ export default function Home() {
                     <Image
                       src="/images/ben-transparente.png"
                       alt="Tio Ben"
-                      width={350}
-                      height={350}
+                      width={250}
+                      height={250}
                       priority
                     />
                   </motion.div>
