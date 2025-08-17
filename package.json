@@ -12,6 +12,7 @@
     "@google/genai": "^1.14.0",
     "@google/generative-ai": "^0.24.1",
     "framer-motion": "^12.23.12",
+    "google-auth-library": "^10.2.1",
     "next": "15.4.6",
     "react": "19.1.0",
     "react-dom": "19.1.0"
