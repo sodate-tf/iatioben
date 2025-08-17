@@ -49,11 +49,12 @@ export default function Home() {
       setIsLoading(false);
 
       // Salva no Google Sheets
-      fetch("/api/sheets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pergunta: question, resposta: tempResultado }),
-      }).then(r => r.text()).then(console.log);
+      // /*
+      //fetch("/api/sheets", {
+      //  method: "POST",
+      //  headers: { "Content-Type": "application/json" },
+      ///  body: JSON.stringify({ pergunta: question, resposta: tempResultado }),
+      //}).then(r => r.text()).then(console.log);*/
 
       // Define modal
       setModalQuestion(question);
