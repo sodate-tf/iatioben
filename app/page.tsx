@@ -159,7 +159,7 @@ export default function Home() {
                 </motion.div>
 
                 <motion.div
-                  className="flex w-full  bg-white rounded-lg shadow-lg p-4 m-20 items-center justify-center text-justify"
+                  className="flex w-full  bg-white text-amber-950 rounded-lg shadow-lg p-4 m-20 items-center justify-center text-justify"
                   initial={{ opacity: 0, y: 40 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6, duration: 0.5 }}
