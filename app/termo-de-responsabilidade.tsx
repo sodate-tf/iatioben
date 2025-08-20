@@ -27,7 +27,7 @@ export default function TermoResponsabilidade() {
           <h2 className="text-2xl font-semibold text-amber-800">2. Limitações do Serviço</h2>
           <h3 className="text-xl font-semibold text-amber-800">2.1 Natureza Tecnológica</h3>
           <ul className="list-disc list-inside text-amber-900 space-y-1">
-            <li>O "Tio Ben" é um sistema de inteligência artificial e pode apresentar limitações ou erros interpretativos</li>
+            <li>O &ldquo;Tio Ben&rdquo; é um sistema de inteligência artificial e pode apresentar limitações ou erros interpretativos</li>
             <li>Respostas são geradas automaticamente com base em programação e bases de dados doutrinários</li>
             <li>Em caso de dúvidas complexas ou contradições, sempre consulte um sacerdote ou catequista presencial</li>
           </ul>
@@ -102,7 +102,7 @@ export default function TermoResponsabilidade() {
           <ul className="list-disc list-inside text-amber-900 space-y-1">
             <li>Armazenamos exclusivamente:</li>
             <li>Conteúdo das perguntas feitas ao sistema</li>
-            <li>Respostas fornecidas pelo "Tio Ben"</li>
+            <li>Respostas fornecidas pelo &ldquo;Tio Ben&rdquo;</li>
             <li>Data e horário das interações</li>
             <li>Dados técnicos não identificáveis (navegador, sistema operacional)</li>
           </ul>
@@ -170,7 +170,7 @@ export default function TermoResponsabilidade() {
           </p>
 
           <p className="text-amber-900 italic">
-            "Tudo o que fizerdes, fazei-o em nome do Senhor Jesus, dando graças a Deus Pai por meio dele." (Colossenses 3:17)
+            &ldquo;Tudo o que fizerdes, fazei-o em nome do Senhor Jesus, dando graças a Deus Pai por meio dele.&rdquo; (Colossenses 3:17)
           </p>
           
           <p className="text-amber-900 mt-6 italic">
