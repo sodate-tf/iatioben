@@ -3,9 +3,9 @@ import React, { useState, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Spinner from "@/components/SpinnerLoading";
-import TestBanner from "@/components/testBanner";
 import VideoAdModal from "@/components/testVideoAd";
 import Link from "next/link";
+import FaqTioBen from "@/components/faqTioBen";
 
 export default function Home() {
   const [question, setQuestion] = useState("");
@@ -158,28 +158,7 @@ export default function Home() {
                   </motion.button>
                 </motion.div>
 
-                <motion.div
-                  className="flex w-full  bg-white text-amber-950 rounded-lg shadow-lg p-4 m-20 items-center justify-center text-justify"
-                  initial={{ opacity: 0, y: 40 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6, duration: 0.5 }}
-                >
-                  <span>
-                    <p className="mb-3"> Bem-vindo(a) ao <b>Tio Ben!</b> Este é o seu espaço para explorar e aprofundar a sua fé de uma maneira única e acessível.<br />
-                        Nosso aplicativo foi criado com o propósito de conectar a sabedoria milenar da <b>fé Católica</b> com a tecnologia moderna,<br/>transformando um vasto conhecimento em respostas simples, claras e objetivas para suas perguntas do dia a dia.
-                    </p>
-                    <p className="mb-3"> O <b>Tio Ben</b> é um agente de inteligência artificial treinado para responder com base em fontes confiáveis e fundamentais da Igreja:<br />
-                        a Bíblia Sagrada, o Catecismo e a Tradição Católica.
-                    </p>
-                    <p className="mb-3"> Ele age como um catequista digital, sempre pronto para guiar e esclarecer suas dúvidas com <b>carinho, respeito e simplicidade.</b><br />
-                        Nosso objetivo é que você se sinta à vontade para perguntar sobre qualquer tema relacionado à fé.<br/>
-                    </p>
-                    <p className="mb-3">
-                      Seja para entender um ensinamento complexo, buscar uma inspiração, ou apenas ter uma conversa sobre a vida cristã, o <b>Tio Ben</b> está aqui para você.<br />
-                      É a sua fé, traduzida em uma conversa amigável e direta, feita para auxiliar na sua jornada espiritual.
-                    </p>
-                  </span>
-                </motion.div>
+                
               </>
             )}
           </AnimatePresence>
@@ -235,7 +214,7 @@ export default function Home() {
           )}
 
           {/* Banner de rodapé */}
-          <TestBanner />
+          <FaqTioBen />
         </div>
 
         {/* Footer */}
