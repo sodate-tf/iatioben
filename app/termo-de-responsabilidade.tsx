@@ -1,4 +1,3 @@
-// app/components/TermoResponsabilidade.tsx
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -73,6 +72,9 @@ export default function TermoResponsabilidade() {
 
           <h2 className="text-2xl font-semibold text-amber-800">4. Uso Responsável</h2>
           <h3 className="text-xl font-semibold text-amber-800">4.1 Compromisso do Usuário</h3>
+          <p className="text-amber-900">
+            Ao utilizar este serviço, você declara:
+          </p>
           <ul className="list-disc list-inside text-amber-900 space-y-1">
             <li>Ter mais de 18 anos ou contar com supervisão de responsável legal</li>
             <li>Compreender as limitações do serviço automatizado</li>
@@ -89,15 +91,88 @@ export default function TermoResponsabilidade() {
           </ul>
 
           <h2 className="text-2xl font-semibold text-amber-800">5. Privacidade e Dados</h2>
+          <h3 className="text-xl font-semibold text-amber-800">5.1 Coleta de Informações</h3>
           <ul className="list-disc list-inside text-amber-900 space-y-1">
             <li><strong>NÃO coletamos dados pessoais</strong> que permitam identificar usuários</li>
             <li><strong>NÃO armazenamos</strong> informações como nome, e-mail, telefone ou endereço</li>
             <li><strong>NÃO conseguimos identificar</strong> quem fez determinada pergunta</li>
             <li><strong>NÃO realizamos</strong> rastreamento individual de usuários</li>
           </ul>
+          <h3 className="text-xl font-semibold text-amber-800">5.2 Informações Armazenadas</h3>
+          <ul className="list-disc list-inside text-amber-900 space-y-1">
+            <li>Armazenamos exclusivamente:</li>
+            <li>Conteúdo das perguntas feitas ao sistema</li>
+            <li>Respostas fornecidas pelo "Tio Ben"</li>
+            <li>Data e horário das interações</li>
+            <li>Dados técnicos não identificáveis (navegador, sistema operacional)</li>
+          </ul>
+          <h3 className="text-xl font-semibold text-amber-800">5.3 Finalidade dos Dados</h3>
+          <ul className="list-disc list-inside text-amber-900 space-y-1">
+            <li>Os dados armazenados são utilizados apenas para:</li>
+            <li>Melhoramento do sistema de respostas</li>
+            <li>Análise estatística de funcionamento</li>
+            <li>Manutenção técnica da plataforma</li>
+            <li>Estudos não identificáveis sobre dúvidas frequentes na fé católica</li>
+          </ul>
+          <h3 className="text-xl font-semibold text-amber-800">5.4 Compartilhamento</h3>
+          <ul className="list-disc list-inside text-amber-900 space-y-1">
+            <li>NUNCA compartilhamos dados com terceiros para fins comerciais</li>
+            <li>NUNCA vendemos ou cedemos informações de usuários</li>
+            <li>Dados podem ser acessados apenas pela equipe técnica responsável pelo sistema</li>
+          </ul>
+          
+          <h2 className="text-2xl font-semibold text-amber-800">6. Fundamentação Doutrinária</h2>
+          <h3 className="text-xl font-semibold text-amber-800">6.1 Fontes Oficiais</h3>
+          <ul className="list-disc list-inside text-amber-900 space-y-1">
+            <li>Nossas respostas baseiam-se exclusivamente em:</li>
+            <li>Sagrada Escritura (Bíblia Católica)</li>
+            <li>Catecismo da Igreja Católica</li>
+            <li>Documentos dos Concílios Ecumênicos</li>
+            <li>Encíclicas, Exortações e demais documentos pontifícios</li>
+            <li>Tradição apostólica reconhecida pela Igreja</li>
+          </ul>
+          <h3 className="text-xl font-semibold text-amber-800">6.2 Autoridade Magisterial</h3>
+          <ul className="list-disc list-inside text-amber-900 space-y-1">
+            <li>Reconhecemos a autoridade suprema do Papa e dos bispos em comunhão com ele</li>
+            <li>Em caso de conflito interpretativo, prevalece sempre o Magistério oficial da Igreja</li>
+            <li>Recomendamos sempre consultar fontes primárias e autoridades eclesiásticas locais</li>
+          </ul>
 
-          {/* Continue o mesmo padrão para os demais tópicos */}
+          <h2 className="text-2xl font-semibold text-amber-800">7. Isenção de Responsabilidade</h2>
+          <h3 className="text-xl font-semibold text-amber-800">7.1 Decisões Pessoais</h3>
+          <ul className="list-disc list-inside text-amber-900 space-y-1">
+            <li>O usuário é inteiramente responsável por suas decisões e ações</li>
+            <li>As orientações fornecidas não substituem o discernimento pessoal e a oração</li>
+            <li>Decisões importantes devem sempre contar com acompanhamento presencial qualificado</li>
+          </ul>
+          <h3 className="text-xl font-semibold text-amber-800">7.2 Consequências</h3>
+          <ul className="list-disc list-inside text-amber-900 space-y-1">
+            <li>O iatioben.com.br não se responsabiliza por consequências de decisões tomadas com base exclusivamente nas respostas fornecidas</li>
+            <li>Não assumimos responsabilidade por interpretações inadequadas ou uso indevido das orientações</li>
+            <li>Cada usuário deve exercer prudência cristã no discernimento das orientações recebidas</li>
+          </ul>
 
+          <h2 className="text-2xl font-semibold text-amber-800">8. Alterações nos Termos</h2>
+          <ul className="list-disc list-inside text-amber-900 space-y-1">
+            <li>Este termo pode ser atualizado periodicamente para melhor servir aos usuários</li>
+            <li>Alterações significativas serão comunicadas na página principal do site</li>
+            <li>O uso continuado após alterações implica na aceitação dos novos termos</li>
+          </ul>
+
+          <h2 className="text-2xl font-semibold text-amber-800">9. Contato e Dúvidas</h2>
+          <p className="text-amber-900">
+            Para esclarecimentos sobre este termo ou sobre o funcionamento do serviço, consulte as informações de contato disponíveis no site.
+          </p>
+
+          <h2 className="text-2xl font-semibold text-amber-800">10. Disposições Finais</h2>
+          <p className="text-amber-900">
+            Este termo de responsabilidade é regido pelas leis brasileiras. Ao utilizar o iatioben.com.br, você declara ter lido, compreendido e aceito integralmente estas condições.
+          </p>
+
+          <p className="text-amber-900 italic">
+            "Tudo o que fizerdes, fazei-o em nome do Senhor Jesus, dando graças a Deus Pai por meio dele." (Colossenses 3:17)
+          </p>
+          
           <p className="text-amber-900 mt-6 italic">
             *Que Nossa Senhora interceda por todos que buscam crescer na fé através desta ferramenta, e que o Espírito Santo conduza sempre nossos corações à verdade plena em Jesus Cristo.*
           </p>
