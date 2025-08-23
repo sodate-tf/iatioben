@@ -92,6 +92,7 @@ export default function RootLayout({
             gtag('config', 'G-17GKJ4F1Q8');
           `}
         </Script>
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8819996017476509"  crossOrigin="anonymous"></script>
       </head>
       
       <body
