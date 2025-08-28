@@ -50,13 +50,7 @@ export default function VideoAdModal({
           exit={{ scale: 0.8 }}
         >
           {/* Vídeo */}
-          <video
-            ref={videoRef}
-            src={videoSrc}
-            autoPlay
-            onEnded={handleVideoEnd}
-            className="w-full rounded-lg"
-          />
+          <div id="ezoic-pub-ad-placeholder-115"></div>
 
           {/* Botão pular */}
           {canSkip && (

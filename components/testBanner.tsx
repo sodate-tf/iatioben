@@ -12,9 +12,7 @@ export default function TestFooterBanner() {
              width: "100%",            
            }}>
         <p className="text-center">
-          <Link href="http://wa.me/5518997095270" target="_blank" >
-            <Image src={banner} alt="Noite do Espetinho Acampabento - 23/08/2025"  height={90} />           
-          </Link>
+          <div id="ezoic-pub-ad-placeholder-111"></div>
         </p>
       </div>
     </div>
