@@ -93,8 +93,8 @@ export default function RootLayout({
           `}
         </Script>
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8819996017476509"  crossOrigin="anonymous"></script>
-        <script src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>
-        <script src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>
+        <script async src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>
+        <script async src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>
       </head>
       
       <body
