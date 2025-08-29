@@ -2,7 +2,6 @@
 // pages/liturgia-diaria.tsx
 
 import React, { useEffect, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import Spinner from '@/components/SpinnerLoading'; // Assegure-se de que o caminho está correto
@@ -42,7 +41,7 @@ interface LeiturasObject {
   salmo: SalmoReadingItem[];
   segundaLeitura: LiturgyReadingItem[]; // Pode ser array vazio se não houver 2ª leitura
   evangelho: LiturgyReadingItem[];
-  extras: any[]; // Se 'extras' tiver um tipo definido, use-o
+  //extras: any[]; // Se 'extras' tiver um tipo definido, use-o
 }
 
 // Interface principal para os dados da liturgia retornados pela API
@@ -98,10 +97,14 @@ const LiturgiaDiaria: React.FC = () => {
         } else if (data.leituras.evangelho.length > 0) {
           setActiveTab('evangelho');
         }
-      } catch (err: any) {
-        console.error("Falha ao buscar dados da liturgia:", err);
-        setError(`Não foi possível carregar a liturgia do dia: ${err.message || 'Erro desconhecido'}.`);
-      } finally {
+      } catch (err: unknown) {
+  console.error("Falha ao buscar dados da liturgia:", err);
+  
+  if (err instanceof Error) {
+    setError(`Não foi possível carregar a liturgia do dia: ${err.message}.`);
+  } else {
+    setError('Não foi possível carregar a liturgia do dia: Erro desconhecido.');
+  }} finally {
         setIsLoading(false);
       }
     };
@@ -192,10 +195,14 @@ const LiturgiaDiaria: React.FC = () => {
           text: `Confira a liturgia do dia: ${liturgyData?.data || ''}\n\n${liturgyData?.liturgia || ''}\n\n${getShareableReadingText()}`,
           url: window.location.href,
         });
-      } catch (err: any) {
-        console.error('Erro ao compartilhar:', err);
-        alert(`Não foi possível compartilhar a liturgia neste momento: ${err.message || 'Erro desconhecido'}.`);
-      }
+      } catch (err: unknown) {
+  console.error("Falha ao buscar dados da liturgia:", err);
+  
+  if (err instanceof Error) {
+    setError(`Não foi possível carregar a liturgia do dia: ${err.message}.`);
+  } else {
+    setError('Não foi possível carregar a liturgia do dia: Erro desconhecido.');
+  }}
     } else {
       alert('Seu navegador não suporta a função de compartilhamento. Por favor, copie o link e o texto.');
       const shareText = `Liturgia Diária - ${liturgyData?.liturgia || 'Dia'}\n\n${liturgyData?.data || ''}\n\n${getShareableReadingText()}\n\n${window.location.href}`;
