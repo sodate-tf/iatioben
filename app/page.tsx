@@ -6,6 +6,7 @@ import Spinner from "@/components/SpinnerLoading";
 import VideoAdModal from "@/components/testVideoAd";
 import Link from "next/link";
 import FaqTioBen from "@/components/faqTioBen";
+import Cabecalho from "@/components/cabecalho";
 
 export default function Home() {
   const [question, setQuestion] = useState("");
@@ -76,6 +77,7 @@ export default function Home() {
   return (
     <>
       <div className="flex flex-col min-h-screen bg-amber-400 relative" >
+        <Cabecalho />
         <div className="flex-1 flex flex-col items-center px-4 py-8">
           {/* Título */}
           <motion.h1
