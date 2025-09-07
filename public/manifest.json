@@ -8,22 +8,22 @@
   "theme_color": "#454440",
   "icons": [
     {
-      "src": "/tio-ben-192x192.png",
+      "src": "/tio-ben-icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/tio-ben-512x512.png",
+      "src": "/tio-ben-icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "/tio-ben-384x384.png",
+      "src": "/tio-ben-icon-384x384.png",
       "sizes": "384x384",
       "type": "image/png"
     },
     {
-      "src": "/tio-ben-256x256.png",
+      "src": "/tio-ben-icon-256x256.png",
       "sizes": "256x256",
       "type": "image/png"
     }
