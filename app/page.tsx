@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Spinner from "@/components/SpinnerLoading";
@@ -26,6 +26,22 @@ export default function Home() {
     setShowAnswerModal(true);
   };
 
+    useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/service-worker.js")
+        .then((registration) =>
+          console.log(
+            "Service Worker registrado com sucesso:",
+            registration.scope
+          )
+        )
+        .catch((error) =>
+          console.error("Falha ao registrar o Service Worker:", error)
+        );
+    }
+  }, []);
+  
   const handleAskQuestion = async () => {
     if (!question.trim()) return;
 

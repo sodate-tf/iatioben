@@ -1,17 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+
 
 
    export const metadata: Metadata = {
@@ -55,6 +47,7 @@ const geistMono = Geist_Mono({
       };
 
 
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -64,6 +57,8 @@ export default function RootLayout({
     <html lang="en">    
       
         <head>
+          <link rel="manifest" href="/manifest.json" />
+          <link rel="apple-touch-icon" href="/tio-ben-180x180.png" />
           <title>Pergunte ao Tio Ben - Respostas Católicas com IA</title>
           <meta name="description" content="Faça perguntas ao Tio Ben, nosso catequista virtual, e receba respostas baseadas na Bíblia, Catecismo e tradição da Igreja Católica. Aprenda e aprofunde sua fé com simplicidade e clareza." />
           <meta name="keywords" content="Tio Ben, perguntas católicas, catequista virtual, respostas católicas, fé, Bíblia Católica, Catecismo, Igreja Católica, estudo da fé, aprendizado religioso, app de perguntas, IA católica" />
@@ -94,11 +89,59 @@ export default function RootLayout({
         </Script>
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8819996017476509"  crossOrigin="anonymous"></script>
         <script async src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false"></script>
-        <script async src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>
+        <script async src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false"></script>        
+
+      
+
+<script 
+  type="application/ld+json" 
+  dangerouslySetInnerHTML={{
+    __html: `{
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Tio Ben",
+      "url": "https://iatiioben.com.br",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://iatiioben.com.br?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      },
+      "inLanguage": "pt-BR",
+      "image": "https://iatiioben.com.br/images/ben-transparente.png",
+      "sameAs": [
+        "https://www.instagram.com/ia.tioben"
+      ],
+      "mainEntity": {
+        "@type": "Organization",
+        "name": "Tio Ben",
+        "url": "https://iatiioben.com.br"
+      },
+      "additionalLinks": [
+        {
+          "@type": "URL",
+          "url": "https://iatiioben.com.br/liturgia-diaria",
+          "name": "Liturgia Diária"
+        },
+        {
+          "@type": "URL",
+          "url": "https://iatiioben.com.br/instalacao-pwa",
+          "name": "Instale o Tio Ben"
+        },
+        {
+          "@type": "URL",
+          "url": "https://iatiioben.com.br",
+          "name": "Tio Ben Catequista Virtual"
+        }
+      ]
+    }`
+  }}
+/>
+
+
       </head>
       
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+       
       >
         {children}
       </body>
