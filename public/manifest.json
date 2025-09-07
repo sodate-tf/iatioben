@@ -18,12 +18,12 @@
       "type": "image/png"
     },
     {
-      "src": "tio-ben-384x384.png",
+      "src": "/tio-ben-384x384.png",
       "sizes": "384x384",
       "type": "image/png"
     },
     {
-      "src": "tio-ben-256x256.png",
+      "src": "/tio-ben-256x256.png",
       "sizes": "256x256",
       "type": "image/png"
     }
