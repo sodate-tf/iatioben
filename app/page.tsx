@@ -20,31 +20,7 @@ export default function Home() {
   const [showInterstitial, setShowInterstitial] = useState(false);
   const [showAnswerModal, setShowAnswerModal] = useState(false);
   
-  const [showInstallModal, setShowInstallModal] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-
-  useEffect(() => {
-    const userAgent = window.navigator.userAgent;
-    const isIOSDevice =
-      /iPad|iPhone|iPod/.test(userAgent) ||
-      (userAgent.includes("Mac") && "ontouchend" in document);
-    const isMSStream = 'MSStream' in window;
-
-    setIsIOS(isIOSDevice && !isMSStream);
-  }, []);
-
-  useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker
-        .register("/service-worker.js")
-        .then((registration) =>
-          console.log("Service Worker registrado com sucesso:", registration.scope)
-        )
-        .catch((error) =>
-          console.error("Falha ao registrar o Service Worker:", error)
-        );
-    }
-  }, []);
+ 
 
   const navigateToAnswer = () => {
     setShowInterstitial(false);
@@ -246,63 +222,7 @@ export default function Home() {
             />
           )}
 
-          {isIOS && (
-            <div className="flex justify-center p-4 bg-gray-100 dark:bg-gray-800">
-              <button
-                onClick={() => setShowInstallModal(true)}
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-              >
-                Adicionar à Tela de Início
-              </button>
-            </div>
-          )}
-
-          {showInstallModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 max-w-sm w-full">
-                <h2 className="text-xl font-bold mb-4 text-center">
-                  Como Instalar no iPhone
-                </h2>
-                <p className="text-center mb-4">
-                  Para adicionar o Tio Ben à sua tela de início, siga as
-                  instruções:
-                </p>
-                <ol className="list-decimal list-inside space-y-2">
-                  <li>
-                    Toque no ícone de Compartilhar
-                    <span className="ml-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={1.5}
-                        stroke="currentColor"
-                        className="w-6 h-6 inline-block"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M7.217 10.385a2.25 2.25 0 0 1-2.246 2.246H3.375a2.25 2.25 0 0 1-2.246-2.246v-1.125a2.25 2.25 0 0 1 2.246-2.246h1.596a2.25 2.25 0 0 1 2.246 2.246zm1.125-3.375a2.25 2.25 0 0 1 2.246-2.246h1.125a2.25 2.25 0 0 1 2.246 2.246zm1.125-1.125a2.25 2.25 0 0 1 2.246 2.246v1.125a2.25 2.25 0 0 1-2.246 2.246h-1.125a2.25 2.25 0 0 1-2.246-2.246v-1.125a2.25 2.25 0 0 1 2.246-2.246zm1.125-1.125a2.25 2.25 0 0 1 2.246 2.246v1.125a2.25 2.25 0 0 1-2.246 2.246h-1.125a2.25 2.25 0 0 1-2.246-2.246v-1.125a2.25 2.25 0 0 1 2.246-2.246z"
-                        />
-                      </svg>
-                    </span>
-                    na barra inferior.
-                  </li>
-                  <li>
-                    Em seguida, toque em &quot;Adicionar à Tela de Início&quot;.
-                  </li>
-                </ol>
-                <div className="flex justify-center mt-6">
-                  <button
-                    onClick={() => setShowInstallModal(false)}
-                    className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-full"
-                  >
-                    Fechar
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          
         </div>
 
         <footer className="bg-amber-100 text-center py-4 -mt-8">
