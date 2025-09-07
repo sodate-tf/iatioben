@@ -47,6 +47,7 @@ export const metadata = {
   },
   manifest: "/manifest.json",
   icons: {
+    icon: "/tio-ben-192x192.png",
     apple: "/tio-ben-180x180.png"
   }
 };
@@ -67,42 +68,44 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "WebSite",
               "name": "Tio Ben",
-              "url": "https://iatiioben.com.br",
+              "url": "https://www.iatioben.com.br",
               "potentialAction": {
                 "@type": "SearchAction",
-                "target": "https://iatiioben.com.br?q={search_term_string}",
+                "target": "https://www.iatioben.com.br?q={search_term_string}",
                 "query-input": "required name=search_term_string"
               },
               "inLanguage": "pt-BR",
-              "image": "https://iatiioben.com.br/images/ben-transparente.png",
+              "image": "https://www.iatioben.com.br/images/ben-transparente.png",
               "sameAs": [
                 "https://www.instagram.com/ia.tioben"
               ],
               "mainEntity": {
                 "@type": "Organization",
                 "name": "Tio Ben",
-                "url": "https://iatiioben.com.br"
+                "url": "https://www.iatioben.com.br"
               },
               "additionalLinks": [
                 {
                   "@type": "URL",
-                  "url": "https://iatiioben.com.br/liturgia-diaria",
+                  "url": "https://www.iatioben.com.br/liturgia-diaria",
                   "name": "Liturgia Diária"
                 },
                 {
                   "@type": "URL",
-                  "url": "https://iatiioben.com.br/instalacao-pwa",
+                  "url": "https://www.iatioben.com.br/",
                   "name": "Instale o Tio Ben"
                 },
                 {
                   "@type": "URL",
-                  "url": "https://iatiioben.com.br",
+                  "url": "https://www.iatioben.com.br",
                   "name": "Tio Ben Catequista Virtual"
                 }
               ]
             }`
           }}
         />
+      </head>
+      <body className={inter.className}>
         <Script
           id="google-analytics"
           strategy="afterInteractive"
@@ -156,8 +159,8 @@ export default function RootLayout({
             `,
           }}
         />
-      </head>
-      <body className={inter.className}>{children}</body>
+        {children}
+      </body>
     </html>
   );
 }
