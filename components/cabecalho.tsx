@@ -114,8 +114,8 @@ export default function Cabecalho() {
           <img
             src="images/ben-transparente.png"
             alt="Tio Ben Logo"
-            width={50}
-            height={50}
+            width={100}
+            height={100}
           />
           <span className="text-xl md:text-2xl font-bold text-amber-900">Tio Ben</span>
         </Link>
