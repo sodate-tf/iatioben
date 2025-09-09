@@ -109,13 +109,13 @@ export default function Cabecalho() {
 
   return (
     <>
-      <header className="bg-amber-100 p-4 flex items-center justify-between shadow-md">
-        <Link href="/" className="flex items-center space-x-2 cursor-pointer mb-2 md:mb-0">
+      <header className="bg-amber-100 p-1 flex items-center justify-between shadow-md">
+        <Link href="/" className="flex items-center space-x-2 cursor-pointer mb-0 md:mb-0">
           <img
             src="images/ben-transparente.png"
             alt="Tio Ben Logo"
-            width={100}
-            height={100}
+            width={75}
+            height={75}
           />
           <span className="text-xl md:text-2xl font-bold text-amber-900">Tio Ben</span>
         </Link>
