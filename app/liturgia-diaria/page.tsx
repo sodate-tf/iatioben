@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import Spinner from '@/components/SpinnerLoading'; // Assegure-se de que o caminho está correto
 import Cabecalho from '@/components/cabecalho'; // Certifique-se de que este componente existe e está no caminho correto
+import AdSense from '@/components/Adsense';
 
 // --- Definições de Tipos (Interfaces) ---
 
@@ -347,16 +348,7 @@ const LiturgiaDiaria: React.FC = () => {
         ) : null /* Se não houver dados e não estiver carregando/erro, não renderiza nada */}
       </div>
  
-
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8819996017476509"
-     crossOrigin="anonymous"></script>
-<ins className="adsbygoogle display:block"
-     data-ad-format="autorelaxed"
-     data-ad-client="ca-pub-8819996017476509"
-     data-ad-slot="5858882948"></ins>
-<script>
-     (adsbygoogle = window.adsbygoogle || []).push({});
-</script>
+      <AdSense adSlot='5858882948' adFormat='autorelaxed'  />
 
       {/* Rodapé consistente */}
       <footer className="bg-amber-100 text-center py-4 mt-auto">
