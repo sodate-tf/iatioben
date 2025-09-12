@@ -3,9 +3,9 @@ const urlsToCache = [
     '/',
     '/manifest.json',
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap',
-    'https://iatioben.com.br/tio-ben-icon-192x192.png',
-    'https://iatioben.com.br/tio-ben-icon-512x512.png',
-    'https://iatioben.com.br/tio-ben-icon-180x180.png'
+    'https://www.iatioben.com.br/tio-ben-icon-192x192.png',
+    'https://www.iatioben.com.br/tio-ben-icon-512x512.png',
+    'https://www.iatioben.com.br/tio-ben-icon-180x180.png'
 ];
 
 self.addEventListener('install', event => {
