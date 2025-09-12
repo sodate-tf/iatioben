@@ -7,7 +7,7 @@ window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
     // Armazena o evento para que possamos dispará-lo mais tarde, com um clique no botão
     deferredPrompt = event;
-    console.log(`'beforeinstallprompt' event was fired.`);
+    //console.log(`'beforeinstallprompt' event was fired.`);
     // Se desejar, você pode mostrar seu botão personalizado aqui
     // Exemplo: document.getElementById('installButton').style.display = 'block';
 });
@@ -15,7 +15,7 @@ window.addEventListener('beforeinstallprompt', (event) => {
 // Listener para o evento 'appinstalled'
 // Isso é útil para saber se o usuário instalou o PWA
 window.addEventListener('appinstalled', (event) => {
-    console.log('PWA foi instalado com sucesso!');
+    //console.log('PWA foi instalado com sucesso!');
     // Você pode ocultar o botão de instalação aqui, pois o app já está instalado
 });
 
@@ -32,14 +32,14 @@ export function showInstallPrompt() {
         // Verifica a resposta do usuário
         deferredPrompt.userChoice.then((choiceResult) => {
             if (choiceResult.outcome === 'accepted') {
-                console.log('Usuário aceitou a instalação do PWA.');
+                //console.log('Usuário aceitou a instalação do PWA.');
             } else {
-                console.log('Usuário recusou a instalação do PWA.');
+                //console.log('Usuário recusou a instalação do PWA.');
             }
             // Limpa o evento para que não possa ser usado novamente
             deferredPrompt = null;
         });
     } else {
-        console.log('O prompt de instalação não está disponível no momento.');
+        //console.log('O prompt de instalação não está disponível no momento.');
     }
 }

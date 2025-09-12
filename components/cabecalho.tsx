@@ -67,7 +67,7 @@ export default function Cabecalho() {
       navigator.serviceWorker
         .register("/service-worker.js")
         .then((registration) =>
-          console.log("Service Worker registrado com sucesso:", registration.scope)
+          console.log("")
         )
         .catch((error) =>
           console.error("Falha ao registrar o Service Worker:", error)
