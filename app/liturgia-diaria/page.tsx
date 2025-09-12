@@ -346,15 +346,17 @@ const LiturgiaDiaria: React.FC = () => {
           </motion.div>
         ) : null /* Se não houver dados e não estiver carregando/erro, não renderiza nada */}
       </div>
-      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8819996017476509"
+ 
+
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8819996017476509"
      crossOrigin="anonymous"></script>
-        <ins className="adsbygoogle  display:block"
-            data-ad-format="autorelaxed"
-            data-ad-client="ca-pub-8819996017476509"
-            data-ad-slot="5858882948"></ins>
-        <script>
-            (adsbygoogle = window.adsbygoogle || []).push({});
-        </script>
+<ins className="adsbygoogle display:block"
+     data-ad-format="autorelaxed"
+     data-ad-client="ca-pub-8819996017476509"
+     data-ad-slot="5858882948"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
 
       {/* Rodapé consistente */}
       <footer className="bg-amber-100 text-center py-4 mt-auto">

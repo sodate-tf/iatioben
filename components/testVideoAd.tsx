@@ -49,8 +49,17 @@ export default function VideoAdModal({
           animate={{ scale: 1 }}
           exit={{ scale: 0.8 }}
         >
-          {/* Vídeo */}
-          <div id="ezoic-pub-ad-placeholder-115"></div>
+         
+          <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8819996017476509"
+     crossOrigin="anonymous"></script>
+<ins className="adsbygoogle display:block"
+     data-ad-client="ca-pub-8819996017476509"
+     data-ad-slot="6448612719"
+     data-ad-format="auto"
+     data-full-width-responsive="true"></ins>
+<script>
+     (adsbygoogle = window.adsbygoogle || []).push({});
+</script>
 
           {/* Botão pular */}
           {canSkip && (

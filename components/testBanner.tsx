@@ -17,7 +17,10 @@ export default function TestFooterBanner() {
            style={{
              width: "100%",            
            }}>
-        <ins className="adsbygoogle display:block"
+             <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8819996017476509"
+     crossOrigin="anonymous"></script>
+
+        <ins className={"adsbygoogle display:block"}
             data-ad-client="ca-pub-8819996017476509"
             data-ad-slot="9591116531"
             data-ad-format="auto"
