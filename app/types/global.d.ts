@@ -3,6 +3,8 @@ export {};
 
 declare global {
   interface Window {
-    adsbygoogle?: any[];
+    adsbygoogle?: Array<{
+      push: (obj: Record<string, unknown>) => void;
+    }>;
   }
 }
