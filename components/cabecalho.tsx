@@ -1,6 +1,7 @@
 import { BookOpen, Download } from 'lucide-react';
 import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
+import AdsenseScriptLoader from './AdsenseLoadScript';
 
 // Define SVG icons as components for reusability.
 const CloudArrowDownIcon = () => (
@@ -109,6 +110,7 @@ export default function Cabecalho() {
 
   return (
     <>
+     <AdsenseScriptLoader />
       <header className="bg-amber-100 p-1 flex items-center justify-between shadow-md">
         <Link href="/" className="flex items-center space-x-2 cursor-pointer mb-0 md:mb-0">
           <img

@@ -113,15 +113,14 @@ export default function RootLayout({
           async
           src="https://www.googletagmanager.com/gtag/js?id=G-17GKJ4F1Q8"
         />
-        <Script id="google-analytics">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-17GKJ4F1Q8');
-          `}
-        </Script>
-    
+       
+        <Script
+            id="adsbygoogle-init"
+            async
+            strategy="afterInteractive"
+            crossOrigin="anonymous"
+            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8819996017476509"
+          />
         <Script
           async
           src="https://cmp.gatekeeperconsent.com/min.js"
