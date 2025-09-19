@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Script from "next/script";
 import React from "react";
+import { SpeedInsights } from "@vercel/speed-insights/next"
+import { Analytics } from "@vercel/analytics/next"
 
 export const metadata: Metadata = {
   title: "Pergunte ao Tio Ben - Respostas Católicas com IA",
@@ -54,7 +56,9 @@ export default function RootLayout({
 
 
   return (
+    
     <html lang="pt-BR">
+      
       <head>
         {/* Meta tags para iOS/Apple */}
         <link rel="apple-touch-icon" href="/tio-ben-180x180.png" />
@@ -107,6 +111,7 @@ export default function RootLayout({
           }}
         />
         <link rel="manifest" href="/manifest.json" />
+        
       </head>
       <body>
         <Script
@@ -135,6 +140,8 @@ export default function RootLayout({
         
 
         {children}
+        <SpeedInsights/>
+        <Analytics/>
       </body>
     </html>
   );
