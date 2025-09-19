@@ -193,8 +193,8 @@ const LiturgiaDiaria: React.FC = () => {
       try {
         await navigator.share({
           title: `Liturgia Diária - ${liturgyData?.liturgia || 'Dia'}`, // Usar liturgyData.liturgia
-          text: `Confira a liturgia do dia: ${liturgyData?.data || ''}\n\n${liturgyData?.liturgia || ''}\n\n${getShareableReadingText()}`,
-          url: window.location.href,
+          text: `Confira a liturgia do dia: ${liturgyData?.data || ''}\n\n${liturgyData?.liturgia || ''}`,
+          url: "https://www.iatioben.com.br/liturgia-diaria",
         });
       } catch (err: unknown) {
   console.error("Falha ao buscar dados da liturgia:", err);
