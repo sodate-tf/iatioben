@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import Spinner from '@/components/SpinnerLoading'; // Assegure-se de que o caminho está correto
 import Cabecalho from '@/components/cabecalho'; // Certifique-se de que este componente existe e está no caminho correto
 import AdSense from '@/components/Adsense';
+import LiturgiaMeta from '@/components/MetaLirurgia';
 
 // --- Definições de Tipos (Interfaces) ---
 
@@ -234,6 +235,7 @@ const LiturgiaDiaria: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-amber-400 relative">
       {/* Cabeçalho consistente */}
       <Cabecalho />
+      <LiturgiaMeta />
 
       {/* Área de conteúdo principal da página da Liturgia Diária */}
       <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
