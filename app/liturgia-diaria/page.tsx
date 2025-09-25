@@ -231,9 +231,8 @@ const LiturgiaDiaria: React.FC = () => {
   tabs.filter(tab => liturgyData && liturgyData.leituras && liturgyData.leituras[tab.key] && liturgyData.leituras[tab.key].length > 0); // <-- CORREÇÃO AQUI
 
   return (
-    
-    <div className="flex flex-col min-h-screen bg-amber-400 relative">
-      <Head>
+    <>
+    <Head>
         <title>Liturgia Diária - Leituras e Reflexões do Dia</title>
         <meta
           name="description"
@@ -252,7 +251,7 @@ const LiturgiaDiaria: React.FC = () => {
         <meta property="og:url" content="https://www.iatioben.com.br/liturgia-diaria" />
         <meta property="og:image" content="https://www.iatioben.com.br/images/liturgia-og.jpg" />
       </Head>
-      
+    <div className="flex flex-col min-h-screen bg-amber-400 relative">            
       {/* Cabeçalho consistente */}
       <Cabecalho />
       
@@ -381,6 +380,7 @@ const LiturgiaDiaria: React.FC = () => {
         </p>
       </footer>
     </div>
+    </>
   );
 };
 
