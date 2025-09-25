@@ -5,46 +5,6 @@ import React from "react";
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Analytics } from "@vercel/analytics/next"
 
-export const metadata: Metadata = {
-  // O template permite que cada página defina seu próprio título,
-  // e o nome do site será automaticamente adicionado no final.
-  title: {
-    template: '%s | Tio Ben',
-    default: 'Pergunte ao Tio Ben - Respostas Católicas com IA',
-  },
-  description: 'Acesse a Liturgia Diária, receba respostas católicas e aprofunde sua fé.',
-  // As demais meta tags globais que se aplicam a todo o site, como o autor,
-  // as keywords gerais, e as configurações do OpenGraph.
-  keywords: [
-    "Tio Ben",
-    "perguntas católicas",
-    "catequista virtual",
-    "respostas católicas",
-    "fé",
-    "Bíblia Católica",
-    "Catecismo",
-    "Igreja Católica",
-    "estudo da fé",
-    "aprendizado religioso",
-    "app de perguntas",
-    "IA católica",
-  ],
-  authors: [{ name: "4U Develops" }],
-  viewport: "width=device-width, initial-scale=1.0",
-  openGraph: {
-    title: "Pergunte ao Tio Ben - Catequista Virtual Católico",
-    description: "Faça suas perguntas ao Tio Ben e receba respostas católicas confiáveis e claras. Baseadas na Bíblia, Catecismo e tradição da Igreja.",
-    type: "website",
-    url: "https://www.iatioben.com.br",
-    images: [
-      {
-        url: "https://www.iatioben.com.br/images/og-image.png",
-      },
-    ],
-    locale: "pt_BR",
-    siteName: "Pergunte ao Tio Ben",
-  },
-};
 export default function RootLayout({
   children,
 }: Readonly<{
