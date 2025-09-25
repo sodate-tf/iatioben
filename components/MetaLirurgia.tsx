@@ -1,80 +1,55 @@
-import Head from "next/head";
+import type { Metadata } from 'next';
+import LiturgiaDiariaClient from '../app/liturgia-diaria/page';
 
-interface MetaProps {
-  title?: string;
-  description?: string;
-  url?: string;
-  image?: string;
-  datePublished?: string;
-  dateModified?: string;
-}
+// Esta página agora é um Server Component e lida apenas com a metadata.
+export const metadata: Metadata = {
+  title: "Liturgia Diária e Respostas Católicas com IA | Tio Ben",
+  description:
+    "Acesse a Liturgia Diária de forma simples e rápida. Encontre as leituras do dia, o Evangelho, a reflexão e a oração, tudo em um só lugar. Aprofunde sua fé com a Liturgia Diária Católica.",
+  keywords: [
+    "Tio Ben",
+    "perguntas católicas",
+    "catequista virtual",
+    "respostas católicas",
+    "fé",
+    "Bíblia Católica",
+    "Catecismo",
+    "Igreja Católica",
+    "estudo da fé",
+    "aprendizado religioso",
+    "app de perguntas",
+    "IA católica",
+    "Liturgia",
+    "Liturgia Diária",
+    "Liturgia diária católica",
+    "leitura do dia",
+    "liturgia do dia",
+  ],
+  authors: [{ name: "4U Develops" }],
+  alternates: {
+    canonical: "https://www.iatioben.com.br/liturgia-diaria",
+  },
+  openGraph: {
+    title: "Liturgia Diária Católica | Tio Ben",
+    description:
+      "Acesse a Liturgia Diária de forma simples e rápida. Encontre as leituras do dia, o Evangelho, a reflexão e a oração, tudo em um só lugar. Aprofunde sua fé com a Liturgia Diária Católica.",
+    type: "website",
+    url: "https://www.iatioben.com.br/liturgia-diaria",
+    images: [
+      {
+        url: "https://www.iatioben.com.br/images/og-image.png",
+      },
+    ],
+    locale: "pt_BR",
+    siteName: "Pergunte ao Tio Ben",
+  },
+  other: {
+    "google-adsense-account": "ca-pub-8819996017476509",
+    "google-site-verification": "G-17GKJ4F1Q8",
+  },
+};
 
-export default function LiturgiaMeta({
-  title = "Liturgia Diária Católica - Evangelho do dia, Salmos e  Leituras | Tio Ben",
-  description = "Acompanhe a Liturgia Diária completa com Evangelho do dia, Salmo e Leituras. Ore, medite e viva a Palavra de Deus todos os dias.",
-  url = "https://iatioben.com.br/liturgia-diaria",
-  image = "https://iatioben.com.br/images/liturgia-og.jpg",
-  datePublished,
-  dateModified,
-}: MetaProps) {
-  return (
-    <Head>
-      {/* Básico para SEO */}
-      <title>{title}</title>
-      <meta name="description" content={description} />
-      <link rel="canonical" href={url} />
 
-      {/* Open Graph (Facebook, WhatsApp, LinkedIn) */}
-      <meta property="og:type" content="article" />
-      <meta property="og:site_name" content="IA Tio Ben" />
-      <meta property="og:title" content={title} />
-      <meta property="og:description" content={description} />
-      <meta property="og:url" content={url} />
-      <meta property="og:image" content={image} />
-      <meta property="og:locale" content="pt_BR" />
-
-      
-      {/* Schema.org - Article (Google Rich Snippets) */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Article",
-            headline: title,
-            description: description,
-            image: [image],
-            datePublished: datePublished || new Date().toISOString(),
-            dateModified: dateModified || new Date().toISOString(),
-            author: {
-              "@type": "Person",
-              name: "Tio Ben",
-            },
-            publisher: {
-              "@type": "Organization",
-              name: "IA Tio Ben",
-              logo: {
-                "@type": "ImageObject",
-                url: "https://www.iatioben.com.br/tio-ben-icon-512x512.png",
-              },
-            },
-            mainEntityOfPage: {
-              "@type": "WebPage",
-              "@id": url,
-            },
-          }),
-        }}
-      />
-
-      {/* SEO técnico */}
-      <meta name="robots" content="index, follow" />
-      <meta name="language" content="pt-BR" />
-      <meta name="author" content="IA Tio Ben" />
-      <meta name="copyright" content="IA Tio Ben" />
-      <meta name="theme-color" content="#ffffff" />
-
-      {/* Performance e Mobile */}
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    </Head>
-  );
+export default function LiturgiaPage() {
+  return <LiturgiaDiariaClient />;
 }
