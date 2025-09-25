@@ -8,6 +8,7 @@ import Spinner from '@/components/SpinnerLoading'; // Assegure-se de que o camin
 import Cabecalho from '@/components/cabecalho'; // Certifique-se de que este componente existe e está no caminho correto
 import AdSense from '@/components/Adsense';
 import Head from 'next/head';
+import LiturgiaHead from '@/components/liturgiaHead';
 
 
 // Interface base para uma leitura
@@ -232,29 +233,11 @@ const LiturgiaDiaria: React.FC = () => {
 
   return (
     <>
-     <Head>
-        <title>Liturgia Diária - Tio Ben</title>
-        <meta name="description" content="Acompanhe a liturgia diária e mantenha-se em unidade com a Igreja, meditando as mesmas leituras proclamadas em todo o mundo." />
-        <meta property="og:title" content="Liturgia Diária - Tio Ben" />
-        <meta
-          property="og:description"
-          content="Acompanhe a liturgia diária e mantenha-se em unidade com a Igreja, meditando as mesmas leituras proclamadas em todo o mundo."
-        />
-        <meta property="og:image" content="/og_image_liturgia.png" />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://www.iatioben.com.br/liturgia-diaria" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Liturgia Diária - Tio Ben" />
-        <meta
-          name="twitter:description"
-          content="Acompanhe a liturgia diária e mantenha-se em unidade com a Igreja, meditando as mesmas leituras proclamadas em todo o mundo."
-        />
-        <meta name="twitter:image" content="/og_image_liturgia.png" />
-      </Head>
+    
     <div className="flex flex-col min-h-screen bg-amber-400 relative">            
       {/* Cabeçalho consistente */}
       <Cabecalho />
-      
+      <LiturgiaHead />  
 
       {/* Área de conteúdo principal da página da Liturgia Diária */}
       <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
