@@ -7,6 +7,7 @@ import VideoAdModal from "@/components/testVideoAd";
 import Link from "next/link";
 import FaqTioBen from "@/components/faqTioBen";
 import Cabecalho from "@/components/cabecalho";
+import Head from "next/head";
 
 
 export default function Home() {
@@ -94,6 +95,54 @@ export default function Home() {
 
   return (
     <>
+    <Head>
+        {/* --- SEO BÁSICO --- */}
+        <title>IA Tio Ben | Inteligência Artificial para Liturgia, Oração e Reflexões</title>
+        <meta
+          name="description"
+          content="IA Tio Ben - Sua inteligência artificial para liturgia diária, liturgia católica, leituras do dia e reflexões cristãs. Simples, acessível e direto para sua vida espiritual."
+        />
+        <meta
+          name="keywords"
+          content="IA Tio Ben, inteligência artificial católica, liturgia, liturgia católica, liturgia diária, leitura do dia, leituras liturgia do dia, oração diária, reflexões bíblicas"
+        />
+
+        {/* --- SEO AVANÇADO --- */}
+        <meta name="robots" content="index, follow" />
+        <meta name="author" content="4U Develops" />
+        <meta name="language" content="pt-BR" />
+
+        {/* --- OPEN GRAPH (para Facebook/WhatsApp) --- */}
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="IA Tio Ben" />
+        <meta
+          property="og:title"
+          content="IA Tio Ben | Liturgia Diária e Inteligência Artificial Cristã"
+        />
+        <meta
+          property="og:description"
+          content="Receba a liturgia do dia, leituras, salmos e reflexões com ajuda da IA Tio Ben."
+        />
+        <meta property="og:url" content="https://www.iatioben.com.br/" />
+        <meta property="og:image" content="https://www.iatioben.com.br/images/og_image.png" />
+
+        {/* --- TWITTER CARD --- */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:site" content="@iatioben" />
+        <meta
+          name="twitter:title"
+          content="IA Tio Ben | Inteligência Artificial para Liturgia e Reflexões"
+        />
+        <meta
+          name="twitter:description"
+          content="Liturgia diária, leituras católicas e reflexões na palma da sua mão com a IA Tio Ben."
+        />
+        <meta name="twitter:image" content="https://www.iatioben.com.br/images/og_image.png" />
+
+        {/* --- FAVICON --- */}
+        <link rel="icon" href="/favicon.ico" />
+      </Head>
+      
       <div className="flex flex-col min-h-screen bg-amber-400 relative">
         <Cabecalho />
         <div className="flex-1 flex flex-col items-center px-4 py-8">

@@ -7,7 +7,8 @@ import { motion } from 'framer-motion';
 import Spinner from '@/components/SpinnerLoading'; // Assegure-se de que o caminho está correto
 import Cabecalho from '@/components/cabecalho'; // Certifique-se de que este componente existe e está no caminho correto
 import AdSense from '@/components/Adsense';
-import LiturgiaMeta from '@/components/MetaLirurgia';
+import Head from 'next/head';
+
 
 // Interface base para uma leitura
 interface LiturgyReadingItem {
@@ -230,10 +231,31 @@ const LiturgiaDiaria: React.FC = () => {
   tabs.filter(tab => liturgyData && liturgyData.leituras && liturgyData.leituras[tab.key] && liturgyData.leituras[tab.key].length > 0); // <-- CORREÇÃO AQUI
 
   return (
+    
     <div className="flex flex-col min-h-screen bg-amber-400 relative">
+      <Head>
+        <title>Liturgia Diária - Leituras e Reflexões do Dia</title>
+        <meta
+          name="description"
+          content="Acompanhe a liturgia diária completa com leituras, salmos e evangelho. Confira a liturgia católica, a leitura do dia e fortaleça sua fé diariamente. | IA Tio Ben"
+        />
+        <meta
+          name="keywords"
+          content="liturgia, liturgia católica, liturgia diária, leitura do dia, leituras liturgia do dia, Ia Tio Ben"
+        />
+        <meta property="og:title" content="Liturgia Diária - Leituras do Dia | Ia Tio Ben" />
+        <meta
+          property="og:description"
+          content="Leituras litúrgicas do dia: primeira leitura, salmo, evangelho e liturgia católica completa."
+        />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://www.iatioben.com.br/liturgia-diaria" />
+        <meta property="og:image" content="https://www.iatioben.com.br/images/liturgia-og.jpg" />
+      </Head>
+      
       {/* Cabeçalho consistente */}
       <Cabecalho />
-      <LiturgiaMeta />
+      
 
       {/* Área de conteúdo principal da página da Liturgia Diária */}
       <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
