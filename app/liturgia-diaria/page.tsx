@@ -7,8 +7,8 @@ import { motion } from 'framer-motion';
 import Spinner from '@/components/SpinnerLoading'; // Assegure-se de que o caminho está correto
 import Cabecalho from '@/components/cabecalho'; // Certifique-se de que este componente existe e está no caminho correto
 import AdSense from '@/components/Adsense';
-import Head from 'next/head';
-import LiturgiaHead from '@/components/liturgiaHead';
+import { createMetaData } from '@/components/createMetaData';
+import { Metadata } from 'next';
 
 
 // Interface base para uma leitura
@@ -67,6 +67,12 @@ interface FormattedDate {
 }
 
 // --- Componente Principal ---
+export const metadata: Metadata = createMetaData({
+  title: 'Liturgia Diária - Tio Ben',
+  description: 'Acompanhe a liturgia diária e mantenha-se em unidade com a Igreja, meditando as mesmas leituras proclamadas em todo o mundo.',
+  url: 'https://www.iatioben.com.br/liturgia-diaria',
+  image: 'https://www.iatioben.com.br/og_image_liturgia.png'
+});
 
 const LiturgiaDiaria: React.FC = () => {
   // Estados tipados
@@ -237,7 +243,6 @@ const LiturgiaDiaria: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-amber-400 relative">            
       {/* Cabeçalho consistente */}
       <Cabecalho />
-      <LiturgiaHead />  
 
       {/* Área de conteúdo principal da página da Liturgia Diária */}
       <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
