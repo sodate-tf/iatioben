@@ -29,7 +29,6 @@ export const metadata: Metadata = {
     type: 'website',
   },
 };
-
 export default function Home() {
   return <HomePageClient />;
 }
