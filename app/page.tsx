@@ -7,6 +7,51 @@ import VideoAdModal from "@/components/testVideoAd";
 import Link from "next/link";
 import FaqTioBen from "@/components/faqTioBen";
 import Cabecalho from "@/components/cabecalho";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Pergunte ao Tio Ben - Respostas Católicas com IA",
+  description:
+    "Faça perguntas ao Tio Ben, nosso catequista virtual, e receba respostas baseadas na Bíblia, Catecismo e tradição da Igreja Católica. Aprenda e aprofunde sua fé com simplicidade e clareza.",
+  keywords: [
+    "Tio Ben",
+    "perguntas católicas",
+    "catequista virtual",
+    "respostas católicas",
+    "fé",
+    "Bíblia Católica",
+    "Catecismo",
+    "Igreja Católica",
+    "estudo da fé",
+    "aprendizado religioso",
+    "app de perguntas",
+    "IA católica",
+  ],
+  authors: [{ name: "4U Develops" }],
+  viewport: "width=device-width, initial-scale=1.0",
+  alternates: {
+    canonical: "https://www.iatioben.com.br",
+  },
+  openGraph: {
+    title: "Pergunte ao Tio Ben - Catequista Virtual Católico",
+    description:
+      "Faça suas perguntas ao Tio Ben e receba respostas católicas confiáveis e claras. Baseadas na Bíblia, Catecismo e tradição da Igreja.",
+    type: "website",
+    url: "https://www.iatioben.com.br",
+    images: [
+      {
+        url: "https://www.iatioben.com.br/images/og-image.png",
+      },
+    ],
+    locale: "pt_BR",
+    siteName: "Pergunte ao Tio Ben",
+  },
+  other: {
+    "google-adsense-account": "ca-pub-8819996017476509",
+    "google-site-verification": "G-17GKJ4F1Q8",
+  },
+};
+
 
 export default function Home() {
   const [question, setQuestion] = useState("");
@@ -89,6 +134,7 @@ export default function Home() {
       }
     }
   };
+  
 
   return (
     <>
