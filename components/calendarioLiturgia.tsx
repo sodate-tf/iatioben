@@ -19,6 +19,8 @@ export default function CalendarioLiturgia({ handleShare, onFontSizeChange }: Ca
     if (onFontSizeChange) onFontSizeChange(newSize);
   };
 
+
+  setSelectedDate(new Date().toDateString())
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const date = e.target.value;
     setSelectedDate(date);
