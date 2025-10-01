@@ -1,34 +1,25 @@
-"use client"
+"use client";
 import "./globals.css";
 import Script from "next/script";
 import React from "react";
-import { SpeedInsights } from "@vercel/speed-insights/next"
-import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-
-
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    
     <html lang="pt-BR">
-      
       <head>
-        {/* Meta tags para iOS/Apple */}
+        {/* Meta tags e dados estruturados */}
         <link rel="apple-touch-icon" href="/tio-ben-180x180.png" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-
         <meta
           name="apple-mobile-web-app-status-bar-style"
           content="black-translucent"
         />
         <meta name="apple-mobile-web-app-title" content="Tio Ben" />
-
-        {/* Script de dados estruturados para SEO */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -44,9 +35,7 @@ export default function RootLayout({
               },
               "inLanguage": "pt-BR",
               "image": "https://www.iatioben.com.br/images/ben-transparente.png",
-              "sameAs": [
-                "https://www.instagram.com/ia.tioben"
-              ],
+              "sameAs": ["https://www.instagram.com/ia.tioben"],
               "mainEntity": {
                 "@type": "Organization",
                 "name": "Tio Ben",
@@ -68,39 +57,38 @@ export default function RootLayout({
           }}
         />
         <link rel="manifest" href="/manifest.json" />
-       
 
-
+        {/* Google Analytics - script padrão */}
+        <Script
+          strategy="afterInteractive"
+          src={`https://www.googletagmanager.com/gtag/js?id=G-17GKJ4F1Q8`}
+        />
+        <Script
+          id="gtag-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-17GKJ4F1Q8', { page_path: window.location.pathname });
+            `,
+          }}
+        />
       </head>
       <body>
+        {/* Outros scripts */}
         <Script
           async
-          src="https://www.googletagmanager.com/gtag/js?id=G-17GKJ4F1Q8"
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8819996017476509"
+          crossOrigin="anonymous"
         />
-       
-        <Script
-            id="adsbygoogle-init"
-            async
-            strategy="afterInteractive"
-            crossOrigin="anonymous"
-            src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8819996017476509"
-          />
-        <Script
-          async
-          src="https://cmp.gatekeeperconsent.com/min.js"
-          data-cfasync="false"
-        />
-        <Script
-          async
-          src="https://the.gatekeeperconsent.com/cmp.min.js"
-          data-cfasync="false"
-        />
-
-        
+        <Script async src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false" />
+        <Script async src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false" />
 
         {children}
-        <SpeedInsights/>
-        <Analytics/>
+        <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
