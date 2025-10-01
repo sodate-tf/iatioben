@@ -107,7 +107,11 @@ export default function Cabecalho() {
 
   // Condição para renderizar o botão de instalação
   const shouldShowInstallButton = isIOS || installable;
-
+const today = new Date();
+const dd = String(today.getDate()).padStart(2, "0");
+const mm = String(today.getMonth() + 1).padStart(2, "0");
+const yyyy = today.getFullYear();
+const todayUrl = `/liturgia-diaria/${dd}-${mm}-${yyyy}`;
   return (
     <>
      <AdsenseScriptLoader />
@@ -132,7 +136,7 @@ export default function Cabecalho() {
             </button>
           )}
           <Link
-            href="/liturgia-diaria"
+            href={todayUrl}
             className="flex flex-col items-center justify-center p-2 rounded-lg text-amber-900 hover:bg-amber-200 transition-colors duration-200 text-xs md:text-sm"
           >
             <BookOpen className="w-8 h-8 md:w-10 md:h-10" />
