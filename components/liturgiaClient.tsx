@@ -231,39 +231,39 @@ export default function LiturgiaContent({ date }: LiturgiaContentProps) {
                 </div>                
               </div>
 
-             <nav className="flex flex-nowrap overflow-x-auto gap-2 mb-4 text-sm md:text-base px-2 py-1 bg-white shadow-md rounded-lg">
+             <nav className="flex flex-nowrap overflow-x-auto gap-2 mb-4 text-sm md:text-base px-2 py-1 text-gray-950 bg-white shadow-md rounded-lg">
                 <Link
                   href={`/liturgia-diaria/${dataAnterior2.date}`}
                   title={`Liturgia de ${dataAnterior2.tooltip}`}
-                  className="flex-shrink-0 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors bg-gray-200 font-medium"
+                  className="flex-shrink-0 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors text-gray-950 bg-gray-200 font-medium"
                 >
                   &laquo; {dataAnterior2.abrev}
                 </Link>
                 <Link
                   href={`/liturgia-diaria/${dataAnterior1.date}`}
                   title={`Liturgia de ${dataAnterior1.tooltip}`}
-                  className="flex-shrink-0 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors bg-gray-200 font-medium"
+                  className="flex-shrink-0 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors text-gray-950 bg-gray-200 font-medium"
                 >
                   {dataAnterior1.abrev}
                 </Link>
                 <Link
                   href="/liturgia-diaria"
                   title="Liturgia de Hoje"
-                  className="flex-shrink-0 px-3 py-2 rounded-md bg-amber-400 font-semibold hover:bg-amber-500 transition-colors"
+                  className="flex-shrink-0 px-3 py-2 rounded-md bg-amber-400 font-semibold text-gray-950 hover:bg-amber-500 transition-colors"
                 >
                   Hoje
                 </Link>
                 <Link
                   href={`/liturgia-diaria/${dataSeguinte1.date}`}
                   title={`Liturgia de ${dataSeguinte1.tooltip}`}
-                  className="flex-shrink-0 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors bg-gray-200 font-medium"
+                  className="flex-shrink-0 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors text-gray-950 bg-gray-200 font-medium"
                 >
                   {dataSeguinte1.abrev}
                 </Link>
                 <Link
                   href={`/liturgia-diaria/${dataSeguinte2.date}`}
                   title={`Liturgia de ${dataSeguinte2.tooltip}`}
-                  className="flex-shrink-0 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors bg-gray-200 font-medium"
+                  className="flex-shrink-0 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors text-gray-950 bg-gray-200 font-medium"
                 >
                   {dataSeguinte2.abrev} &raquo;
                 </Link>

@@ -49,7 +49,6 @@ export default function CalendarioLiturgia({ handleShare, onFontSizeChange }: Ca
         >
           <MinusIcon className="h-5 w-5 text-gray-700" />
         </button>
-        <span className="text-gray-800 font-medium">{fontSize}px</span>
         <button
           onClick={() => updateFontSize(Math.min(24, fontSize + 2))}
           className="flex justify-center items-center p-2 rounded-md bg-gray-200 hover:bg-gray-300 transition-colors"
@@ -64,7 +63,7 @@ export default function CalendarioLiturgia({ handleShare, onFontSizeChange }: Ca
         type="date"
         value={selectedDate}
         onChange={handleDateChange}
-        className="px-2 py-1 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 cursor-pointer text-sm"
+        className="px-2 py-1 text-gray-950 bg-gray-100 rounded-md hover:bg-gray-200 cursor-pointer text-sm"
         title="Escolher data"
       />
     </div>
