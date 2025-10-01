@@ -221,14 +221,14 @@ export default function LiturgiaContent({ date }: LiturgiaContentProps) {
               <div className="flex flex-col md:flex-row items-center justify-center w-full mb-4 relative">
                 <div className="flex flex-col items-center md:mr-6">
                   <div className="relative">
+                    <CalendarioLiturgia handleShare={handleShare} onFontSizeChange={setFontSize} />
                     <span className="text-6xl font-bold text-amber-700">{day}</span>
                     <div className="flex flex-col absolute top-7 left-[calc(100%+5px)] -translate-y-1/2">
                       <span className="text-xl font-semibold text-amber-600 leading-none">{month}</span>
                       <span className="text-2xl text-gray-600 leading-none">{year}</span>
                     </div>
                   </div>
-                </div>
-                <CalendarioLiturgia handleShare={handleShare} onFontSizeChange={setFontSize} />
+                </div>                
               </div>
 
               <nav className="flex flex-wrap justify-center gap-2 mb-4 text-sm md:text-base">
