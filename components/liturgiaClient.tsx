@@ -237,14 +237,14 @@ export default function LiturgiaContent({ date }: LiturgiaContentProps) {
                   title={`Liturgia de ${dataAnterior2.tooltip}`}
                   className="flex-shrink-0 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors text-gray-950 bg-gray-200 font-medium"
                 >
-                  &laquo; {String(dataAnterior2.abrev)}
+                  &laquo; {""+dataAnterior2.abrev}
                 </Link>
                 <Link
                   href={`/liturgia-diaria/${dataAnterior1.date}`}
                   title={`Liturgia de ${dataAnterior1.tooltip}`}
                   className="flex-shrink-0 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors text-gray-950 bg-gray-200 font-medium"
                 >
-                  {String(dataAnterior1.abrev)}
+                  {""+dataAnterior1.abrev}
                 </Link>
                 <Link
                   href="/liturgia-diaria"
@@ -258,14 +258,14 @@ export default function LiturgiaContent({ date }: LiturgiaContentProps) {
                   title={`Liturgia de ${dataSeguinte1.tooltip}`}
                   className="flex-shrink-0 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors text-gray-950 bg-gray-200 font-medium"
                 >
-                  {String(dataSeguinte1.abrev)}
+                  {""+dataSeguinte1.abrev}
                 </Link>
                 <Link
                   href={`/liturgia-diaria/${dataSeguinte2.date}`}
                   title={`Liturgia de ${dataSeguinte2.tooltip}`}
                   className="flex-shrink-0 px-3 py-2 rounded-md hover:bg-gray-300 transition-colors text-gray-950 bg-gray-200 font-medium"
                 >
-                  {String(dataSeguinte2.abrev)} &raquo;
+                  {""+dataSeguinte2.abrev} &raquo;
                 </Link>
               </nav>
 
