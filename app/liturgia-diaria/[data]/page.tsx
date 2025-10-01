@@ -11,12 +11,14 @@ export default function Page() {
    const params = useParams();
   const data = params?.data as string; // dd-mm-yyyy
   return (
-    <div className="flex flex-col min-h-screen bg-amber-400">
-      <head>
+    <>
+    <head>
         <LiturgiaJsonLd date={data} />
         <CreateMetaData date={data} />
        </head>
+    <div className="flex flex-col min-h-screen bg-amber-400">      
       <LiturgiaContent date={data} /> {/* CLIENT COMPONENT */}      
     </div>
+    </>
   );
 }
