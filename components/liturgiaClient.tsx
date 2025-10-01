@@ -7,7 +7,7 @@ import Cabecalho from './cabecalho';
 import AdSense from './Adsense';
 import Link from 'next/link';
 import CalendarioLiturgia from './calendarioLiturgia';
-import createMetaData from './createMetaData';
+
 // Interface base para uma leitura
 interface LiturgyReadingItem {
   referencia: string;
@@ -70,11 +70,6 @@ interface PageProps {
   params: { data?: string }; // dd-mm-yyyy
 }
 
-
-
-export async function generateMetadata({ params }: PageProps) {
-  return createMetaData({ date: params.data });
-}
 export default function LiturgiaContent({ date }: LiturgiaContentProps) {
   
    // Estados tipados
