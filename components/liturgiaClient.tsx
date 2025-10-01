@@ -253,7 +253,7 @@ export default function LiturgiaContent({ date }: LiturgiaContentProps) {
 
 
   // Recebe a data atual (ou da liturgia que está sendo visualizada)
-const hoje = new Date(); // data no formato dd-mm-yyyy
+const hoje = date ? parseDateString(date) : new Date(); // data no formato dd-mm-yyyy
 
 // Função auxiliar para parsear dd-mm-yyyy para Date
 function parseDateString(str: string): Date {
@@ -353,21 +353,21 @@ const dataSeguinte2Format = formatDateTooltip(new Date(hoje.getTime() + 2 * 24 *
 
                 {/* Navegação entre datas */}
                 <nav className="flex flex-wrap justify-center gap-2 mb-4 text-sm md:text-base">
-                  <a href={`/liturgia-diaria/${dataAnterior2}`} title={`Liturgia de ${dataAnterior2Format}`} className="px-2 py-1 rounded hover:bg-gray-200 transition">
+                  <Link href={`/liturgia-diaria/${dataAnterior2}`} title={`Liturgia de ${dataAnterior2Format}`} className="px-2 py-1 rounded hover:bg-gray-200 transition">
                     &laquo; {dataAnterior2Abrev}
-                  </a>
-                  <a href={`/liturgia-diaria/${dataAnterior1}`} title="Liturgia de Ontem" className="px-2 py-1 rounded hover:bg-gray-200 transition">
+                  </Link>
+                  <Link href={`/liturgia-diaria/${dataAnterior1}`} title="Liturgia de Ontem" className="px-2 py-1 rounded hover:bg-gray-200 transition">
                     &lsaquo; Ontem
-                  </a>
-                  <a href="/liturgia-diaria" title="Liturgia de Hoje" className="px-2 py-1 rounded bg-amber-200 font-semibold hover:bg-amber-300 transition">
+                  </Link>
+                  <Link href="/liturgia-diaria" title="Liturgia de Hoje" className="px-2 py-1 rounded bg-amber-200 font-semibold hover:bg-amber-300 transition">
                     Hoje
-                  </a>
-                  <a href={`/liturgia-diaria/${dataSeguinte1}`} title="Liturgia de Amanhã" className="px-2 py-1 rounded hover:bg-gray-200 transition">
+                  </Link>
+                  <Link href={`/liturgia-diaria/${dataSeguinte1}`} title="Liturgia de Amanhã" className="px-2 py-1 rounded hover:bg-gray-200 transition">
                     Amanhã &rsaquo;
-                  </a>
-                  <a href={`/liturgia-diaria/${dataSeguinte2}`} title={`Liturgia de ${dataSeguinte2Format}`} className="px-2 py-1 rounded hover:bg-gray-200 transition">
+                  </Link>
+                  <Link href={`/liturgia-diaria/${dataSeguinte2}`} title={`Liturgia de ${dataSeguinte2Format}`} className="px-2 py-1 rounded hover:bg-gray-200 transition">
                     {dataSeguinte2Abrev} &raquo;
-                  </a>
+                  </Link>
                 </nav>
 
                 {/* Cor Litúrgica */}
