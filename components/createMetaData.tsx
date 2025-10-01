@@ -2,7 +2,7 @@
 
 import Head from "next/head";
 
-interface MetaDataProps {
+interface CreateMetaDataProps {
   title?: string;
   description?: string;
   url?: string;
@@ -10,7 +10,7 @@ interface MetaDataProps {
   date?: string; // dd-mm-yyyy opcional
 }
 
-export default function MetaData({ title, description, url, image, date }: MetaDataProps) {
+export default function CreateMetaData({ title, description, url, image, date }: CreateMetaDataProps) {
   let pageTitle = title;
   let pageDescription = description;
   let canonicalUrl = url;

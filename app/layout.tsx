@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+"use client"
 import "./globals.css";
 import Script from "next/script";
 import React from "react";
