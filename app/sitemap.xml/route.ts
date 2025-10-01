@@ -14,15 +14,15 @@ export async function GET() {
   };
 
   // URLs da liturgia: de 3 dias antes até 14 dias depois
-  const liturgiaUrls: string[] = [];
+  const liturgiaUrls: { url: string; date: Date }[] = [];
   for (let i = -3; i <= 14; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
-    liturgiaUrls.push(`${baseUrl}/liturgia-diaria/${formatDate(d)}`);
+    liturgiaUrls.push({ url: `${baseUrl}/liturgia-diaria/${formatDate(d)}`, date: d });
   }
 
   const urls = [
-    `${baseUrl}/`, // Página principal
+    { url: `${baseUrl}/`, date: today }, // Página principal
     ...liturgiaUrls,
   ];
 
@@ -31,9 +31,9 @@ export async function GET() {
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   ${urls
     .map(
-      (url) => `<url>
+      ({ url, date }) => `<url>
     <loc>${url}</loc>
-    <lastmod>${today.toISOString()}</lastmod>
+    <lastmod>${date.toISOString()}</lastmod>
     <changefreq>daily</changefreq>
     <priority>${url === baseUrl + "/" ? "1.0" : "0.8"}</priority>
   </url>`
