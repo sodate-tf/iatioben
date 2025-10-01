@@ -7,8 +7,8 @@ interface MetaDataLiturgiaProps {
 
 export default function MetaDataLiturgia({ date }: MetaDataLiturgiaProps) {
   if (!date)
-    return("")
-  
+    return(<></>)
+
   const [dd, mm, yyyy] = date.split("-");
   const d = new Date(`${yyyy}-${mm}-${dd}`);
 
