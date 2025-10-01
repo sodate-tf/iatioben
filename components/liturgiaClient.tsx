@@ -181,7 +181,7 @@ export default function LiturgiaContent({ date }: LiturgiaContentProps) {
     : [];
 
   // Data atual
-  const hoje = date ? parseDateString(date) : new Date();
+  const hoje = parseDateString(new Date().toString());
   function parseDateString(str: string): Date {
     const [dd, mm, yyyy] = str.split('-').map(Number);
     return new Date(yyyy, mm - 1, dd);
