@@ -1,5 +1,9 @@
+"use client"
 import { Metadata } from 'next';
 import LiturgiaContent from '@/components/liturgiaClient';
+import { useParams } from 'next/navigation';
+import MetaData from '@/components/createMetaData';
+import LiturgiaJsonLd from '@/components/liturgiaJsonLd';
  interface CreateMetaDataOptions {
   date: Date; // Receber a data atual como parâmetro
 }
@@ -53,11 +57,14 @@ export const createMetaData = ({ date }: CreateMetaDataOptions): Metadata => {
   };
 };
 
-export const metadata: Metadata = createMetaData({ date: new Date() });
 export default function Page() {  
+   const params = useParams();
+  const data = params?.data as string; // dd-mm-yyyy
   return (
     <div className="flex flex-col min-h-screen bg-amber-400">
-      <LiturgiaContent /> {/* CLIENT COMPONENT */}      
+        <LiturgiaJsonLd date={data} />
+       <MetaData date={data} />
+      <LiturgiaContent date={data} /> {/* CLIENT COMPONENT */}      
     </div>
   );
 }

@@ -6,8 +6,8 @@ import Spinner from './SpinnerLoading';
 import Cabecalho from './cabecalho';
 import AdSense from './Adsense';
 import Link from 'next/link';
-
-
+import CalendarioLiturgia from './calendarioLiturgia';
+import createMetaData from './createMetaData';
 // Interface base para uma leitura
 interface LiturgyReadingItem {
   referencia: string;
@@ -62,9 +62,21 @@ interface FormattedDate {
   month?: string;
   year?: string;
 }
+interface LiturgiaContentProps {
+  date?: string;
+}
+
+interface PageProps {
+  params: { data?: string }; // dd-mm-yyyy
+}
 
 
-export default function LiturgiaContent() {
+
+export async function generateMetadata({ params }: PageProps) {
+  return createMetaData({ date: params.data });
+}
+export default function LiturgiaContent({ date }: LiturgiaContentProps) {
+  
    // Estados tipados
   const [liturgyData, setLiturgyData] = useState<LiturgyData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -72,11 +84,23 @@ export default function LiturgiaContent() {
   const [activeTab, setActiveTab] = useState<LiturgyReadingKey | null>(null);
   const [fontSize, setFontSize] = useState<number>(16);
 
-  const API_URL = "https://liturgia.up.railway.app/v2/"; // URL da API
+  //const API_URL = "https://liturgia.up.railway.app/v2/"; // URL da API
+  let API_URL = "https://liturgia.up.railway.app/v2/";
+
+  if (date) {
+    // valida se está no formato dd-mm-yyyy
+    const regex = /^(\d{2})-(\d{2})-(\d{4})$/;
+    const match = date.match(regex);
+
+    if (match) {
+      const [, dd, mm, yyyy] = match;
+      API_URL = `https://liturgia.up.railway.app/v2/?dia=${dd}&mes=${mm}&ano=${yyyy}`;
+    }
+  }
 
   useEffect(() => {
     const fetchLiturgy = async () => {
-      try {
+      try {        
         const res = await fetch(API_URL);
         if (!res.ok) {
           throw new Error(`Erro HTTP! status: ${res.status}`);
@@ -227,6 +251,54 @@ export default function LiturgiaContent() {
   ] as const
   tabs.filter(tab => liturgyData && liturgyData.leituras && liturgyData.leituras[tab.key] && liturgyData.leituras[tab.key].length > 0); // <-- CORREÇÃO AQUI
 
+
+  // Recebe a data atual (ou da liturgia que está sendo visualizada)
+const hoje = new Date(); // data no formato dd-mm-yyyy
+
+// Função auxiliar para parsear dd-mm-yyyy para Date
+function parseDateString(str: string): Date {
+  const [dd, mm, yyyy] = str.split('-').map(Number);
+  return new Date(yyyy, mm - 1, dd);
+}
+
+// Função para formatar Date para dd-mm-yyyy
+function formatDateNav(date: Date): string {
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  return `${dd}-${mm}-${yyyy}`;
+}
+
+// Função para abreviar o dia da semana (ex: Seg, Ter, Qua)
+function getDayAbbreviation(date: Date): string {
+  return date.toLocaleDateString('pt-BR', { weekday: 'short' });
+}
+
+// Função para formatar data completa para tooltip
+function formatDateTooltip(date: Date): string {
+  return date.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+}
+
+// Calcular datas
+const dataAnterior2 = formatDateNav(new Date(hoje.getTime() - 2 * 24 * 60 * 60 * 1000));
+const dataAnterior1 = formatDateNav(new Date(hoje.getTime() - 1 * 24 * 60 * 60 * 1000));
+const dataSeguinte1 = formatDateNav(new Date(hoje.getTime() + 1 * 24 * 60 * 60 * 1000));
+const dataSeguinte2 = formatDateNav(new Date(hoje.getTime() + 2 * 24 * 60 * 60 * 1000));
+
+// Abreviações e tooltips
+const dataAnterior2Abrev = getDayAbbreviation(new Date(hoje.getTime() - 2 * 24 * 60 * 60 * 1000));
+const dataAnterior2Format = formatDateTooltip(new Date(hoje.getTime() - 2 * 24 * 60 * 60 * 1000));
+
+const dataAnterior1Abrev = 'Ontem';
+const dataAnterior1Format = formatDateTooltip(new Date(hoje.getTime() - 1 * 24 * 60 * 60 * 1000));
+
+const dataSeguinte1Abrev = 'Amanhã';
+const dataSeguinte1Format = formatDateTooltip(new Date(hoje.getTime() + 1 * 24 * 60 * 60 * 1000));
+
+const dataSeguinte2Abrev = getDayAbbreviation(new Date(hoje.getTime() + 2 * 24 * 60 * 60 * 1000));
+const dataSeguinte2Format = formatDateTooltip(new Date(hoje.getTime() + 2 * 24 * 60 * 60 * 1000));
+
+
   return (
     <>
     
@@ -258,69 +330,67 @@ export default function LiturgiaContent() {
             className="bg-white rounded-lg shadow-lg p-4 md:p-8 w-full"
           >
             {/* Seção de exibição da data */}
-            <div className="flex justify-center items-end mb-4 relative w-full"> {/* Centralizado */}
-              <div className="flex flex-col items-center">
-                <div className="relative">
-                  <span className="text-6xl font-bold text-amber-700">{day}</span> {/* Número grande do dia */}
-                  {/* Mês e ano ajustados para centralizar melhor com o dia grande */}
-                  <div className="flex flex-col absolute top-7 left-[calc(100%+5px)] -translate-y-1/2">
-                    <span className="text-xl font-semibold text-amber-600 leading-none">{month}</span>
-                    <span className="text-2xl text-gray-600 leading-none">{year}</span>
+            <div className="flex flex-col items-center w-full px-4 md:px-0">
+                {/* Linha do dia e controles */}
+                <div className="flex flex-col md:flex-row items-center justify-center w-full mb-4 relative">
+                  {/* Dia, mês e ano */}
+                  <div className="flex flex-col items-center md:mr-6">
+                    <div className="relative">
+                      <span className="text-6xl font-bold text-amber-700">{day}</span>
+                      <div className="flex flex-col absolute top-7 left-[calc(100%+5px)] -translate-y-1/2">
+                        <span className="text-xl font-semibold text-amber-600 leading-none">{month}</span>
+                        <span className="text-2xl text-gray-600 leading-none">{year}</span>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Botões de compartilhar e ajuste de fonte */}
+                  <CalendarioLiturgia
+                    handleShare={handleShare}
+                    onFontSizeChange={(size) => setFontSize(size)}
+                  />
                 </div>
+
+                {/* Navegação entre datas */}
+                <nav className="flex flex-wrap justify-center gap-2 mb-4 text-sm md:text-base">
+                  <a href={`/liturgia-diaria/${dataAnterior2}`} title={`Liturgia de ${dataAnterior2Format}`} className="px-2 py-1 rounded hover:bg-gray-200 transition">
+                    &laquo; {dataAnterior2Abrev}
+                  </a>
+                  <a href={`/liturgia-diaria/${dataAnterior1}`} title="Liturgia de Ontem" className="px-2 py-1 rounded hover:bg-gray-200 transition">
+                    &lsaquo; Ontem
+                  </a>
+                  <a href="/liturgia-diaria" title="Liturgia de Hoje" className="px-2 py-1 rounded bg-amber-200 font-semibold hover:bg-amber-300 transition">
+                    Hoje
+                  </a>
+                  <a href={`/liturgia-diaria/${dataSeguinte1}`} title="Liturgia de Amanhã" className="px-2 py-1 rounded hover:bg-gray-200 transition">
+                    Amanhã &rsaquo;
+                  </a>
+                  <a href={`/liturgia-diaria/${dataSeguinte2}`} title={`Liturgia de ${dataSeguinte2Format}`} className="px-2 py-1 rounded hover:bg-gray-200 transition">
+                    {dataSeguinte2Abrev} &raquo;
+                  </a>
+                </nav>
+
+                {/* Cor Litúrgica */}
+                <p className="text-xl text-gray-700 mb-2 text-center">
+                  <span className="font-semibold">Cor Litúrgica:</span>{" "}
+                  <span className={`font-bold ${
+                    liturgyData.cor === 'Branco' ? 'text-gray-900' :
+                    liturgyData.cor === 'Verde' ? 'text-green-700' :
+                    liturgyData.cor === 'Vermelho' ? 'text-red-700' :
+                    liturgyData.cor === 'Roxo' ? 'text-purple-700' :
+                    liturgyData.cor === 'Rosa' ? 'text-pink-600' :
+                    liturgyData.cor === 'Dourado' ? 'text-yellow-600' :
+                    'text-gray-800'
+                  }`}>
+                    {liturgyData.cor}
+                  </span>
+                </p>
+
+                {/* Subtítulo / Nome da Liturgia */}
+                <h2 className="text-2xl font-bold text-amber-900 mb-6 border-b-2 border-amber-300 pb-2 text-center">
+                  {liturgyData.liturgia}
+                </h2>
               </div>
-
-              {/* Botão de Compartilhamento e Controles de Tamanho de Fonte (à direita) */}
-              <div className="absolute right-0 top-0 flex flex-col items-end space-y-2">
-                <button
-                  onClick={handleShare}
-                  className="bg-blue-500 text-white p-2 rounded-full shadow-md hover:bg-blue-600 transition-colors duration-200 flex items-center justify-center"
-                  title="Compartilhar"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6.632l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                  </svg>
-                </button>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => setFontSize(prev => Math.max(12, prev - 2))}
-                    className="bg-gray-200 text-gray-700 p-1 rounded-full text-lg font-bold hover:bg-gray-300"
-                    title="Diminuir fonte"
-                  >
-                    A-
-                  </button>
-                  <button
-                    onClick={() => setFontSize(prev => Math.min(24, prev + 2))}
-                    className="bg-gray-200 text-gray-700 p-1 rounded-full text-lg font-bold hover:bg-gray-300"
-                    title="A+"
-                  >
-                    A+
-                  </button>
-                </div>
-              </div>
-            </div>
-
-
-            {/* Exibição da Cor Litúrgica */}
-            <p className="text-xl text-gray-700 mb-2 text-center"> {/* Centralizado */}
-              <span className="font-semibold">Cor Litúrgica:</span>{" "}
-              <span className={`font-bold ${
-                liturgyData.cor === 'Branco' ? 'text-gray-900' :
-                liturgyData.cor === 'Verde' ? 'text-green-700' :
-                liturgyData.cor === 'Vermelho' ? 'text-red-700' :
-                liturgyData.cor === 'Roxo' ? 'text-purple-700' :
-                liturgyData.cor === 'Rosa' ? 'text-pink-600' : // Ajustado para tom mais escuro
-                liturgyData.cor === 'Dourado' ? 'text-yellow-600' : // Ajustado para tom mais escuro
-                'text-gray-800'
-              }`}>
-                {liturgyData.cor}
-              </span>
-            </p>
-
-            {/* Subtítulo / Nome da Liturgia */}
-            <h2 className="text-2xl font-bold text-amber-900 mb-6 border-b-2 border-amber-300 pb-2 text-center"> {/* Centralizado */}
-              {liturgyData.liturgia}
-            </h2>
 
             {/* Abas para as Leituras */}
             <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-6">

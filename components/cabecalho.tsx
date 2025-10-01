@@ -114,7 +114,7 @@ export default function Cabecalho() {
       <header className="bg-amber-100 p-1 flex items-center justify-between shadow-md">
         <Link href="/" className="flex items-center space-x-2 cursor-pointer mb-0 md:mb-0">
           <img
-            src="images/ben-transparente.png"
+            src="http://www.iatioben.com.br/images/ben-transparente.png"
             alt="Tio Ben Logo"
             width={75}
             height={75}
