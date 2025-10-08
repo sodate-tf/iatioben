@@ -1,5 +1,4 @@
 "use client";
-import AdminLayout from "@/components/layout/AdminLayout";
 import { AuthProvider } from "../adminTioBen/contexts/AuthContext";
 import { DataProvider } from "../adminTioBen/contexts/DataContext";
 import React from 'react'; // Importar React é boa prática, mas ReactNode já está importado se estiver no arquivo
@@ -8,10 +7,8 @@ import React from 'react'; // Importar React é boa prática, mas ReactNode já 
 export default function AdminTioBenLayout({ children }: { children: React.ReactNode }) {
     return (
         <AuthProvider>
-            <DataProvider>
-                <AdminLayout> 
-                    {children} 
-                </AdminLayout> 
+            <DataProvider>                
+                {children}                 
             </DataProvider>
         </AuthProvider>
     );
