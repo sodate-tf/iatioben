@@ -1,8 +1,5 @@
 // components/TestFooterBanner.tsx
 import React from "react";
-import banner from "@/public/images/noite-do-espetinho.png"
-import Image from "next/image";
-import Link from "next/link";
 import AdSense from "./Adsense";
 export default function TestFooterBanner() {
   return (

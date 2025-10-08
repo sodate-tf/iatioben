@@ -182,10 +182,7 @@ export default function LiturgiaContent({ date }: LiturgiaContentProps) {
 
   // Data atual
   const hoje = new Date();
-  function parseDateString(str: string): Date {
-    const [dd, mm, yyyy] = str.split('-').map(Number);
-    return new Date(yyyy, mm - 1, dd);
-  }
+
   function formatDateNav(d: Date) {
     return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
   }

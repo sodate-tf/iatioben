@@ -4,9 +4,7 @@ import { useParams } from 'next/navigation';
 
 import LiturgiaJsonLd from '@/components/liturgiaJsonLd';
 import CreateMetaData from '@/components/createMetaData';
- interface CreateMetaDataOptions {
-  date: Date; // Receber a data atual como parâmetro
-}
+
 export default function Page() {  
    const params = useParams();
   const data = params?.data as string; // dd-mm-yyyy

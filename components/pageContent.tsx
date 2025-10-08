@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Spinner from "@/components/SpinnerLoading";

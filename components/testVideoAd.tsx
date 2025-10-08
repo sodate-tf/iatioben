@@ -12,7 +12,6 @@ interface VideoAdModalProps {
 export default function VideoAdModal({
   onComplete,
   skipAfter = 7,
-  videoSrc = "/images/noite-do-espetinho.mp4", // vídeo de teste local
 }: VideoAdModalProps) {
   const [canSkip, setCanSkip] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -25,9 +24,6 @@ export default function VideoAdModal({
     return () => clearTimeout(timer);
   }, [skipAfter]);
 
-  const handleVideoEnd = () => {
-    onComplete();
-  };
 
   const handleSkip = () => {
     if (videoRef.current) {
