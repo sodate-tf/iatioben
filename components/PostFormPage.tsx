@@ -1,38 +1,45 @@
-// components/PostFormPage.tsx
 "use client";
 
 import { useData } from '@/app/adminTioBen/contexts/DataContext';
 import { Post, Category } from '@/app/adminTioBen/types';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-// CORREÇÃO: Usar useRouter do App Router
 import { useRouter } from 'next/navigation'; 
 import Image from 'next/image';
 
-// Define a interface para as props do componente (Mantida a mesma)
 interface PostFormPageProps {
-  postId?: string | undefined; // O Server Component passa o ID como string, mas mantemos | undefined por segurança
+  postId?: string;
 }
 
-// Tipagens (Mantidas as mesmas)
-type PostFormData = Partial<Omit<Post, 'createdAt' | 'updatedAt' | 'publishDate' | 'expiryDate'>> & {
+type PostFormData = Partial<Omit<Post, 'createdAt' | 'updatedAt' | 'publishDate' | 'expiryDate' | 'coverImageUrl'>> & {
   coverImageFile?: File;
+  coverImageUrl?: string | null;
   publishDate: string;
   expiryDate: string;
 };
+
 type FormError = { message: string } | null;
 
+const MAX_IMAGE_SIZE_MB: number = 5;
+const ALLOWED_MIME_TYPES: string[] = ['image/jpeg', 'image/png', 'image/webp'];
+
 const PostFormPage: React.FC<PostFormPageProps> = ({ postId }) => {
-  // CORREÇÃO: use router do 'next/navigation'
   const router = useRouter(); 
   
   const id: string | undefined = postId;
   
+  // Assumimos que addPost/updatePost no useData foram refatorados para lidar com a API de upload
   const { categories, getPost, addPost, updatePost } = useData();
   
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<FormError>(null);
 
-  const today = useMemo(() => new Date().toISOString().split('T')[0] || '', []);
+  const today: string = useMemo(() => {
+    try {
+      return new Date().toISOString().split('T')[0] ?? '';
+    } catch (e) {
+      return '';
+    }
+  }, []);
 
   const [post, setPost] = useState<PostFormData>({
     title: '',
@@ -41,6 +48,7 @@ const PostFormPage: React.FC<PostFormPageProps> = ({ postId }) => {
     metaDescription: '',
     content: '',
     categoryId: '',
+    coverImageUrl: null,
     isActive: true,
     publishDate: today,
     expiryDate: '',
@@ -48,34 +56,29 @@ const PostFormPage: React.FC<PostFormPageProps> = ({ postId }) => {
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  // --- Helpers ---
-const generateSlug = useCallback((title: string): string => {
-  return title
-    .toLowerCase() 
-    .replace(/ç/g, 'c')
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}, []);
+  const generateSlug = useCallback((title: string): string => {
+    if (!title) return '';
+    return title
+      .toLowerCase() 
+      .replace(/ç/g, 'c')
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }, []);
 
-  // CORREÇÃO: Funções de navegação usando router.push do App Router
   const navigateToArtigos = useCallback((): void => {
     router.push('/adminHome/artigos');
-    // Não precisamos de .catch se estivermos usando o router do App Router, 
-    // mas o uso de `router.refresh()` é bom se os dados precisarem ser revalidados.
   }, [router]);
 
   const isValidUUID = useCallback((uuid: string): boolean => {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid);
   }, []);
 
-  // --- Carregamento de Dados para Edição ---
   useEffect(() => {
     if (id) {
       if (!isValidUUID(id)) {
         setErrorMessage({ message: "ID de post inválido. Redirecionando..." });
-        // Usamos setTimeout apenas para exibir a mensagem. O redirecionamento é via hook.
         const timer = setTimeout(navigateToArtigos, 3000); 
         return () => clearTimeout(timer); 
       }
@@ -83,11 +86,13 @@ const generateSlug = useCallback((title: string): string => {
       const existingPost = getPost(id);
       
       if (existingPost) {
-        setPost({
+        setPost(prev => ({
+          ...prev,
           ...existingPost,
+          coverImageUrl: existingPost.coverImageUrl ?? null,
           publishDate: existingPost.publishDate.split('T')[0] ?? today,
           expiryDate: existingPost.expiryDate ? existingPost.expiryDate.split('T')[0] : '',
-        });
+        }));
         if (existingPost.coverImageUrl) {
           setImagePreview(existingPost.coverImageUrl);
         }
@@ -99,25 +104,44 @@ const generateSlug = useCallback((title: string): string => {
     }
   }, [id, getPost, navigateToArtigos, today, isValidUUID]); 
 
-  // --- Handlers (mantidos os mesmos) ---
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>): void => {
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>): void => {
     const { name, value, type } = e.target;
     
     if (type === 'checkbox') {
       const { checked } = e.target as HTMLInputElement;
       setPost(prev => ({ ...prev, [name]: checked }));
     } else {
-      setPost(prev => ({ ...prev, [name]: value }));
-      if (name === 'title') {
-        setPost(prev => ({ ...prev, slug: generateSlug(value) }));
-      }
+      setPost(prev => {
+        const newState: PostFormData = { ...prev, [name]: value };
+        if (name === 'title') {
+          newState.slug = generateSlug(value);
+        }
+        return newState;
+      });
     }
-  };
+  }, [generateSlug]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
+  const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>): void => {
     const file: File | undefined = e.target.files?.[0];
+    setErrorMessage(null);
+
     if (file) {
-      setPost(prev => ({ ...prev, coverImageFile: file, coverImageUrl: undefined }));
+      if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+        setErrorMessage({ message: `O tamanho da imagem excede o limite de ${MAX_IMAGE_SIZE_MB}MB.` });
+        e.target.value = '';
+        setPost(prev => ({ ...prev, coverImageFile: undefined }));
+        setImagePreview(post.coverImageUrl ?? null);
+        return;
+      }
+      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+        setErrorMessage({ message: "Tipo de arquivo inválido. Apenas JPEG, PNG e WEBP são permitidos." });
+        e.target.value = '';
+        setPost(prev => ({ ...prev, coverImageFile: undefined }));
+        setImagePreview(post.coverImageUrl ?? null);
+        return;
+      }
+
+      setPost(prev => ({ ...prev, coverImageFile: file, coverImageUrl: prev.coverImageUrl }));
       
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -125,20 +149,22 @@ const generateSlug = useCallback((title: string): string => {
       };
       reader.readAsDataURL(file);
     } else {
+      // Se o usuário cancelou a seleção, remove o File mas mantém o URL antigo para edição.
       setPost(prev => ({ ...prev, coverImageFile: undefined }));
-      if (!post.coverImageUrl && !post.coverImageFile) {
-         setImagePreview(null);
-      }
+      setImagePreview(post.coverImageUrl ?? null);
     }
-  };
+  }, [post.coverImageUrl]);
 
-  // --- Submissão do Formulário ---
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     setErrorMessage(null);
     setIsSaving(true);
     
-    const { title, slug, content, categoryId, publishDate } = post;
+    const { 
+      title, slug, content, categoryId, publishDate, 
+      coverImageFile, expiryDate, keywords, metaDescription, 
+      coverImageUrl, isActive 
+    } = post;
 
     if (!title || !slug || !content || !categoryId || !publishDate) {
       setErrorMessage({ message: "Por favor, preencha todos os campos obrigatórios (Título, Conteúdo, Categoria e Data de Publicação)." });
@@ -146,7 +172,7 @@ const generateSlug = useCallback((title: string): string => {
       return;
     }
     
-    const selectedCategory = categories.find(cat => cat.id === categoryId);
+    const selectedCategory = categories.find((cat: Category) => cat.id === categoryId);
     if (!selectedCategory) {
       setErrorMessage({ message: "A categoria selecionada é inválida." });
       setIsSaving(false);
@@ -154,37 +180,65 @@ const generateSlug = useCallback((title: string): string => {
     }
 
     try {
+      const isEditing: boolean = id ? isValidUUID(id) : false;
+      const postIdValue: string = isEditing ? id as string : '';
+
+      // O objeto de dados base, sem coverImageFile
       const postData: Post = {
-        id: id && isValidUUID(id) ? id : '', 
+        id: postIdValue, 
         title, 
         slug, 
         content, 
         categoryId, 
         categoryName: selectedCategory.name,
         
-        keywords: post.keywords ?? '',
-        metaDescription: post.metaDescription ?? '',
-        coverImageUrl: post.coverImageUrl,
+        keywords: keywords ?? '',
+        metaDescription: metaDescription ?? '',
+        coverImageUrl: coverImageUrl ?? undefined, // URL existente, se houver
 
-        isActive: post.isActive ?? true,
+        isActive: isActive ?? true,
         
         publishDate: new Date(publishDate).toISOString(),
-        expiryDate: post.expiryDate ? new Date(post.expiryDate).toISOString() : undefined,
+        expiryDate: expiryDate ? new Date(expiryDate).toISOString() : undefined,
         
         createdAt: new Date(), 
         updatedAt: new Date(),
       };
+      
+      const finalPost: Post = { ...postData };
 
-      if (id && isValidUUID(id)) {
-        await updatePost(postData);
+      if (coverImageFile) {
+        // Se há um novo arquivo, usamos FormData e chamamos a API de upload.
+        const formData = new FormData();
+        formData.append('coverImage', coverImageFile);
+        formData.append('postJson', JSON.stringify(postData)); // Envia o postData para o backend
+        formData.append('isEditing', isEditing.toString());
+        formData.append('postId', postIdValue);
+
+        // A função de contexto agora deve chamar a API de upload
+        const result = isEditing ? await updatePost(postData, formData) : await addPost(postData, formData);
+        
+        if (result && result.coverImageUrl) {
+          finalPost.coverImageUrl = result.coverImageUrl;
+        } else if (isEditing) {
+          // Se o upload falhou na edição, mantemos a URL antiga para evitar perder o dado
+          finalPost.coverImageUrl = postData.coverImageUrl; 
+        }
+
       } else {
-        await addPost(postData); 
+        // Se não há novo arquivo, apenas salva os dados existentes
+        if (isEditing) {
+          await updatePost(postData);
+        } else {
+          await addPost(postData); 
+        }
       }
       
-      // Redireciona
+      // Finalmente, atualiza o estado e redireciona.
+      setPost(prev => ({ ...prev, ...finalPost, coverImageFile: undefined }));
       navigateToArtigos();
     } catch (error) {
-      const msg = (error instanceof Error) ? error.message : 'Erro desconhecido ao salvar o post.';
+      const msg: string = (error instanceof Error) ? error.message : 'Erro desconhecido ao salvar o post.';
       console.error("Failed to save post:", error);
       setErrorMessage({ message: `Falha ao salvar o post: ${msg}` });
     } finally {
@@ -212,7 +266,7 @@ const generateSlug = useCallback((title: string): string => {
               type="text" 
               name="title" 
               id="title" 
-              value={post.title} 
+              value={post.title ?? ''} 
               onChange={handleChange} 
               className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" 
               required 
@@ -224,7 +278,7 @@ const generateSlug = useCallback((title: string): string => {
               type="text" 
               name="slug" 
               id="slug" 
-              value={post.slug} 
+              value={post.slug ?? ''} 
               onChange={handleChange} 
               className="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-100" 
               readOnly 
@@ -239,7 +293,7 @@ const generateSlug = useCallback((title: string): string => {
             type="text" 
             name="keywords" 
             id="keywords" 
-            value={post.keywords} 
+            value={post.keywords ?? ''} 
             onChange={handleChange} 
             className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" 
           />
@@ -250,7 +304,7 @@ const generateSlug = useCallback((title: string): string => {
             name="metaDescription" 
             id="metaDescription" 
             rows={3} 
-            value={post.metaDescription} 
+            value={post.metaDescription ?? ''} 
             onChange={handleChange} 
             className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" 
           />
@@ -272,11 +326,11 @@ const generateSlug = useCallback((title: string): string => {
             <input 
               type="file" 
               onChange={handleImageChange} 
-              accept="image/*" 
+              accept={ALLOWED_MIME_TYPES.join(',')} 
               className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-primary hover:file:bg-blue-100"
             />
           </div>
-          <p className="text-xs text-gray-500 mt-1">O upload do arquivo (se selecionado) será processado.</p>
+          <p className="text-xs text-gray-500 mt-1">Máx. {MAX_IMAGE_SIZE_MB}MB. Tipos: {ALLOWED_MIME_TYPES.map(t => t.split('/')[1].toUpperCase()).join(', ')}.</p>
         </div>
 
         {/* Content */}
@@ -286,7 +340,7 @@ const generateSlug = useCallback((title: string): string => {
             name="content" 
             id="content" 
             rows={15} 
-            value={post.content} 
+            value={post.content ?? ''} 
             onChange={handleChange} 
             className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" 
             placeholder="Escreva o conteúdo do post aqui... HTML é suportado."
@@ -301,12 +355,12 @@ const generateSlug = useCallback((title: string): string => {
             <select 
               name="categoryId" 
               id="categoryId" 
-              value={post.categoryId} 
+              value={post.categoryId ?? ''} 
               onChange={handleChange} 
               className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary" 
               required
             >
-              <option value="">Selecione uma categoria</option>
+              <option value="" disabled>Selecione uma categoria</option>
               {categories.map((cat: Category) => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
@@ -318,7 +372,7 @@ const generateSlug = useCallback((title: string): string => {
                 id="isActive" 
                 name="isActive" 
                 type="checkbox" 
-                checked={post.isActive} 
+                checked={post.isActive ?? true} 
                 onChange={handleChange} 
                 className="h-4 w-4 text-primary border-gray-300 rounded focus:ring-primary" 
               />
@@ -362,6 +416,7 @@ const generateSlug = useCallback((title: string): string => {
             type="button" 
             onClick={navigateToArtigos} 
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            disabled={isSaving} 
           >
             Cancelar
           </button>
