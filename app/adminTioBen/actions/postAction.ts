@@ -45,10 +45,10 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
         p.meta_description AS "metaDescription",
         p.cover_image_url AS "coverImageUrl",
         p.keywords,
-        p.category_name AS "categoryName",
+        c.category_name AS "categoryName",
         p.publish_date AS "publishDate",
         p.updated_at AS "updatedAt"
-      FROM posts p
+      FROM posts p JOIN categories c ON c.id = p.category_id
       WHERE p.slug = ${slug}
       LIMIT 1;
     `;
