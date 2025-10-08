@@ -79,7 +79,7 @@ const PostsListPage = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     {/* CORREÇÃO: Usando router.push() e caminho ajustado para '/adminTioBen/posts/edit/[id]' */}
-                    <button onClick={() => router.push(`/adminTioBen/posts/edit/${post.id}`)} className="text-primary hover:text-blue-800 mr-4 p-1 rounded-full hover:bg-blue-100 transition-colors">
+                    <button onClick={() => router.push(`/AdminHome/artigos/cadastrar-editar/${post.id}`)} className="text-primary hover:text-blue-800 mr-4 p-1 rounded-full hover:bg-blue-100 transition-colors">
                       <Edit size={16} />
                     </button>
                     <button onClick={() => handleDelete(post.id)} className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-100 transition-colors">
