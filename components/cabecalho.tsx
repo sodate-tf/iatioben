@@ -99,7 +99,7 @@ export default function Cabecalho() {
             - prioridade alta para carregamento rápido (priority={true})
         */}
         <div className="flex-shrink-0">
-            <Image
+            <img
                 src="http://www.iatioben.com.br/images/ben-transparente.png"
                 alt="Logo Tio Ben"
                 // O width e height originais definem a proporção e qualidade
@@ -112,8 +112,7 @@ export default function Cabecalho() {
                 // As classes controlam o tamanho final no layout
                 className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 object-contain"
                 
-                // Essencial para itens acima da dobra (melhora o LCP)
-                priority={true}
+                // Essencial para itens acima da dobra (melhora o LCP)                
             />
         </div>
 
