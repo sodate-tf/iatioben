@@ -18,7 +18,7 @@ function BlogPostContent({ slug }: { slug: string }) {
   return (
     <>
     <head>            
-        <MetaDataBlog slug={slug} />
+        
       
     </head>
     <div>
