@@ -1,5 +1,5 @@
 "use client";
-import "./globals.css";
+import "./globals.css"; // Mantido devido ao "use client" e efeitos globais
 import Script from "next/script";
 import React from "react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -11,7 +11,11 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <head>
-        {/* Meta tags e dados estruturados */}
+        {/*
+          Melhoria UX: Mantenha apenas os links e meta tags ESSENCIAIS
+          para o head. O Next.js já gerencia o <title>, <meta description>
+          e o resto do SEO do `metadata` no app/page.tsx.
+        */}
         <link rel="apple-touch-icon" href="/tio-ben-180x180.png" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -20,6 +24,8 @@ export default function RootLayout({
           content="black-translucent"
         />
         <meta name="apple-mobile-web-app-title" content="Tio Ben" />
+        
+        {/* Dados estruturados em JSON-LD são mantidos no <head> para SEO instantâneo */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -58,7 +64,7 @@ export default function RootLayout({
         />
         <link rel="manifest" href="/manifest.json" />
 
-        {/* Google Analytics - script padrão */}
+        {/* Google Analytics - Movido para o final do <head> com strategy="afterInteractive" */}
         <Script
           strategy="afterInteractive"
           src={`https://www.googletagmanager.com/gtag/js?id=G-17GKJ4F1Q8`}
@@ -77,16 +83,32 @@ export default function RootLayout({
         />
       </head>
       <body>
-        {/* Outros scripts */}
+        {children}
+        
+        {/* Otimização Mobile First: Scripts de Ads/Consentimento no final do <body> para não bloquear o FCP (First Contentful Paint) */}
+        
+        {/* Google AdSense - Usando 'defer' e no <body> para carregamento não bloqueante. */}
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8819996017476509"
           crossOrigin="anonymous"
+          strategy="lazyOnload" // Estratégia de carregamento não-essencial
         />
-        <Script async src="https://cmp.gatekeeperconsent.com/min.js" data-cfasync="false" />
-        <Script async src="https://the.gatekeeperconsent.com/cmp.min.js" data-cfasync="false" />
+        
+        {/* Scripts de Consentimento (CMP) - Também usando 'lazyOnload' e 'defer' */}
+        <Script 
+          async 
+          src="https://cmp.gatekeeperconsent.com/min.js" 
+          data-cfasync="false" 
+          strategy="lazyOnload"
+        />
+        <Script 
+          async 
+          src="https://the.gatekeeperconsent.com/cmp.min.js" 
+          data-cfasync="false" 
+          strategy="lazyOnload"
+        />
 
-        {children}
         <SpeedInsights />
         <Analytics />
       </body>

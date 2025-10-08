@@ -1,6 +1,4 @@
-// app/adminTioBen/layout.tsx (CORRETO)
 "use client";
-
 import AdminLayout from "@/components/layout/AdminLayout";
 import { AuthProvider } from "../adminTioBen/contexts/AuthContext";
 import { DataProvider } from "../adminTioBen/contexts/DataContext";
@@ -11,7 +9,6 @@ export default function AdminTioBenLayout({ children }: { children: React.ReactN
     return (
         <AuthProvider>
             <DataProvider>
-                {/* 2. O AdminLayout DEVE ENVOLVER o children */}
                 <AdminLayout> 
                     {children} 
                 </AdminLayout> 
