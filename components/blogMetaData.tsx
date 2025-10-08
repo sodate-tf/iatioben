@@ -38,7 +38,7 @@ export default async function MetaDataBlog({ slug }: MetaDataBlogProps) {
     publisher: {
       "@type": "Organization",
       name: "Tio Ben",
-      logo: { "@type": "ImageObject", url: "https://www.iatioben.com.br/logo.png", width: 600, height: 60 },
+      logo: { "@type": "ImageObject", url: "http://www.iatioben.com.br/images/ben-transparente.png", width: 600, height: 60 },
     },
   };
 
