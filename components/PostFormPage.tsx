@@ -2,38 +2,38 @@
 "use client";
 
 import { useData } from '@/app/adminTioBen/contexts/DataContext';
-import { Post } from '@/app/adminTioBen/types';
-import React, { useState, useEffect, useCallback } from 'react';
-// Importação correta do useRouter para o Pages Router (onde a página está rodando)
-import { useRouter } from 'next/router';
+import { Post, Category } from '@/app/adminTioBen/types';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+// CORREÇÃO: Usar useRouter do App Router
+import { useRouter } from 'next/navigation'; 
 import Image from 'next/image';
 
-// Define a interface para as props do componente
+// Define a interface para as props do componente (Mantida a mesma)
 interface PostFormPageProps {
-  postId: string | undefined; // Recebe o ID da página [id].tsx
+  postId: string | undefined; // O Server Component passa o ID como string, mas mantemos | undefined por segurança
 }
 
-// Define o tipo de dados que o formulário manipula (parcial do Post + arquivo de imagem)
+// Tipagens (Mantidas as mesmas)
 type PostFormData = Partial<Omit<Post, 'createdAt' | 'updatedAt' | 'publishDate' | 'expiryDate'>> & {
   coverImageFile?: File;
-  // Garante que o formulário use strings de data no formato 'YYYY-MM-DD'
   publishDate: string;
   expiryDate: string;
 };
+type FormError = { message: string } | null;
 
 const PostFormPage: React.FC<PostFormPageProps> = ({ postId }) => {
-  // Use o useRouter do 'next/router' para navegação no Pages Router
+  // CORREÇÃO: use router do 'next/navigation'
   const router = useRouter(); 
   
-  // O ID agora é recebido via props
-  const id = postId;
+  const id: string | undefined = postId;
   
   const { categories, getPost, addPost, updatePost } = useData();
   
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<FormError>(null);
 
-  // Inicializa o estado com tipagem segura
+  const today = useMemo(() => new Date().toISOString().split('T')[0] || '', []);
+
   const [post, setPost] = useState<PostFormData>({
     title: '',
     slug: '',
@@ -42,7 +42,7 @@ const PostFormPage: React.FC<PostFormPageProps> = ({ postId }) => {
     content: '',
     categoryId: '',
     isActive: true,
-    publishDate: new Date().toISOString().split('T')[0] || '', // Garante 'YYYY-MM-DD'
+    publishDate: today,
     expiryDate: '',
   });
 
@@ -53,54 +53,53 @@ const PostFormPage: React.FC<PostFormPageProps> = ({ postId }) => {
     return title
       .toLowerCase()
       .trim()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       .replace(/[^\w\s-]/g, '')
       .replace(/[\s_-]+/g, '-')
       .replace(/^-+|-+$/g, '');
   }, []);
 
+  // CORREÇÃO: Funções de navegação usando router.push do App Router
+  const navigateToArtigos = useCallback((): void => {
+    router.push('/adminHome/artigos');
+    // Não precisamos de .catch se estivermos usando o router do App Router, 
+    // mas o uso de `router.refresh()` é bom se os dados precisarem ser revalidados.
+  }, [router]);
+
+  const isValidUUID = useCallback((uuid: string): boolean => {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid);
+  }, []);
+
   // --- Carregamento de Dados para Edição ---
   useEffect(() => {
-    // 1. Validação de ID: Verifica se o ID tem o formato de um UUID válido (se existe)
-    // Se o ID não for undefined (modo de edição), verifica o formato.
-    const isUUID = id ? /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) : false;
+    if (id) {
+      if (!isValidUUID(id)) {
+        setErrorMessage({ message: "ID de post inválido. Redirecionando..." });
+        // Usamos setTimeout apenas para exibir a mensagem. O redirecionamento é via hook.
+        const timer = setTimeout(navigateToArtigos, 3000); 
+        return () => clearTimeout(timer); 
+      }
 
-    if (id && isUUID) {
       const existingPost = getPost(id);
       
       if (existingPost) {
         setPost({
           ...existingPost,
-          // Formata as datas ISO de volta para 'YYYY-MM-DD'
-          publishDate: existingPost.publishDate.split('T')[0] || '',
+          publishDate: existingPost.publishDate.split('T')[0] ?? today,
           expiryDate: existingPost.expiryDate ? existingPost.expiryDate.split('T')[0] : '',
         });
         if (existingPost.coverImageUrl) {
           setImagePreview(existingPost.coverImageUrl);
         }
       } else {
-        // Post não encontrado: Exibe erro e redireciona
-        setErrorMessage("Post não encontrado. Redirecionando...");
-        const timer = setTimeout(() => {
-          router.push('/adminHome/artigos').catch(console.error);
-        }, 3000); 
-        return () => clearTimeout(timer); // Cleanup
+        setErrorMessage({ message: "Post não encontrado. Redirecionando..." });
+        const timer = setTimeout(navigateToArtigos, 3000); 
+        return () => clearTimeout(timer); 
       }
-    } else if (id && !isUUID) {
-      // Caso o parâmetro 'id' exista, mas não seja um UUID (ex: '/artigos/new', '/artigos/cadastrar-editar'), 
-      // mas você quer que a criação seja em '/artigos/cadastrar', 
-      // Você pode redirecionar se o ID for inválido para edição. 
-      // Como a lógica anterior tentava extrair de uma URL, aqui tratamos para garantir que o modo "criação" é quando o 'id' é `undefined` ou um valor específico (que não é o caso aqui). 
-      // Mantendo o foco, se o ID existe, mas é inválido, redireciona.
-      setErrorMessage("Parâmetro de edição inválido. Redirecionando...");
-      const timer = setTimeout(() => {
-        router.push('/adminHome/artigos').catch(console.error);
-      }, 3000); 
-      return () => clearTimeout(timer); // Cleanup
     }
-    // Caso 'id' seja undefined (criação), o estado inicial é usado.
-  }, [id, getPost, router]); // Adicionado router como dependência
+  }, [id, getPost, navigateToArtigos, today, isValidUUID]); 
 
-  // --- Handlers ---
+  // --- Handlers (mantidos os mesmos) ---
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>): void => {
     const { name, value, type } = e.target;
     
@@ -118,7 +117,6 @@ const PostFormPage: React.FC<PostFormPageProps> = ({ postId }) => {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const file: File | undefined = e.target.files?.[0];
     if (file) {
-      // Remove coverImageUrl se um novo arquivo for selecionado
       setPost(prev => ({ ...prev, coverImageFile: file, coverImageUrl: undefined }));
       
       const reader = new FileReader();
@@ -127,10 +125,8 @@ const PostFormPage: React.FC<PostFormPageProps> = ({ postId }) => {
       };
       reader.readAsDataURL(file);
     } else {
-      // Limpa a seleção
       setPost(prev => ({ ...prev, coverImageFile: undefined }));
-      // Mantém a imagem original se for edição e não houver nova seleção
-      if (!post.coverImageUrl) {
+      if (!post.coverImageUrl && !post.coverImageFile) {
          setImagePreview(null);
       }
     }
@@ -142,62 +138,55 @@ const PostFormPage: React.FC<PostFormPageProps> = ({ postId }) => {
     setErrorMessage(null);
     setIsSaving(true);
     
-    // 1. VALIDAÇÃO ESSENCIAL
     const { title, slug, content, categoryId, publishDate } = post;
 
     if (!title || !slug || !content || !categoryId || !publishDate) {
-      setErrorMessage("Por favor, preencha todos os campos obrigatórios (Título, Conteúdo, Categoria e Data de Publicação).");
+      setErrorMessage({ message: "Por favor, preencha todos os campos obrigatórios (Título, Conteúdo, Categoria e Data de Publicação)." });
+      setIsSaving(false);
+      return;
+    }
+    
+    const selectedCategory = categories.find(cat => cat.id === categoryId);
+    if (!selectedCategory) {
+      setErrorMessage({ message: "A categoria selecionada é inválida." });
       setIsSaving(false);
       return;
     }
 
     try {
-      // 2. CONSTRUÇÃO EXPLÍCITA: Cria o objeto final 'Post' com tipagem correta
       const postData: Post = {
-        // Campos obrigatórios de 'Post'
-        // Em adição, o ID deve ser obrigatório para `Post`, por isso o DataProvider deve lidar com a criação de ID.
-        // Aqui, garantimos que o ID é string (vazio se for criação, UUID se for edição).
-        id: id ?? '', // O DataProvider/Backend deve ignorar se for '' na criação.
+        id: id && isValidUUID(id) ? id : '', 
         title, 
         slug, 
         content, 
         categoryId, 
-        // Adicione validação para garantir que categoryName existe, 
-        // ou busque/defina um padrão se necessário. Assumindo que o Context lida com isso.
-        categoryName: categories.find(cat => cat.id === categoryId)?.name ?? "Sem Categoria",
+        categoryName: selectedCategory.name,
         
-        // Campos opcionais/padrão (garantindo valor string/boolean/undefined)
         keywords: post.keywords ?? '',
         metaDescription: post.metaDescription ?? '',
-        coverImageUrl: post.coverImageUrl, // Pode ser undefined
+        coverImageUrl: post.coverImageUrl,
 
         isActive: post.isActive ?? true,
         
-        // Conversão de datas para ISO String
         publishDate: new Date(publishDate).toISOString(),
         expiryDate: post.expiryDate ? new Date(post.expiryDate).toISOString() : undefined,
         
-        // Campos de metadados obrigatórios (Aqui usamos a data atual como um placeholder seguro)
         createdAt: new Date(), 
         updatedAt: new Date(),
       };
 
-      // 3. Lógica do CRUD
-      if (id) {
-        // Edição: ID precisa ser um UUID válido
+      if (id && isValidUUID(id)) {
         await updatePost(postData);
       } else {
-        // Criação: ID será gerado pelo backend/Context
-        // Passa o objeto PostData completo (ID='' será ignorado)
         await addPost(postData); 
       }
       
-      // Redireciona após sucesso
-      router.push('/adminHome/artigos').catch(console.error);
+      // Redireciona
+      navigateToArtigos();
     } catch (error) {
-      const errorMessage = (error as Error).message || 'Erro desconhecido ao salvar o post.';
+      const msg = (error instanceof Error) ? error.message : 'Erro desconhecido ao salvar o post.';
       console.error("Failed to save post:", error);
-      setErrorMessage(`Falha ao salvar o post: ${errorMessage}`);
+      setErrorMessage({ message: `Falha ao salvar o post: ${msg}` });
     } finally {
       setIsSaving(false);
     }
@@ -209,7 +198,7 @@ const PostFormPage: React.FC<PostFormPageProps> = ({ postId }) => {
       
       {errorMessage && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-          <span className="block sm:inline">{errorMessage}</span>
+          <span className="block sm:inline">{errorMessage.message}</span>
         </div>
       )}
 
@@ -276,7 +265,7 @@ const PostFormPage: React.FC<PostFormPageProps> = ({ postId }) => {
                 src={imagePreview} 
                 alt="Pré-visualização" 
                 className="h-20 w-auto object-cover rounded" 
-                width={80} // Defina width e height para o Next/Image
+                width={80} 
                 height={80} 
               />
             )}
@@ -287,7 +276,7 @@ const PostFormPage: React.FC<PostFormPageProps> = ({ postId }) => {
               className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-primary hover:file:bg-blue-100"
             />
           </div>
-          <p className="text-xs text-gray-500 mt-1">O upload do arquivo (se selecionado) será processado e salvo no Vercel Blob.</p>
+          <p className="text-xs text-gray-500 mt-1">O upload do arquivo (se selecionado) será processado.</p>
         </div>
 
         {/* Content */}
@@ -318,7 +307,7 @@ const PostFormPage: React.FC<PostFormPageProps> = ({ postId }) => {
               required
             >
               <option value="">Selecione uma categoria</option>
-              {categories.map(cat => (
+              {categories.map((cat: Category) => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
               ))}
             </select>
@@ -371,7 +360,7 @@ const PostFormPage: React.FC<PostFormPageProps> = ({ postId }) => {
         <div className="flex justify-end gap-4">
           <button 
             type="button" 
-            onClick={() => router.push('/adminHome/artigos').catch(console.error)} 
+            onClick={navigateToArtigos} 
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
           >
             Cancelar
