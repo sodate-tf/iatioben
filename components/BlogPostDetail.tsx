@@ -125,7 +125,7 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
 
   return (
     <div className="flex flex-col min-h-screen bg-amber-400 relative">
-      <Head>
+      <head>
         {/* ==================================== */}
         {/* 1. METADADOS BÁSICOS (SEO e Geral) */}
         {/* ==================================== */}
@@ -167,7 +167,7 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
         <meta name="twitter:image" content={imageUrl} />
         {/* Opcional: <meta name="twitter:site" content="@SeuHandleTwitter" /> */}
         
-      </Head>
+      </head>
 
       <Cabecalho />
 
