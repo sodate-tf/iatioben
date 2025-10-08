@@ -1,11 +1,13 @@
 // app/api/posts/upload/route.ts
 
-import { put } from '@vercel/blob';
+import { put, del } from '@vercel/blob';
 import { NextResponse } from 'next/server';
-import { Post } from '@/app/adminTioBen/types'; // Certifique-se que o caminho está correto
+// Importe suas Server Actions aqui
+import { addPostAction, updatePostAction } from '@/app/adminTioBen/actions/postAction'; 
+import { Post } from '@/app/adminTioBen/types';
 import path from 'path';
 
-// Força o Next.js a usar o runtime Node.js (necessário para manipulação de arquivos)
+// Força o runtime Node.js para manipulação de arquivos
 export const config = {
   api: {
     bodyParser: false,
@@ -18,61 +20,73 @@ export async function POST(request: Request) {
     
     const imageFile = formData.get('coverImage') as File | null;
     const postJson = formData.get('postJson') as string | null;
-    const isEditing = formData.get('isEditing') === 'true';
 
     if (!postJson) {
       return NextResponse.json({ message: 'Dados do post ausentes.' }, { status: 400 });
     }
 
-    const postData: Post = JSON.parse(postJson);
+    // Usamos 'any' temporariamente para a conversão de JSON, mas reatribuímos a Post para segurança
+    const rawPostData: Post = JSON.parse(postJson);
+    let postData: Post = { ...rawPostData };
+    
+    const isEditing: boolean = !!postData.id;
     let coverImageUrl: string | undefined = postData.coverImageUrl;
 
-    // 1. Processamento do Upload para Vercel Blob
+    // --- CORREÇÃO DE UPLOAD E URL ---
     if (imageFile) {
       if (!(imageFile instanceof File)) {
         return NextResponse.json({ message: 'Arquivo de imagem inválido.' }, { status: 400 });
       }
+      
+      const slug: string = postData.slug || 'post-sem-slug';
+      const fileExtension: string = path.extname(imageFile.name) || '.jpg';
+      const filename: string = `${slug}-${Date.now()}${fileExtension}`;
 
-      // Garante um nome de arquivo único e limpo
-      const slug = postData.slug || 'post-sem-titulo';
-      const fileExtension = path.extname(imageFile.name) || '.jpg';
-      const filename = `${slug}-${Date.now()}${fileExtension}`;
-
-      // Envia o arquivo para o Vercel Blob
+      // 1. Envio para o Vercel Blob
       const blob = await put(filename, imageFile, {
-        access: 'public', // Torna a imagem acessível publicamente
+        access: 'public', 
+        token: process.env.BLOB_READ_WRITE_TOKEN,
       });
       
-      // Salva a URL pública
-      coverImageUrl = blob.url;
-    } 
+      // 2. OBTENÇÃO E ATRIBUIÇÃO DA URL
+      const newImageUrl: string = blob.url;
+      
+      // Boa prática: Apagar a imagem antiga do Blob, se existir, na edição
+      if (isEditing && postData.coverImageUrl && postData.coverImageUrl.includes('blob.vercel-storage.com')) {
+          await del(postData.coverImageUrl);
+      }
+      
+      // Atualiza o objeto que será salvo no DB
+      coverImageUrl = newImageUrl;
+    }
     
-    // Se o post estava em edição e o usuário removeu a imagem, o coverImageUrl será null/undefined, 
-    // e o backend deve refletir isso no DB. Se o coverImageUrl existe e não há novo arquivo, ele é mantido.
-
-    // 2. Integração com o Banco de Dados
-    // Nesta etapa, você deve:
-    // 2.1. Validar e sanitizar os dados de 'postData'.
-    // 2.2. Atualizar 'postData.coverImageUrl' com a nova URL (coverImageUrl).
-    // 2.3. Chamar a função do seu serviço de DB (ex: Prisma, Mongoose) para salvar ou atualizar o post.
+    // 3. Integração com o Banco de Dados (Chama sua Server Action)
     
-    // *** SIMULAÇÃO DE SALVAMENTO NO DB ***
-    const savedPost: Post = {
-        ...postData,
-        coverImageUrl: coverImageUrl, // URL do Blob ou URL anterior
-        // Adicionar o ID gerado pelo DB se for um novo post
-        id: postData.id || 'new-uuid-from-db' 
-    };
-    // *** FIM DA SIMULAÇÃO ***
+    // Garante que o objeto final de dados do post contém a URL correta (nova, antiga, ou null)
+    postData.coverImageUrl = coverImageUrl; 
+    
+    let savedPost: Post;
+    
+    if (isEditing) {
+        // Atualiza o post no DB (agora com a coverImageUrl correta)
+        const updatedResult = await updatePostAction(postData);
+        if (!updatedResult) throw new Error("Falha ao salvar post atualizado no DB.");
+        savedPost = updatedResult;
+    } else {
+        // Adiciona o post no DB (agora com a coverImageUrl correta)
+        const newResult = await addPostAction(postData);
+        if (!newResult) throw new Error("Falha ao salvar novo post no DB.");
+        savedPost = newResult;
+    }
 
-    // 3. Retorna o post atualizado
+    // 4. Retorna o resultado final (com a URL)
     return NextResponse.json(savedPost, { status: isEditing ? 200 : 201 });
     
   } catch (error) {
     console.error('Erro ao salvar post ou fazer upload para Blob:', error);
+    const errorMessage: string = error instanceof Error ? error.message : 'Erro interno desconhecido.';
     return NextResponse.json({ 
-      message: 'Falha interna ao processar o post e o upload.', 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+      message: `Falha interna: ${errorMessage}`
     }, { status: 500 });
   }
 }
