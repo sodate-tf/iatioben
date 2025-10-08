@@ -123,7 +123,7 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
     
   return (
     <div className="flex flex-col min-h-screen bg-amber-400 relative">
-      <MetaDataBlog slug={slug} />
+      <MetaDataBlog postData={postData} />
 
       <Cabecalho />
 

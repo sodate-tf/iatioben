@@ -17,10 +17,6 @@ function BlogPostContent({ slug }: { slug: string }) {
 
   return (
     <>
-    <head>            
-        
-      
-    </head>
     <div>
       <BlogPostDetail slug={slug} />
       </div>

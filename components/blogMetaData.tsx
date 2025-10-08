@@ -1,25 +1,24 @@
 // components/MetaDataBlog.tsx
 import React from "react";
-import { getPostBySlug } from "@/app/adminTioBen/actions/postAction";
 import type { Post } from "@/app/adminTioBen/types";
 
 interface MetaDataBlogProps {
-  slug: string;
+  postData: Post;
 }
 
-export default async function MetaDataBlog({ slug }: MetaDataBlogProps) {
+export default async function MetaDataBlog({ postData }: MetaDataBlogProps) {
   // Busca o post pelo slug
-  const post: Post | null = await getPostBySlug(slug);
+  
 
-  if (!post) return <></>;
+  if (!postData) return <></>;
 
-  const title = `${post.title} - Blog IA Tio Ben`;
-  const description = post.metaDescription || post.metaDescription || "";
-  const canonicalUrl = `https://www.iatioben.com.br/blog/${slug}`;
-  const imageUrl = post.coverImageUrl || "https://www.iatioben.com.br/images/default-cover.png";
+  const title = `${postData.title} - Blog IA Tio Ben`;
+  const description = postData.metaDescription || postData.metaDescription || "";
+  const canonicalUrl = `https://www.iatioben.com.br/blog/${postData.slug}`;
+  const imageUrl = postData.coverImageUrl || "https://www.iatioben.com.br/images/default-cover.png";
 
-  const publishedDate = post.publishDate ? new Date(post.publishDate) : new Date();
-  const modifiedDate = post.updatedAt ? new Date(post.updatedAt) : publishedDate;
+  const publishedDate = postData.publishDate ? new Date(postData.publishDate) : new Date();
+  const modifiedDate = postData.updatedAt ? new Date(postData.updatedAt) : publishedDate;
 
   const publishedIso = publishedDate.toISOString();
   const modifiedIso = modifiedDate.toISOString();
