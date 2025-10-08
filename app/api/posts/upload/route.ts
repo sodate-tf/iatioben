@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
     // Usamos 'any' temporariamente para a conversão de JSON, mas reatribuímos a Post para segurança
     const rawPostData: Post = JSON.parse(postJson);
-    let postData: Post = { ...rawPostData };
+    const postData: Post = { ...rawPostData };
     
     const isEditing: boolean = !!postData.id;
     let coverImageUrl: string | undefined = postData.coverImageUrl;
