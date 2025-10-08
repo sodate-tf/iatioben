@@ -93,18 +93,37 @@ export default function Cabecalho() {
    <header className="bg-amber-100 p-2 flex items-center justify-between shadow-md sticky top-0 z-10 w-full">
     
     {/* Seção do Logo: Otimizada para Mobile */}
-    <Link href="/" className="flex items-center space-x-1 sm:space-x-2 cursor-pointer min-w-0">
-     <Image
-      src="http://www.iatioben.com.br/images/ben-transparente.png"
-      alt="Tio Ben Logo"
-      width={150}
-      // Tamanhos otimizados para mobile e desktop
-      className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 object-contain"
-     />
-     {/* Título: Reduzido no Mobile, ampliado no Desktop */}
-     <span className="text-xl sm:text-2xl md:text-3xl font-bold text-amber-900 leading-none">
-      Tio Ben
-     </span>
+   <Link href="/" className="flex items-center space-x-2 sm:space-x-3 cursor-pointer min-w-0 p-1 rounded-lg hover:bg-amber-50 transition-colors duration-200">
+        {/*
+            ✅ Next.js Image: Usando 'sizes' para responsividade otimizada (Mobile First)
+            - prioridade alta para carregamento rápido (priority={true})
+        */}
+        <div className="flex-shrink-0">
+            <Image
+                src="http://www.iatioben.com.br/images/ben-transparente.png"
+                alt="Logo Tio Ben"
+                // O width e height originais definem a proporção e qualidade
+                width={150}
+                height={150} // Ajustei para 150 para manter a proporção 1:1, se for transparente
+                
+                // Define o tamanho visual em diferentes breakpoints (mobile first)
+                sizes="(max-width: 640px) 32px, (max-width: 768px) 40px, 48px"
+                
+                // As classes controlam o tamanho final no layout
+                className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 object-contain"
+                
+                // Essencial para itens acima da dobra (melhora o LCP)
+                priority={true}
+            />
+        </div>
+
+        {/*
+            ✅ Título: Reduzido no Mobile, ampliado no Desktop (melhor legibilidade com leading-tight)
+            - Responsividade no tamanho da fonte e espaçamento
+        */}
+        <span className="text-xl sm:text-2xl md:text-3xl font-extrabold text-amber-900 leading-tight tracking-tight whitespace-nowrap">
+            Tio Ben
+        </span>
     </Link>
     
     {/* Seção de Ícones (Ações): Compactada e Alinhada para Mobile */}
