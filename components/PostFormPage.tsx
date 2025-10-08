@@ -10,7 +10,7 @@ import Image from 'next/image';
 
 // Define a interface para as props do componente (Mantida a mesma)
 interface PostFormPageProps {
-  postId: string | undefined; // O Server Component passa o ID como string, mas mantemos | undefined por segurança
+  postId?: string | undefined; // O Server Component passa o ID como string, mas mantemos | undefined por segurança
 }
 
 // Tipagens (Mantidas as mesmas)
