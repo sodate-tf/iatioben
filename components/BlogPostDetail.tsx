@@ -10,6 +10,7 @@ import AdSense from './Adsense';
 import { useData } from '@/app/adminTioBen/contexts/DataContext';
 import type { Post } from '@/app/adminTioBen/types';
 import Image from 'next/image';
+import MetaDataBlog from './blogMetaData';
 
 
 interface BlogPostDetailProps {
@@ -122,7 +123,7 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
     
   return (
     <div className="flex flex-col min-h-screen bg-amber-400 relative">
-      
+      <MetaDataBlog slug={slug} />
 
       <Cabecalho />
 
