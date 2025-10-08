@@ -17,13 +17,10 @@ function BlogPostContent({ slug }: { slug: string }) {
 
   return (
     <>
-    <head>            
-        <MetaDataBlog slug={slug} />
-        <BlogJsonLd slug={slug} />
-    </head>
-    <div>
+ 
+
       <BlogPostDetail slug={slug} />
-      </div>
+      
     </>
   );
 }
@@ -34,7 +31,10 @@ export default function BlogPostPage() {
 
   return (
     <DataProvider>
-      
+         <head>            
+        <MetaDataBlog slug={slug} />
+        <BlogJsonLd slug={slug} />
+    </head>
       <BlogPostContent slug={slug} />
     </DataProvider>
   );
