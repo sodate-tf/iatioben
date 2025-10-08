@@ -162,12 +162,13 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
 
       {/* Conteúdo */}
       <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-       <p
-        className="whitespace-pre-line text-gray-700 leading-relaxed"
-        style={{ fontSize: `${fontSize}px` }}
-       >
-        {postData.content}
-       </p>
+       <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+              <div
+                className="text-gray-700 leading-relaxed" // Mantive apenas as classes de estilo do bloco
+                style={{ fontSize: `${fontSize}px` }}
+                dangerouslySetInnerHTML={{ __html: postData.content }}
+              />
+            </div>
       </div>
      </motion.div>
     ) : null}
