@@ -1,9 +1,11 @@
-"use client"
+'use client';
+
 import { useParams } from 'next/navigation';
 import BlogPostDetail from '../../../components/BlogPostDetail';
 import Spinner from '@/components/SpinnerLoading';
 import { DataProvider, useData } from '@/app/adminTioBen/contexts/DataContext';
-import { generateBlogMetadata } from '@/components/blogMetaData';
+import MetaDataBlog from '@/components/blogMetaData';
+import BlogJsonLd from '@/components/blogJasonLd';
 
 function BlogPostContent({ slug }: { slug: string }) {
   const { activePosts } = useData();
@@ -13,13 +15,23 @@ function BlogPostContent({ slug }: { slug: string }) {
     return <Spinner />; // ou uma mensagem "Post não encontrado"
   }
 
-  return <BlogPostDetail slug={slug} />;
+  return (
+    <>
+    <head>            
+        <MetaDataBlog slug={slug} />
+        <BlogJsonLd slug={slug} />
+    </head>
+    <div>
+      <BlogPostDetail slug={slug} />
+      </div>
+    </>
+  );
 }
 
 export default function BlogPostPage() {
   const params = useParams();
   const slug = params?.slug as string;
- 
+
   return (
     <DataProvider>
       

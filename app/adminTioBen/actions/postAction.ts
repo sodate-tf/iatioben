@@ -33,6 +33,34 @@ const normalizePost = (row: QueryResultRow): Post => ({
     updatedAt: new Date(row.updated_at),
 });
 
+
+export async function getPostBySlug(slug: string): Promise<Post | null> {
+  try {
+    const { rows } = await sql`
+      SELECT 
+        p.id,
+        p.title,
+        p.slug,
+        p.content,
+        p.meta_description AS "metaDescription",
+        p.cover_image_url AS "coverImageUrl",
+        p.keywords,
+        p.category_name AS "categoryName",
+        p.publish_date AS "publishDate",
+        p.updated_at AS "updatedAt"
+      FROM posts p
+      WHERE p.slug = ${slug}
+      LIMIT 1;
+    `;
+
+    if (rows.length === 0) return null;
+    return rows[0] as Post;
+  } catch (error) {
+    console.error("Erro ao buscar post pelo slug:", error);
+    return null;
+  }
+}
+
 /**
  * -------------------
  * Rota: READ (Listar todos os posts)

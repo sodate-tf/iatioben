@@ -10,7 +10,7 @@ import AdSense from './Adsense';
 import { useData } from '@/app/adminTioBen/contexts/DataContext';
 import type { Post } from '@/app/adminTioBen/types';
 import Image from 'next/image';
-import { generateBlogMetadata } from './blogMetaData';
+
 
 interface BlogPostDetailProps {
   slug: string; // recebido da rota dinâmica
@@ -119,11 +119,7 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
   // =========================================================================
   // GERAÇÃO DOS METADADOS AVANÇADOS AQUI
   // =========================================================================
-  const {  keywords } = postData;
-  
-  const publishedTime = postData.publishDate ? new Date(postData.publishDate).toISOString() : '';
-  
-   generateBlogMetadata(postData, slug)
+    
   return (
     <div className="flex flex-col min-h-screen bg-amber-400 relative">
       
