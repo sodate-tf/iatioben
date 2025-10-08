@@ -49,15 +49,15 @@ const PostFormPage: React.FC<PostFormPageProps> = ({ postId }) => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   // --- Helpers ---
-  const generateSlug = useCallback((title: string): string => {
-    return title
-      .toLowerCase()
-      .trim()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
-  }, []);
+const generateSlug = useCallback((title: string): string => {
+  return title
+    .toLowerCase() 
+    .replace(/ç/g, 'c')
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}, []);
 
   // CORREÇÃO: Funções de navegação usando router.push do App Router
   const navigateToArtigos = useCallback((): void => {
