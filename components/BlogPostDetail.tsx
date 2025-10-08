@@ -10,6 +10,7 @@ import AdSense from './Adsense';
 import { useData } from '@/app/adminTioBen/contexts/DataContext';
 import type { Post } from '@/app/adminTioBen/types';
 import Image from 'next/image';
+import { generateBlogMetadata } from './blogMetaData';
 
 interface BlogPostDetailProps {
   slug: string; // recebido da rota dinâmica
@@ -118,56 +119,14 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
   // =========================================================================
   // GERAÇÃO DOS METADADOS AVANÇADOS AQUI
   // =========================================================================
-  const { title, metaDescription, categoryName, keywords } = postData;
-  const keywordsArray = keywords ? keywords.split(',').map(k => k.trim()) : [];
+  const {  keywords } = postData;
+  
   const publishedTime = postData.publishDate ? new Date(postData.publishDate).toISOString() : '';
-  const modifiedTime = postData.publishDate ? new Date(postData.publishDate).toISOString() : publishedTime;
-
+  
+   generateBlogMetadata(postData, slug)
   return (
     <div className="flex flex-col min-h-screen bg-amber-400 relative">
-      <head>
-        {/* ==================================== */}
-        {/* 1. METADADOS BÁSICOS (SEO e Geral) */}
-        {/* ==================================== */}
-        <title>{title} | {SITE_TITLE}</title>
-        <meta name="description" content={metaDescription} />
-        <link rel="canonical" href={canonicalUrl} />
-        <meta name="keywords" content={keywordsArray.join(', ')} />
-        <meta name="author" content={SITE_AUTHOR} />
-        
-        {/* ==================================== */}
-        {/* 2. OPEN GRAPH (Redes Sociais: Facebook, LinkedIn, WhatsApp) */}
-        {/* ==================================== */}
-        <meta property="og:title" content={title} />
-        <meta property="og:description" content={metaDescription} />
-        <meta property="og:url" content={canonicalUrl} />
-        <meta property="og:site_name" content={SITE_TITLE} />
-        <meta property="og:type" content="article" />
-        <meta property="og:locale" content={SITE_LOCALE} />
-        <meta property="og:image" content={imageUrl} />
-        <meta property="og:image:alt" content={title} />
-        
-        {/* ==================================== */}
-        {/* 3. OPEN GRAPH - ARTIGO (Meta Dados Avançados) */}
-        {/* ==================================== */}
-        <meta property="article:published_time" content={publishedTime} />
-        <meta property="article:modified_time" content={modifiedTime} />
-        <meta property="article:author" content={SITE_AUTHOR} /> 
-        <meta property="article:section" content={categoryName} />
-        {keywordsArray.map((keyword, index) => (
-            <meta key={`tag-${index}`} property="article:tag" content={keyword} />
-        ))}
-        
-        {/* ==================================== */}
-        {/* 4. TWITTER CARD (Meta Dados Específicos para X/Twitter) */}
-        {/* ==================================== */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={title} />
-        <meta name="twitter:description" content={metaDescription} />
-        <meta name="twitter:image" content={imageUrl} />
-        {/* Opcional: <meta name="twitter:site" content="@SeuHandleTwitter" /> */}
-        
-      </head>
+      
 
       <Cabecalho />
 
