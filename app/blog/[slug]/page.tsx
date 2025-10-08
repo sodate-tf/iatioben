@@ -17,10 +17,10 @@ function BlogPostContent({ slug }: { slug: string }) {
 
   return (
     <>
-    
+    <head>            
         <MetaDataBlog slug={slug} />
         <BlogJsonLd slug={slug} />
-    
+    </head>
     <div>
       <BlogPostDetail slug={slug} />
       </div>

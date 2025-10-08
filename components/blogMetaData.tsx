@@ -24,34 +24,6 @@ export default async function MetaDataBlog({ slug }: MetaDataBlogProps) {
   const publishedIso = publishedDate.toISOString();
   const modifiedIso = modifiedDate.toISOString();
 
-  // JSON-LD Article
-  const jsonLdArticle = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
-    headline: title,
-    description,
-    image: { "@type": "ImageObject", url: imageUrl, width: 1200, height: 630 },
-    datePublished: publishedIso,
-    dateModified: modifiedIso,
-    author: { "@type": "Person", name: "Tio Ben" },
-    publisher: {
-      "@type": "Organization",
-      name: "Tio Ben",
-      logo: { "@type": "ImageObject", url: "http://www.iatioben.com.br/images/ben-transparente.png", width: 600, height: 60 },
-    },
-  };
-
-  // JSON-LD Breadcrumb
-  const jsonLdBreadcrumb = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: "https://www.iatioben.com.br/" },
-      { "@type": "ListItem", position: 2, name: "Blog", item: "https://www.iatioben.com.br/blog" },
-      { "@type": "ListItem", position: 3, name: post.title, item: canonicalUrl },
-    ],
-  };
 
   return (
     <>
@@ -76,9 +48,6 @@ export default async function MetaDataBlog({ slug }: MetaDataBlogProps) {
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={imageUrl} />
 
-      {/* JSON-LD */}
-      <script type="application/ld+json">{JSON.stringify(jsonLdArticle)}</script>
-      <script type="application/ld+json">{JSON.stringify(jsonLdBreadcrumb)}</script>
     </>
   );
 }
