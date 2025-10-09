@@ -1,4 +1,5 @@
 // components/MetaDataBlog.tsx
+"use client"
 import React from "react";
 import type { Post } from "@/app/adminTioBen/types";
 
@@ -14,8 +15,8 @@ export default async function MetaDataBlog({ postData }: MetaDataBlogProps) {
 
   const title = `${postData.title} - Blog IA Tio Ben`;
   const description = postData.metaDescription || postData.metaDescription || "";
-  const canonicalUrl = `https://www.iatioben.com.br/blog/${postData.slug}`;
-  const imageUrl = postData.coverImageUrl || "https://www.iatioben.com.br/images/default-cover.png";
+  const canonicalUrl = `http://www.iatioben.com.br/blog/${postData.slug}`;
+  const imageUrl = postData.coverImageUrl || "http://www.iatioben.com.br/images/default-cover.png";
 
   const publishedDate = postData.publishDate ? new Date(postData.publishDate) : new Date();
   const modifiedDate = postData.updatedAt ? new Date(postData.updatedAt) : publishedDate;
