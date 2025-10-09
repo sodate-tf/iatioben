@@ -1,23 +1,36 @@
-'use client'; 
+'use client';
 
 import { useParams } from 'next/navigation';
+import BlogPostDetail from '../../../components/BlogPostDetail';
 import Spinner from '@/components/SpinnerLoading';
-import { DataProvider } from '@/app/adminTioBen/contexts/DataContext';
-import BlogDetailLogic from './BlogDetailLogic_';
+import { DataProvider, useData } from '@/app/adminTioBen/contexts/DataContext';
+import MetaDataBlog from '@/components/blogMetaData';
+import BlogJsonLd from '@/components/blogJasonLd';
+
+function BlogPostContent({ slug }: { slug: string }) {
+  const { activePosts } = useData();
+  const post = activePosts.find((p) => p.slug === slug);
+
+  if (!post) {
+    return <Spinner />; // ou uma mensagem "Post não encontrado"
+  }
+
+  return (
+    <>
+    <div>
+      <BlogPostDetail slug={slug} />
+      </div>
+    </>
+  );
+}
 
 export default function BlogPostPage() {
   const params = useParams();
   const slug = params?.slug as string;
-  if (!slug) {
-    return (
-      <div className="flex justify-center items-center min-h-screen p-4">
-        <Spinner />
-      </div>
-    ); 
-  }
+
   return (
-    <DataProvider>
-      <BlogDetailLogic slug={slug} />
+    <DataProvider>    
+      <BlogPostContent slug={slug} />
     </DataProvider>
   );
 }
