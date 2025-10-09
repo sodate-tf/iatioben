@@ -64,16 +64,28 @@ export default function FaqTioBenEstilizado() {
   <div className="grid gap-6 md:grid-cols-2">
     {blocos.map((bloco, index) => (
       <>
-        <Card className="border border-amber-300 bg-amber-50 shadow-lg hover:shadow-xl transition rounded-2xl">
-          <CardContent className="p-6">
-            <h3 className="text-xl font-semibold text-amber-800 mb-3">{bloco.titulo}</h3>
-            {bloco.texto.map((par, i) => (
-              <p key={i} className="text-amber-900 mb-3 leading-relaxed">
-                {par}
-              </p>
-            ))}
-          </CardContent>
-        </Card>
+        <div className="grid gap-6 md:grid-cols-2">
+    {blocos.map((bloco, index) => (
+      // CORREÇÃO: Envolvemos o Card e o TestBanner em uma <div>
+      // e movemos a 'key' para esta <div>.
+      <div key={index} className="col-span-1">
+        <Card className="border border-amber-300 bg-amber-50 shadow-lg hover:shadow-xl transition rounded-2xl">
+          <CardContent className="p-6">
+            <h3 className="text-xl font-semibold text-amber-800 mb-3">{bloco.titulo}</h3>
+            {/* O loop interno JÁ ESTÁ CORRETO: key={i} */}
+            {bloco.texto.map((par, i) => (
+              <p key={i} className="text-amber-900 mb-3 leading-relaxed">
+                {par}
+              </p>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Inserir o TestBanner a cada 2 cards, DENTRO DO ELEMENTO QUE RECEBE A KEY */}
+        {(index + 1) % 2 === 0 && <TestBanner />}
+      </div>
+    ))}
+  </div>
 
         {/* Inserir o TestBanner a cada 2 cards */}
         {(index + 1) % 2 === 0 && <TestBanner />}
