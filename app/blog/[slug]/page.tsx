@@ -1,47 +1,36 @@
-'use client';
+'use client'; 
+
 import { useParams } from 'next/navigation';
-import BlogPostDetail from '../../../components/BlogPostDetail';
+
+// Componentes da Página
 import Spinner from '@/components/SpinnerLoading';
-import { DataProvider, useData } from '@/app/adminTioBen/contexts/DataContext';
-import MetaDataBlog from '@/components/blogMetaData';
-import BlogJsonLd from '@/components/blogJasonLd';
+import { DataProvider } from '@/app/adminTioBen/contexts/DataContext';
+import BlogDetailLogic from './BlogDetailLogic_';
 
 
-function BlogDetailLogic({ slug }: { slug: string }) {
-  const { activePosts } = useData();
-  const post = activePosts.find((p) => p.slug === slug);
-  if (!post) {
+// Componente Filho (refatorado)
+
+
+
+/**
+ * Componente principal da Página do Blog Post.
+ * Responsável por obter o slug e fornecer o contexto de dados.
+ */
+export default function BlogPostPage() {
+  const params = useParams();
+  const slug = params?.slug as string;
+
+  // 1. Tratamento Mobile First: Feedback imediato se o slug não estiver disponível
+  if (!slug) {
     return (
       <div className="flex justify-center items-center min-h-screen p-4">
         <Spinner />
       </div>
-    );
-  }
-
-  return (
-    <>
-      <MetaDataBlog postData={post} /> 
-      <BlogJsonLd slug={slug} /> 
-      <div className="flex flex-col w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
-        <BlogPostDetail slug={slug}  /> 
-      </div>
-    </>
-  );
-}
-
-
-export default function BlogPostPage() {
-  const params = useParams();
-  const slug = params?.slug as string;
-  if (!slug) {
-
-    return (
-        <div className="flex justify-center items-center min-h-screen p-4">
-            <Spinner />
-        </div>
     ); 
   }
 
+  // 2. Renderiza a estrutura com o Provider
+  // O DataProvider envolve a lógica, garantindo que useData funcione.
   return (
     <DataProvider>
       <BlogDetailLogic slug={slug} />

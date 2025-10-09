@@ -100,7 +100,7 @@ export default function Cabecalho() {
         */}
         <div className="flex-shrink-0">
             <img
-                src="http://www.iatioben.com.br/images/ben-transparente.png"
+                src="//www.iatioben.com.br/images/ben-transparente.png"
                 alt="Logo Tio Ben"
                 // O width e height originais definem a proporção e qualidade
                 width={150}
