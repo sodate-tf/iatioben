@@ -1,5 +1,3 @@
-// components/MetaDataBlog.tsx
-"use client"
 import React from "react";
 import type { Post } from "@/app/adminTioBen/types";
 

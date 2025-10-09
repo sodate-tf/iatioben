@@ -1,5 +1,3 @@
-// components/BlogJsonLd.tsx (Novo nome mais claro para sua função)
-"use client"
 import React from "react";
 import { getPostBySlug } from "@/app/adminTioBen/actions/postAction";
 import type { Post } from "@/app/adminTioBen/types";
