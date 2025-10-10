@@ -11,6 +11,7 @@ import Image from 'next/image';
 import MetaDataBlog from './blogMetaData';
 
 
+
 interface BlogPostDetailProps {
   slug: string; // recebido da rota dinâmica
 }
@@ -30,21 +31,17 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fontSize, setFontSize] = useState(16);
-
+    
   // 🔍 Busca o post pelo slug
   useEffect(() => {
     setIsLoading(true);
-    console.log("ACTIVE POSTS:"+activePosts);
-    console.log("SLUG:"+ slug)
-
     const post = activePosts.find((p) => p.slug === slug);
-    if (post) {
-      console.log("POST ENCONTRADO")
+    if (post) {  
       setPostData(post);
       setError(null);
     } else {
       setPostData(null);
-      //setError(`Post com slug '${slug}' não encontrado.`);
+  
     }
     setIsLoading(false);
   }, [slug, activePosts]);
@@ -127,7 +124,7 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
     
   return (
     <div className="flex flex-col min-h-screen bg-amber-400 relative">
-      <MetaDataBlog postData={postData} />
+      
 
       <Cabecalho />
 
