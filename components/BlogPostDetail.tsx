@@ -34,6 +34,7 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
   // 🔍 Busca o post pelo slug
   useEffect(() => {
     setIsLoading(true);
+    console.log(activePosts);
     const post = activePosts.find((p) => p.slug === slug);
     if (post) {
       setPostData(post);
