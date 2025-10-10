@@ -34,14 +34,17 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
   // 🔍 Busca o post pelo slug
   useEffect(() => {
     setIsLoading(true);
-    console.log(activePosts);
+    console.log("ACTIVE POSTS:"+activePosts);
+    console.log("SLUG:"+ slug)
+
     const post = activePosts.find((p) => p.slug === slug);
     if (post) {
+      console.log("POST ENCONTRADO")
       setPostData(post);
       setError(null);
     } else {
       setPostData(null);
-      setError(`Post com slug '${slug}' não encontrado.`);
+      //setError(`Post com slug '${slug}' não encontrado.`);
     }
     setIsLoading(false);
   }, [slug, activePosts]);
