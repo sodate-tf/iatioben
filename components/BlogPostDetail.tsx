@@ -1,60 +1,44 @@
+// components/BlogPostDetail.tsx
 'use client';
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Spinner from './SpinnerLoading';
 import Cabecalho from './cabecalho';
 import AdSense from './Adsense';
-import { useData } from '@/app/adminTioBen/contexts/DataContext';
 import type { Post } from '@/app/adminTioBen/types';
 import Image from 'next/image';
-import generatePostMetadata from './blogMetaData';
-
-
 
 interface BlogPostDetailProps {
-  slug: string; // recebido da rota dinâmica
+  // Agora recebe o objeto Post COMPLETO, tipado corretamente.
+  post: Post; 
 }
 
-// URL de fallback para quando o post não tiver imagem de capa
 const FALLBACK_IMAGE_URL = "/images/default-cover.png"; 
+const SITE_URL = "http://www.iatioben.com.br"; // Use HTTPS!
 
-// Informações gerais do site/branding (Ajuste estas variáveis!)
-const SITE_TITLE = "Blog IA Tio Ben";
-const SITE_URL = "http://www.iatioben.com.br";
-const SITE_LOCALE = "pt_BR";
-const SITE_AUTHOR = "IA Tio Ben"; 
-
-export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
-  const { activePosts } = useData();
-  const [postData, setPostData] = useState<Post | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [fontSize, setFontSize] = useState(16);
-    
-  // 🔍 Busca o post pelo slug
-  useEffect(() => {
-    setIsLoading(true);
-    const post = activePosts.find((p) => p.slug === slug);    
-    if (post) {  
-      generatePostMetadata(post)
-      setPostData(post);
-      setError(null);
-    } else {
-      setPostData(null);
+export default function BlogPostDetail({ post }: BlogPostDetailProps) {
+  // Os dados já vêm prontos, eliminando o useEffect e busca via Context.
+  const postData = post;
   
-    }
-    setIsLoading(false);
-  }, [slug, activePosts]);
-
-   
+  // Mantém apenas os estados de interatividade/UI
+  const [error, setError] = useState<string | null>(null);
+  // Mantém a funcionalidade de acessibilidade de fonte
+  const [fontSize, setFontSize] = useState(16); 
+    
   // 📤 Compartilhar post
   const handleShare = useCallback(async () => {
+    // Validação de dados (embora o Server Component já garanta que postData exista)
     if (!postData) return;
 
-    // Use o metaDescription para o texto de compartilhamento
-    const shareText = `🔥 Leia: ${postData.title} no Blog do Tio Ben!\n\n${postData.metaDescription}\n\n`;
-    const shareUrl = window.location.href;
+    const shareText = `🔥 Leia: ${postData.title} no Blog do Tio Ben!\n\n${postData.metaDescription || postData.title}\n\n`;
+    const shareUrl = window.location.href; // Funciona apenas no lado do cliente
+    
+    // Validação extra para garantir que window.location.href não seja vazia.
+    if (!shareUrl) {
+      console.error("URL da página não disponível para compartilhamento.");
+      return;
+    }
 
     if (navigator.share) {
       try {
@@ -63,11 +47,11 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
           text: shareText,
           url: shareUrl,
         });
-      } catch (err: unknown) {
-        console.error('Erro ao compartilhar:', err);
-        setError(
-          err instanceof Error ? err.message : 'Erro desconhecido ao compartilhar.'
-        );
+      } catch (err) {
+        // Validação de erro com tipo explícito
+        const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao compartilhar.';
+        console.error('Erro ao compartilhar:', errorMessage);
+        setError(errorMessage);
       }
     } else {
       try {
@@ -79,8 +63,8 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
     }
   }, [postData]);
 
-  // 📅 Data formatada
-  const dataFormatada = postData?.publishDate
+  // 📅 Data formatada: Validação de data
+  const dataFormatada = postData.publishDate
     ? new Date(postData.publishDate).toLocaleDateString('pt-BR', {
         day: '2-digit',
         month: 'long',
@@ -88,42 +72,27 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
       })
     : '';
 
-  // URL da imagem a ser usada, com fallback
-  const imageUrl = postData?.coverImageUrl || FALLBACK_IMAGE_URL;
+  const imageUrl = postData.coverImageUrl || FALLBACK_IMAGE_URL;
+  const canonicalUrl = `${SITE_URL}/blog/${postData.slug}`;
 
-  // URL canônica completa para o post
-  const canonicalUrl = `${SITE_URL}/blog/${slug}`;
-
-  // Se o postData ainda não carregou, renderiza apenas o loader/erro e sai.
-  if (isLoading || error || !postData) {
-      // Retorna o JSX original sem as meta tags dinâmicas
-      return (
-          <div className="flex flex-col min-h-screen bg-amber-400 relative">
-            
-              <Cabecalho />
-              <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
-                  {isLoading ? <Spinner /> : (
-                      <div className="w-full text-center">
-                          <Link href="/blog" className="text-amber-900 hover:underline mb-4 inline-block font-semibold">
-                              &larr; Voltar para o Blog
-                          </Link>
-                          <p className="text-red-600 text-lg">{error}</p>
-                      </div>
-                  )}
-              </div>
-                          
-          </div>
-      );
+  // Se houver erro de compartilhamento ou outros erros de UI
+  if (error) {
+     return (
+        <div className="flex flex-col min-h-screen bg-amber-400 relative">
+             <Cabecalho />
+             <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
+                 <div className="w-full text-center">
+                     <p className="text-red-600 text-lg">{error}</p>
+                 </div>
+             </div>
+        </div>
+     );
   }
+
+  // O 'generatePostMetadata' e as tags dinâmicas no <head> foram movidas para o Server Component (page.tsx)
   
-  // =========================================================================
-  // GERAÇÃO DOS METADADOS AVANÇADOS AQUI
-  // =========================================================================
-    
   return (
     <div className="flex flex-col min-h-screen bg-amber-400 relative">
-      
-
       <Cabecalho />
 
       <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
@@ -133,6 +102,8 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
           transition={{ duration: 0.5 }}
           className="bg-white rounded-lg shadow-lg p-4 md:p-8 w-full"
         >
+          {/* ... restante da estrutura JSX (mantido) ... */}
+          
           {/* Cabeçalho do Post */}
           <div className="flex justify-between items-center mb-6 border-b pb-3 border-amber-200">
             <Link
@@ -174,16 +145,12 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
 
           {/* Título e Metadados */}
           <div className="text-center mb-6">
-            {/* O <h1> principal está nas metadatas, mas aqui mantemos uma tag para o visual */}
             <h1 className="text-3xl md:text-4xl font-extrabold text-amber-900 mb-3 leading-tight">
               {postData.title}
             </h1>
-
-            {/* Badge da Categoria */}
             <p className="inline-block bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1 rounded-full mb-2">
               {postData.categoryName ?? 'Sem categoria'}
             </p>
-
             <p className="text-sm text-gray-500">Publicado em {dataFormatada}</p>
           </div>
 

@@ -9,7 +9,7 @@ import type { Post } from "@/app/adminTioBen/types";
  * * @param postData - Os dados do post.
  * @returns Um objeto no formato de Metadata do Next.js.
  */
-export default function generatePostMetadata(postData: Post): Metadata {
+export function generatePostMetadata(postData: Post): Metadata {
   
   // Se o postData for nulo ou indefinido, retorna metadados padrões ou vazios.
   // Como esta função será usada dentro de generateMetadata,
