@@ -8,8 +8,7 @@ import AdSense from './Adsense';
 import { useData } from '@/app/adminTioBen/contexts/DataContext';
 import type { Post } from '@/app/adminTioBen/types';
 import Image from 'next/image';
-import MetaDataBlog from './blogMetaData';
-
+import { generatePostMetadata } from './blogMetaData';
 
 
 interface BlogPostDetailProps {
@@ -35,8 +34,9 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
   // 🔍 Busca o post pelo slug
   useEffect(() => {
     setIsLoading(true);
-    const post = activePosts.find((p) => p.slug === slug);
+    const post = activePosts.find((p) => p.slug === slug);    
     if (post) {  
+      generatePostMetadata(post)
       setPostData(post);
       setError(null);
     } else {
@@ -110,10 +110,7 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
                       </div>
                   )}
               </div>
-              <AdSense adSlot="5858882948" adFormat="autorelaxed" />
-              <footer className="bg-amber-100 text-center py-4 mt-auto">
-                  {/* ... (footer content) */}
-              </footer>
+                          
           </div>
       );
   }
@@ -124,7 +121,7 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
     
   return (
     <div className="flex flex-col min-h-screen bg-amber-400 relative">
-      <MetaDataBlog postData={postData} />
+      
 
       <Cabecalho />
 

@@ -1,15 +1,16 @@
 'use client';
 import BlogPostDetail from '../../../components/BlogPostDetail';
+import Spinner from '@/components/SpinnerLoading';
 import { DataProvider, useData } from '@/app/adminTioBen/contexts/DataContext';
-import { useParams } from 'next/navigation';
 
-export default function BlogPostContent() {
-    const params = useParams();
-    const slug = params?.slug as string;
+export default function BlogPostContent({ slug }: { slug: string }) {
+  const { activePosts } = useData();
+  const post = activePosts.find((p) => p.slug === slug);
 
-  if (!slug) {
-     // SE NÃO TIVER O SLUG, COLOCAR UM REDIRECT PARA /BLOG 
+  if (!post) {
+    return <Spinner />; // ou uma mensagem "Post não encontrado"
   }
+
   return (
     <>
       <div>

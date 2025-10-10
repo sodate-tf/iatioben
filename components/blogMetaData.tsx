@@ -1,45 +1,73 @@
-"use client"
-import React from "react";
+// utils/metadata.ts (ou onde você preferir)
+
+import type { Metadata } from "next";
 import type { Post } from "@/app/adminTioBen/types";
 
-interface MetaDataBlogProps {
-  postData: Post;
-}
-
-export default async function MetaDataBlog({ postData }: MetaDataBlogProps) {
-  // Busca o post pelo slug
+/**
+ * Função utilitária que gera o objeto Metadata do Next.js
+ * a partir dos dados do post.
+ * * @param postData - Os dados do post.
+ * @returns Um objeto no formato de Metadata do Next.js.
+ */
+export function generatePostMetadata(postData: Post): Metadata {
   
+  // Se o postData for nulo ou indefinido, retorna metadados padrões ou vazios.
+  // Como esta função será usada dentro de generateMetadata,
+  // idealmente o dado já deve estar validado (e a página não renderizada se não houver post).
+  if (!postData) {
+    return {
+      title: "Blog IA Tio Ben",
+      description: "Conteúdo sobre Inteligência Artificial e tecnologia.",
+    };
+  }
 
-  if (!postData) return <></>;
+  // Lógica de cálculo dos metadados (mantendo o que você já fez)
+  const baseDomain = "http://www.iatioben.com.br"; // Use HTTPS em produção!
+  const siteName = "Blog IA Tio Ben";
 
-  const title = `${postData.title} - Blog IA Tio Ben`;
-  const description = postData.metaDescription || postData.metaDescription || "";
-  const canonicalUrl = `http://www.iatioben.com.br/blog/${postData.slug}`;
-  const imageUrl = postData.coverImageUrl || "http://www.iatioben.com.br/images/default-cover.png";
+  const title = `${postData.title} - ${siteName}`;
+  // Prioriza a metaDescription, se não existir, usa um fallback vazio
+  const description = postData.metaDescription || ""; 
+  const canonicalUrl = `${baseDomain}/blog/${postData.slug}`;
+  const imageUrl = postData.coverImageUrl || `${baseDomain}/images/default-cover.png`;
 
-  return (
-    <>
-      <title>{title}</title>
-      <meta name="description" content={description} />
-      <link rel="canonical" href={canonicalUrl} />
+  // Retorna o objeto Metadata no formato Next.js (Server Side)
+  return {
+    // Título Principal
+    title: title,
+    // Meta Descrição e URL Canônica
+    description: description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    
+    // Open Graph
+    openGraph: {
+      title: title,
+      description: description,
+      url: canonicalUrl,
+      type: "article",
+      siteName: siteName,
+      locale: "pt_BR",
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: postData.title, // Adiciona alt-text para acessibilidade
+        },
+      ],
+    },
 
-      {/* Open Graph */}
-      <meta property="og:title" content={title} />
-      <meta property="og:description" content={description} />
-      <meta property="og:url" content={canonicalUrl} />
-      <meta property="og:type" content="article" />
-      <meta property="og:site_name" content="Blog IA Tio Ben" />
-      <meta property="og:locale" content="pt_BR" />
-      <meta property="og:image" content={imageUrl} />
-      <meta property="og:image:width" content="1200" />
-      <meta property="og:image:height" content="630" />
+    // Twitter Card
+    twitter: {
+      card: "summary_large_image",
+      title: title,
+      description: description,
+      images: [imageUrl],
+    },
 
-      {/* Twitter Card */}
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={title} />
-      <meta name="twitter:description" content={description} />
-      <meta name="twitter:image" content={imageUrl} />
-
-    </>
-  );
+    // Viewport para Mobile First (boa prática)
+    viewport: "width=device-width, initial-scale=1, viewport-fit=cover",
+  };
 }
