@@ -2,6 +2,7 @@
 import React from 'react';
 // Não precisamos mais do 'Outlet' ou de qualquer importação do 'react-router-dom'
 import PublicHeader from './PublicHeader';
+import Footer from '../Footer';
 
 // O componente agora recebe 'children' (o conteúdo da rota filha) como propriedade
 interface PublicLayoutProps {
@@ -16,11 +17,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         {children} {/* 👈 SUBSTITUIÇÃO do <Outlet /> */}
       </main>
-      <footer className="bg-surface shadow-inner mt-12 py-6">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center text-text-secondary">
-          <p>&copy; {new Date().getFullYear()} IA Tio Ben. Todos os direitos reservados.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

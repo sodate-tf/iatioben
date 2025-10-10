@@ -7,6 +7,7 @@ import Cabecalho from './cabecalho';
 import AdSense from './Adsense';
 import Link from 'next/link';
 import CalendarioLiturgia from './calendarioLiturgia';
+import Footer from './Footer';
 
 interface LiturgyReadingItem {
   referencia: string;
@@ -302,15 +303,9 @@ export default function LiturgiaContent({ date }: LiturgiaContentProps) {
         ) : null}
       </div>
 
-      <AdSense adSlot="5858882948" adFormat="autorelaxed" />
+    
 
-      <footer className="bg-amber-100 text-center py-4 mt-auto">
-        <div id="ezoic-pub-ad-placeholder-103"></div>
-        <Link href="http://www.iatioben.com.br/termo-de-responsabilidade">Termo de responsabilidade</Link>
-        <p className="text-gray-600 text-sm">
-          Desenvolvido por <Link href="http://4udevelops.com.br">4U Develops</Link> - Todos os direitos reservados
-        </p>
-      </footer>
+     <Footer />
     </div>
   );
 }

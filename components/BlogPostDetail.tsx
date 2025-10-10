@@ -8,6 +8,7 @@ import Cabecalho from './cabecalho';
 import AdSense from './Adsense';
 import type { Post } from '@/app/adminTioBen/types';
 import Image from 'next/image';
+import Footer from './Footer';
 
 interface BlogPostDetailProps {
   // Agora recebe o objeto Post COMPLETO, tipado corretamente.
@@ -164,20 +165,7 @@ export default function BlogPostDetail({ post }: BlogPostDetailProps) {
       </div>
 
       {/* Anúncios e Rodapé */}
-      <AdSense adSlot="5858882948" adFormat="autorelaxed" />
-      <footer className="bg-amber-100 text-center py-4 mt-auto">
-        <div id="ezoic-pub-ad-placeholder-103"></div>
-        <Link href="http://www.iatioben.com.br/termo-de-responsabilidade" className="hover:underline text-gray-700 text-sm">
-          Termo de responsabilidade
-        </Link>
-        <p className="text-gray-600 text-sm mt-1">
-          Desenvolvido por{' '}
-          <Link href="http://4udevelops.com.br" className="hover:underline">
-            4U Develops
-          </Link>{' '}
-          - Todos os direitos reservados
-        </p>
-      </footer>
+      <Footer />
     </div>
   );
 }
