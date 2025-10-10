@@ -3,39 +3,41 @@
 import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import Spinner from './SpinnerLoading';
+// O Spinner foi removido pois os dados já chegam prontos via post: Post
+// import Spinner from './SpinnerLoading'; 
 import Cabecalho from './cabecalho';
-import AdSense from './Adsense';
+// O AdSense foi mantido no import, mas não estava sendo usado no JSX
+// import AdSense from './Adsense'; 
 import type { Post } from '@/app/adminTioBen/types';
 import Image from 'next/image';
 import Footer from './Footer';
 
 interface BlogPostDetailProps {
-  // Agora recebe o objeto Post COMPLETO, tipado corretamente.
-  post: Post; 
+  // Recebe o objeto Post COMPLETO
+  post: Post;
 }
 
-const FALLBACK_IMAGE_URL = "/images/default-cover.png"; 
-const SITE_URL = "http://www.iatioben.com.br"; // Use HTTPS!
+// ⚠️ Mude para HTTPS
+const FALLBACK_IMAGE_URL = "/images/default-cover.png";
+const SITE_URL = "https://www.iatioben.com.br"; // Alterado para HTTPS (melhor prática!)
 
 export default function BlogPostDetail({ post }: BlogPostDetailProps) {
-  // Os dados já vêm prontos, eliminando o useEffect e busca via Context.
+  // Os dados já vêm prontos
   const postData = post;
-  
+
   // Mantém apenas os estados de interatividade/UI
   const [error, setError] = useState<string | null>(null);
   // Mantém a funcionalidade de acessibilidade de fonte
-  const [fontSize, setFontSize] = useState(16); 
-    
+  const [fontSize, setFontSize] = useState(16);
+
   // 📤 Compartilhar post
   const handleShare = useCallback(async () => {
-    // Validação de dados (embora o Server Component já garanta que postData exista)
+    // Validação de dados
     if (!postData) return;
 
     const shareText = `🔥 Leia: ${postData.title} no Blog do Tio Ben!\n\n${postData.metaDescription || postData.title}\n\n`;
     const shareUrl = window.location.href; // Funciona apenas no lado do cliente
-    
-    // Validação extra para garantir que window.location.href não seja vazia.
+
     if (!shareUrl) {
       console.error("URL da página não disponível para compartilhamento.");
       return;
@@ -59,6 +61,7 @@ export default function BlogPostDetail({ post }: BlogPostDetailProps) {
         await navigator.clipboard.writeText(shareText + shareUrl);
         alert('Link e resumo do post copiados para a área de transferência!');
       } catch (err) {
+        // Erro de cópia não interrompe a UI principal, apenas loga
         console.error('Erro ao copiar:', err);
       }
     }
@@ -67,44 +70,46 @@ export default function BlogPostDetail({ post }: BlogPostDetailProps) {
   // 📅 Data formatada: Validação de data
   const dataFormatada = postData.publishDate
     ? new Date(postData.publishDate).toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric',
-      })
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    })
     : '';
 
   const imageUrl = postData.coverImageUrl || FALLBACK_IMAGE_URL;
-  const canonicalUrl = `${SITE_URL}/blog/${postData.slug}`;
+  // O canonical URL não precisa ser re-calculado, mas foi mantido
+  // const canonicalUrl = `${SITE_URL}/blog/${postData.slug}`; 
 
   // Se houver erro de compartilhamento ou outros erros de UI
   if (error) {
-     return (
-        <div className="flex flex-col min-h-screen bg-amber-400 relative">
-             <Cabecalho />
-             <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
-                 <div className="w-full text-center">
-                     <p className="text-red-600 text-lg">{error}</p>
-                 </div>
-             </div>
+    return (
+      // O contêiner principal 'w-full' e o 'max-w-4xl mx-auto' já ajudam a centralizar e limitar
+      <div className="flex flex-col min-h-screen bg-amber-400 relative w-full overflow-x-hidden"> 
+        <Cabecalho />
+        <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
+          <div className="w-full text-center">
+            <p className="text-red-600 text-lg">{error}</p>
+          </div>
         </div>
-     );
+        <Footer />
+      </div>
+    );
   }
 
-  // O 'generatePostMetadata' e as tags dinâmicas no <head> foram movidas para o Server Component (page.tsx)
-  
   return (
-    <div className="flex flex-col min-h-screen bg-amber-400 relative">
+    // 💡 Adicionado 'overflow-x-hidden' para garantir que nada na tela cause rolagem horizontal
+    <div className="flex flex-col min-h-screen bg-amber-400 relative w-full overflow-x-hidden">
       <Cabecalho />
 
-      <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
+      {/* 💡 Ajustado: 'px-4' (mobile) e 'max-w-4xl' garante que o conteúdo não estoure */}
+      <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full"> 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-white rounded-lg shadow-lg p-4 md:p-8 w-full"
+          // Ajuste de padding: 'p-6' para mobile, 'md:p-8' para desktop
+          className="bg-white rounded-xl shadow-2xl p-6 md:p-8 w-full" 
         >
-          {/* ... restante da estrutura JSX (mantido) ... */}
-          
           {/* Cabeçalho do Post */}
           <div className="flex justify-between items-center mb-6 border-b pb-3 border-amber-200">
             <Link
@@ -116,7 +121,8 @@ export default function BlogPostDetail({ post }: BlogPostDetailProps) {
 
             <button
               onClick={handleShare}
-              className="px-3 py-1 md:px-4 md:py-2 rounded-full bg-amber-600 text-white text-sm font-semibold shadow-md hover:bg-amber-700 transition-colors flex items-center gap-1"
+              // Ajustes de tamanho do botão para mobile
+              className="px-3 py-1 text-xs md:px-4 md:py-2 rounded-full bg-amber-600 text-white md:text-sm font-semibold shadow-md hover:bg-amber-700 transition-colors flex items-center gap-1"
             >
               <svg
                 viewBox="0 0 16 16"
@@ -133,15 +139,22 @@ export default function BlogPostDetail({ post }: BlogPostDetailProps) {
             </button>
           </div>
 
-          {/* Imagem de capa */}
-          <div className="mb-6 relative w-full" style={{ height: '24rem' }}>
-            <Image
-              src={imageUrl} 
-              alt={postData.title}
-              fill 
-              sizes="(max-width: 768px) 100vw, 800px" 
-              className="object-cover rounded-lg shadow-md"
-            />
+          {/* Imagem de capa: Ajustado para usar aspect ratio e garantir que a imagem inteira apareça */}
+          <div className="mb-6 relative w-full">
+            {/* 💡 Novo: Adicionado 'aspect-[16/9]' para forçar a proporção 16:9 (bom para capas) */}
+            <div className="relative w-full aspect-[16/9] overflow-hidden rounded-lg shadow-xl"> 
+              <Image
+                src={imageUrl}
+                alt={postData.title}
+                fill
+                // 💡 Alterado 'object-cover' para 'object-contain' para mostrar a imagem INTEIRA
+                // Se o desejo for preencher o espaço (e talvez cortar), volte para 'object-cover'
+                // Aqui, 'object-contain' garante que ela não seja cortada.
+                className="object-contain" 
+                sizes="(max-width: 768px) 100vw, 800px"
+              />
+            </div>
+            {/* 💡 Removido o estilo fixo de altura: style={{ height: '24rem' }} */}
           </div>
 
           {/* Título e Metadados */}
@@ -157,10 +170,10 @@ export default function BlogPostDetail({ post }: BlogPostDetailProps) {
 
           {/* Conteúdo */}
           <div
-            className="text-gray-700 leading-relaxed" 
+            className="text-gray-700 leading-relaxed prose max-w-none" // Adicionado 'prose max-w-none' para estilizar HTML interno
             style={{ fontSize: `${fontSize}px` }}
             dangerouslySetInnerHTML={{ __html: postData.content }}
-          /> 
+          />
         </motion.div>
       </div>
 
