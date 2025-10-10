@@ -8,7 +8,8 @@ import AdSense from './Adsense';
 import { useData } from '@/app/adminTioBen/contexts/DataContext';
 import type { Post } from '@/app/adminTioBen/types';
 import Image from 'next/image';
-import { generatePostMetadata } from './blogMetaData';
+import generatePostMetadata from './blogMetaData';
+
 
 
 interface BlogPostDetailProps {
