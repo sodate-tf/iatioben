@@ -1,9 +1,7 @@
 'use client';
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import Head from 'next/head'; // Importação essencial para Meta Tags em Client Components
 import Spinner from './SpinnerLoading';
 import Cabecalho from './cabecalho';
 import AdSense from './Adsense';
@@ -47,6 +45,7 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
     setIsLoading(false);
   }, [slug, activePosts]);
 
+   
   // 📤 Compartilhar post
   const handleShare = useCallback(async () => {
     if (!postData) return;
@@ -98,6 +97,7 @@ export default function BlogPostDetail({ slug }: BlogPostDetailProps) {
       // Retorna o JSX original sem as meta tags dinâmicas
       return (
           <div className="flex flex-col min-h-screen bg-amber-400 relative">
+            
               <Cabecalho />
               <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
                   {isLoading ? <Spinner /> : (
