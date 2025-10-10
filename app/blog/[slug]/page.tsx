@@ -1,11 +1,7 @@
-'use client';
-
 import { useParams } from 'next/navigation';
 import BlogPostDetail from '../../../components/BlogPostDetail';
 import Spinner from '@/components/SpinnerLoading';
 import { DataProvider, useData } from '@/app/adminTioBen/contexts/DataContext';
-import MetaDataBlog from '@/components/blogMetaData';
-import BlogJsonLd from '@/components/blogJasonLd';
 
 function BlogPostContent({ slug }: { slug: string }) {
   const { activePosts } = useData();
