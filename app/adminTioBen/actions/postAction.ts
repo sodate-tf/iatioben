@@ -10,6 +10,20 @@ function isValidUuid(id: string): boolean {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     return uuidRegex.test(id);
 }
+// Tipagem mínima para o sitemap
+interface SitemapPostData {
+  slug: string;
+  updatedAt: Date;
+}
+
+/**
+ * Normaliza o objeto retornado do Neon/Postgres para o tipo SitemapPostData.
+ * @param row - Linha retornada do banco de dados.
+ */
+const normalizeSitemapPost = (row: QueryResultRow): SitemapPostData => ({
+    slug: row.slug,
+    updatedAt: new Date(row.updated_at),
+});
 
 /**
  * Normaliza o objeto retornado do Neon/Postgres para o tipo Post local.
@@ -60,6 +74,36 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
     return null;
   }
 }
+
+/**
+ * -------------------
+ * Nova Função: Obter posts ativos para o Sitemap
+ * -------------------
+ */
+
+export async function getPublishedPostsForSitemapAction(): Promise<SitemapPostData[]> {
+    try {
+        const now = new Date().toISOString();
+        
+        const { rows } = await sql`
+            SELECT 
+              slug,
+              updated_at
+            FROM posts
+            WHERE 
+              is_active = TRUE 
+              AND publish_date <= ${now}
+              AND (expiry_date IS NULL OR expiry_date > ${now})
+            ORDER BY updated_at DESC;
+        `;
+
+        return rows.map(normalizeSitemapPost);
+    } catch (error) {
+        console.error("ERRO NEON/SITEMAP: Falha ao buscar posts ativos:", error);
+        return [];
+    }
+}
+
 
 /**
  * -------------------
