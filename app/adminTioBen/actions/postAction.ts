@@ -91,9 +91,7 @@ export async function getPublishedPostsForSitemapAction(): Promise<SitemapPostDa
               updated_at
             FROM posts
             WHERE 
-              is_active = TRUE 
-              AND publish_date <= ${now}
-              AND (expiry_date IS NULL OR expiry_date > ${now})
+              is_active = TRUE               
             ORDER BY updated_at DESC;
         `;
 
