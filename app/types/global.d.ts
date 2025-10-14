@@ -3,8 +3,7 @@ export {};
 
 declare global {
   interface Window {
-    adsbygoogle?: Array<{
-      push: (obj: Record<string, unknown>) => void;
-    }>;
+    // Fila de comandos do AdSense (é um array normal)
+    adsbygoogle?: unknown[];
   }
 }

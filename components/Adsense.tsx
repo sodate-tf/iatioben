@@ -1,94 +1,85 @@
+// components/AdsenseBlock.tsx
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 
-interface AdSenseProps {
-  adSlot: string;
-  adFormat?: string;
-  fullWidthResponsive?: boolean;
-  style?: React.CSSProperties;
-  skeletonHeight?: number;
-}
+type AdsenseBlockProps = {
+  adClient: string; // ex.: "ca-pub-XXXXXXXXXXXXXXX"
+  adSlot: string;   // ex.: "1234567890"
+  adFormat?: "auto" | "rectangle" | "horizontal" | "vertical";
+  responsive?: boolean;
+  testMode?: boolean; // define data-adtest="on" (útil em dev)
+  style?: React.CSSProperties; // para customizar altura/largura do contêiner
+};
 
-export default function AdSense({
+export default function AdsenseBlock({
+  adClient,
   adSlot,
   adFormat = "auto",
-  fullWidthResponsive = true,
-  style = { display: "block", minHeight: 100 },
-  skeletonHeight = 100,
-}: AdSenseProps) {
-  const adRef = useRef<HTMLModElement>(null); // <ins> é HTMLModElement
+  responsive = true,
+  testMode = false,
+  style,
+}: AdsenseBlockProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
 
   useEffect(() => {
-    if (!adRef.current || !scriptLoaded) return;
+    // Garante execução apenas no cliente
+    if (!containerRef.current || loaded) return;
 
+    const el = containerRef.current;
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && adRef.current) {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
             try {
-              // Tipagem já declarada em global.d.ts
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
+              // Fila do AdSense + render do <ins class="adsbygoogle" />
               (window.adsbygoogle = window.adsbygoogle || []).push({});
               setLoaded(true);
             } catch (e) {
-              console.error("AdSense error:", e);
+              console.error("AdSense push error:", e);
+            } finally {
+              observer.unobserve(el);
+              observer.disconnect();
             }
-            observer.disconnect();
+            break;
           }
-        });
+        }
       },
       { threshold: 0.1 }
     );
 
-    observer.observe(adRef.current);
-
-    return () => observer.disconnect();
-  }, [adSlot, scriptLoaded]);
+    observer.observe(el);
+    return () => {
+      observer.unobserve(el);
+      observer.disconnect();
+    };
+  }, [loaded]);
 
   return (
-    <div style={{ position: "relative" }}>
-      {!loaded && (
-        <div
-          style={{
-            height: skeletonHeight,
-            background: "linear-gradient(90deg, #eee, #ddd, #eee)",
-            backgroundSize: "200% 100%",
-            animation: "skeleton-loading 1.5s infinite",
-            borderRadius: 8,
-          }}
-        />
-      )}
-
-      <ins
-        ref={adRef}
-        className="adsbygoogle"
-        style={{ ...style, display: loaded ? "block" : "none" }}
-        data-ad-client="ca-pub-8819996017476509"
-        data-ad-slot={adSlot}
-        data-ad-format={adFormat}
-        data-full-width-responsive={fullWidthResponsive.toString()}
-      />
-
+    <>
+      {/* Injete o script UMA única vez na aplicação.
+          Se você já injeta no _app/layout, remova este Script daqui. */}
       <Script
-        id="adsbygoogle-script"
-        async
+        id="adsbygoogle-init"
         strategy="afterInteractive"
+        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClient}`}
         crossOrigin="anonymous"
-        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8819996017476509"
-        onLoad={() => setScriptLoaded(true)}
+        onError={(e) => console.error("AdSense script load error:", e)}
       />
 
-      <style>
-        {`
-          @keyframes skeleton-loading {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-          }
-        `}
-      </style>
-    </div>
+      <div ref={containerRef} style={{ minHeight: 90, ...(style || {}) }}>
+        <ins
+          className="adsbygoogle"
+          style={{ display: "block" }}
+          data-ad-client={adClient}
+          data-ad-slot={adSlot}
+          data-ad-format={adFormat}
+          data-full-width-responsive={responsive ? "true" : "false"}
+          // Em desenvolvimento, ative testMode para evitar violações de política:
+          // https://developers.google.com/publisher-tag/guides/adtest
+          data-adtest={testMode ? "on" : undefined}
+        />
+      </div>
+    </>
   );
 }
