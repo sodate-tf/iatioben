@@ -15,7 +15,7 @@ export default function TestFooterBanner() {
            style={{
              width: "100%",            
            }}>
-            <AdSense adSlot="9591116531" />
+           
     
       </div>
     </div>

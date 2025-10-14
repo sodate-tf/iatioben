@@ -46,7 +46,7 @@ export default function VideoAdModal({
           animate={{ scale: 1 }}
           exit={{ scale: 0.8 }}
         >
-         <AdSense adSlot="6448612719" /> 
+         
         
           {/* Botão pular */}
           {canSkip && (
