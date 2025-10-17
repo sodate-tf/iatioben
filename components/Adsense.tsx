@@ -1,85 +1,117 @@
-// components/AdsenseBlock.tsx
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
+import React from "react";
 
-type AdsenseBlockProps = {
-  adClient: string; // ex.: "ca-pub-XXXXXXXXXXXXXXX"
-  adSlot: string;   // ex.: "1234567890"
-  adFormat?: "auto" | "rectangle" | "horizontal" | "vertical";
-  responsive?: boolean;
-  testMode?: boolean; // define data-adtest="on" (útil em dev)
-  style?: React.CSSProperties; // para customizar altura/largura do contêiner
-};
+// (Assumindo que global.d.ts foi corrigido acima)
+const ADSENSE_CLIENT_ID = "ca-pub-8819996017476509";
 
-export default function AdsenseBlock({
-  adClient,
+interface AdSenseProps {
+  adSlot: string;
+  adFormat?: string;
+  fullWidthResponsive?: boolean;
+  style?: React.CSSProperties;
+  skeletonHeight?: number;
+}
+
+export default function AdSense({
   adSlot,
   adFormat = "auto",
-  responsive = true,
-  testMode = false,
-  style,
-}: AdsenseBlockProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  fullWidthResponsive = true,
+  style = { display: "block", minHeight: 100 },
+  skeletonHeight = 100,
+}: AdSenseProps) {
+  const adRef = useRef<HTMLModElement>(null); 
   const [loaded, setLoaded] = useState(false);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
 
+  // Lógica de Lazy Loading e Disparo do AdSense
   useEffect(() => {
-    // Garante execução apenas no cliente
-    if (!containerRef.current || loaded) return;
+    if (!adRef.current || !scriptLoaded || loaded) return;
 
-    const el = containerRef.current;
     const observer = new IntersectionObserver(
       (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && adRef.current) {
             try {
-              // Fila do AdSense + render do <ins class="adsbygoogle" />
+              // Esta linha agora COMPILA, pois o tipo `{}` é permitido no array.
               (window.adsbygoogle = window.adsbygoogle || []).push({});
+              
               setLoaded(true);
             } catch (e) {
-              console.error("AdSense push error:", e);
-            } finally {
-              observer.unobserve(el);
-              observer.disconnect();
+              console.error("AdSense error on push:", e);
             }
-            break;
+            observer.disconnect(); 
           }
-        }
+        });
       },
       { threshold: 0.1 }
     );
 
-    observer.observe(el);
-    return () => {
-      observer.unobserve(el);
-      observer.disconnect();
-    };
-  }, [loaded]);
+    observer.observe(adRef.current);
 
+    return () => observer.disconnect();
+  }, [adSlot, scriptLoaded, loaded]);
+
+  // Estrutura de Renderização e Estilização
   return (
-    <>
-      {/* Injete o script UMA única vez na aplicação.
-          Se você já injeta no _app/layout, remova este Script daqui. */}
-      <Script
-        id="adsbygoogle-init"
-        strategy="afterInteractive"
-        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adClient}`}
-        crossOrigin="anonymous"
-        onError={(e) => console.error("AdSense script load error:", e)}
+    // Mobile First: width: "100%" garante que ele se ajuste perfeitamente.
+    <div style={{ position: "relative", width: "100%", ...style }}>
+      {/* Esqueleto de Carregamento para UX */}
+      {!loaded && (
+        <div
+          aria-hidden="true" 
+          className="adsense-skeleton"
+          style={{
+            ...style, 
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: '100%', 
+            zIndex: 1, 
+            height: skeletonHeight, 
+            background: "linear-gradient(90deg, #eee, #ddd, #eee)",
+            backgroundSize: "200% 100%",
+            animation: "skeleton-loading 1.5s infinite",
+            borderRadius: 8,
+          }}
+        />
+      )}
+
+      {/* Elemento AdSense <ins> */}
+      <ins
+        ref={adRef}
+        className="adsbygoogle"
+        style={{
+          ...style,
+          opacity: loaded ? 1 : 0,
+          transition: "opacity 0.5s ease-in-out",
+          minHeight: style.minHeight || skeletonHeight, 
+        }}
+        data-ad-client={ADSENSE_CLIENT_ID}
+        data-ad-slot={adSlot}
+        data-ad-format={adFormat}
+        data-full-width-responsive={fullWidthResponsive.toString()} 
       />
 
-      <div ref={containerRef} style={{ minHeight: 90, ...(style || {}) }}>
-        <ins
-          className="adsbygoogle"
-          style={{ display: "block" }}
-          data-ad-client={adClient}
-          data-ad-slot={adSlot}
-          data-ad-format={adFormat}
-          data-full-width-responsive={responsive ? "true" : "false"}
-          // Em desenvolvimento, ative testMode para evitar violações de política:
-          // https://developers.google.com/publisher-tag/guides/adtest
-          data-adtest={testMode ? "on" : undefined}
-        />
-      </div>
-    </>
+      {/* Script AdSense - Otimizado com strategy="afterInteractive" */}
+      <Script
+        id="adsbygoogle-script"
+        async
+        strategy="afterInteractive" 
+        crossOrigin="anonymous"
+        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`}
+        onLoad={() => setScriptLoaded(true)}
+      />
+
+      {/* Estilos injetados para a animação do esqueleto */}
+      <style global jsx>
+        {`
+          @keyframes skeleton-loading {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+        `}
+      </style>
+    </div>
   );
 }

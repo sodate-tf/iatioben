@@ -14,7 +14,7 @@ export default function TestFooterBanner() {
       <div className="bg-gray-400 text-white font-bold flex justify-center items-center"
            style={{
              width: "100%",            
-           }}>
+           }}> <AdSense adSlot="9591116531" />
            
     
       </div>
