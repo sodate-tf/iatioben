@@ -1,5 +1,6 @@
 'use client';
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Spinner from "@/components/SpinnerLoading";
@@ -10,6 +11,8 @@ import Head from "next/head";
 import Footer from "./Footer";
 
 export default function Home() {
+  const searchParams = useSearchParams();
+
   const [question, setQuestion] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -19,6 +22,16 @@ export default function Home() {
   const [lastAnswer, setLastAnswer] = useState("");
   const [showInterstitial, setShowInterstitial] = useState(false);
   const [showAnswerModal, setShowAnswerModal] = useState(false);
+
+  // 🔄 Se a URL contiver ?texto=, faz a pergunta automaticamente
+  useEffect(() => {
+    const perguntaViaUrl = searchParams.get("texto");
+    if (perguntaViaUrl) {
+      setQuestion(perguntaViaUrl);
+      handleAskQuestion(perguntaViaUrl);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   const navigateToAnswer = () => {
     setShowInterstitial(false);
@@ -56,20 +69,22 @@ export default function Home() {
     }
   };
 
-  const handleAskQuestion = async () => {
-    if (!question.trim()) {
+  // 🔁 Permite chamar manualmente ou via link automático
+  const handleAskQuestion = async (perguntaOpcional?: string) => {
+    const perguntaFinal = perguntaOpcional || question;
+    if (!perguntaFinal.trim()) {
       setErrorMessage("Por favor, digite sua pergunta.");
       return;
     }
 
     setIsLoading(true);
-    setLastQuestion(question);
-    const answer = await askQuestion(question);
+    setLastQuestion(perguntaFinal);
+    const answer = await askQuestion(perguntaFinal);
     setLastAnswer(answer);
 
     if (answer) {
       questionCount.current += 1;
-      logToSheets(question, answer);
+      logToSheets(perguntaFinal, answer);
     }
 
     setIsLoading(false);
@@ -84,6 +99,7 @@ export default function Home() {
     }
   };
 
+  // 🧩 Dados estruturados para SEO
   const jsonLdHome = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -128,8 +144,6 @@ export default function Home() {
         <meta name="twitter:image" content="https://www.iatioben.com.br/images/og_image.png" />
 
         <link rel="icon" href="/favicon.ico" />
-
-        {/* === JSON-LD STRUCTURED DATA === */}
         <script type="application/ld+json">{JSON.stringify(jsonLdHome)}</script>
       </Head>
 
@@ -154,7 +168,7 @@ export default function Home() {
             </p>
           </motion.section>
 
-          {/* PERSONAGEM */}
+          {/* PERSONAGEM / CAMPO DE PERGUNTAS */}
           <AnimatePresence mode="wait">
             {isLoading ? (
               <motion.div
@@ -197,7 +211,7 @@ export default function Home() {
                   </motion.div>
                 </section>
 
-                {/* CAMPO DE PERGUNTAS */}
+                {/* PERGUNTA MANUAL */}
                 <motion.section
                   className="flex flex-col w-full max-w-2xl bg-white rounded-lg shadow-lg p-4 mt-6"
                   initial={{ opacity: 0, y: 40 }}
@@ -218,7 +232,7 @@ export default function Home() {
                   {errorMessage && <p className="text-red-500 text-sm mt-2">{errorMessage}</p>}
                   <motion.button
                     whileTap={{ scale: 0.9 }}
-                    onClick={handleAskQuestion}
+                    onClick={() => handleAskQuestion()}
                     disabled={isLoading || question.trim() === ""}
                     className="mt-4 bg-amber-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-amber-800 disabled:opacity-50"
                   >
@@ -264,6 +278,7 @@ export default function Home() {
             )}
           </AnimatePresence>
 
+          {/* INTERSTITIAL (anúncio) */}
           {showInterstitial && (
             <VideoAdModal
               onComplete={() => {
