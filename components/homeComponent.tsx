@@ -150,14 +150,6 @@ function HomeContent() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 mb-4">
-              IA Tio Ben — Catequista Virtual para a Liturgia Diária e Reflexões Católicas
-            </h1>
-            <p className="text-lg text-gray-800 leading-relaxed">
-              Bem-vindo ao <strong>Tio Ben</strong>! 🙌  
-              Aqui você pode tirar dúvidas sobre fé, Bíblia, liturgia diária e a vida cristã.  
-              Nossa inteligência artificial foi criada para te acompanhar espiritualmente e te ajudar a compreender o <strong>Evangelho do Dia</strong> e as <strong>leituras litúrgicas</strong>.
-            </p>
           </motion.section>
 
           {/* Personagem e perguntas */}
