@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,7 +10,7 @@ import Cabecalho from "@/components/cabecalho";
 import Head from "next/head";
 import Footer from "./Footer";
 
-export default function Home() {
+function HomeContent() {
   const searchParams = useSearchParams();
 
   const [question, setQuestion] = useState("");
@@ -23,7 +23,7 @@ export default function Home() {
   const [showInterstitial, setShowInterstitial] = useState(false);
   const [showAnswerModal, setShowAnswerModal] = useState(false);
 
-  // 🔄 Se a URL contiver ?texto=, faz a pergunta automaticamente
+  // 🚀 Nova função — detecta ?texto= na URL e faz a pergunta automática
   useEffect(() => {
     const perguntaViaUrl = searchParams.get("texto");
     if (perguntaViaUrl) {
@@ -69,7 +69,6 @@ export default function Home() {
     }
   };
 
-  // 🔁 Permite chamar manualmente ou via link automático
   const handleAskQuestion = async (perguntaOpcional?: string) => {
     const perguntaFinal = perguntaOpcional || question;
     if (!perguntaFinal.trim()) {
@@ -99,7 +98,6 @@ export default function Home() {
     }
   };
 
-  // 🧩 Dados estruturados para SEO
   const jsonLdHome = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -115,7 +113,6 @@ export default function Home() {
   return (
     <>
       <Head>
-        {/* === SEO PRINCIPAL === */}
         <title>IA Tio Ben | Liturgia Diária, Evangelho do Dia e Reflexões Católicas</title>
         <meta
           name="description"
@@ -128,21 +125,16 @@ export default function Home() {
         <meta name="robots" content="index, follow" />
         <meta name="author" content="4U Develops" />
         <meta name="language" content="pt-BR" />
-
-        {/* === OPEN GRAPH === */}
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="IA Tio Ben" />
         <meta property="og:title" content="IA Tio Ben | Evangelho e Liturgia Diária com Inteligência Artificial" />
         <meta property="og:description" content="Receba o Evangelho do dia e reflexões católicas com o Tio Ben — sua inteligência artificial para a fé." />
         <meta property="og:url" content="https://www.iatioben.com.br/" />
         <meta property="og:image" content="https://www.iatioben.com.br/images/og_image.png" />
-
-        {/* === TWITTER CARD === */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="IA Tio Ben | Liturgia Diária e Reflexões Cristãs" />
         <meta name="twitter:description" content="Descubra a liturgia católica do dia, salmos e evangelho com o Tio Ben. Uma forma leve e acessível de fortalecer a fé." />
         <meta name="twitter:image" content="https://www.iatioben.com.br/images/og_image.png" />
-
         <link rel="icon" href="/favicon.ico" />
         <script type="application/ld+json">{JSON.stringify(jsonLdHome)}</script>
       </Head>
@@ -151,7 +143,7 @@ export default function Home() {
         <Cabecalho />
 
         <main className="flex-1 flex flex-col items-center px-4 py-8">
-          {/* INTRODUÇÃO */}
+          {/* Introdução */}
           <motion.section
             className="text-center mb-10 max-w-2xl"
             initial={{ opacity: 0, y: -20 }}
@@ -161,10 +153,14 @@ export default function Home() {
             <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 mb-4">
               IA Tio Ben — Catequista Virtual para a Liturgia Diária e Reflexões Católicas
             </h1>
-           
+            <p className="text-lg text-gray-800 leading-relaxed">
+              Bem-vindo ao <strong>Tio Ben</strong>! 🙌  
+              Aqui você pode tirar dúvidas sobre fé, Bíblia, liturgia diária e a vida cristã.  
+              Nossa inteligência artificial foi criada para te acompanhar espiritualmente e te ajudar a compreender o <strong>Evangelho do Dia</strong> e as <strong>leituras litúrgicas</strong>.
+            </p>
           </motion.section>
 
-          {/* PERSONAGEM / CAMPO DE PERGUNTAS */}
+          {/* Personagem e perguntas */}
           <AnimatePresence mode="wait">
             {isLoading ? (
               <motion.div
@@ -207,7 +203,6 @@ export default function Home() {
                   </motion.div>
                 </section>
 
-                {/* PERGUNTA MANUAL */}
                 <motion.section
                   className="flex flex-col w-full max-w-2xl bg-white rounded-lg shadow-lg p-4 mt-6"
                   initial={{ opacity: 0, y: 40 }}
@@ -236,13 +231,12 @@ export default function Home() {
                   </motion.button>
                 </motion.section>
 
-                {/* FAQ */}
                 <FaqTioBen />
               </>
             )}
           </AnimatePresence>
 
-          {/* MODAL DE RESPOSTA */}
+          {/* Modal de resposta */}
           <AnimatePresence>
             {showAnswerModal && (
               <motion.div
@@ -257,9 +251,7 @@ export default function Home() {
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.8, opacity: 0 }}
                 >
-                  <h2 className="text-xl font-bold text-amber-900 mb-4 text-center">
-                    {lastQuestion}
-                  </h2>
+                  <h2 className="text-xl font-bold text-amber-900 mb-4 text-center">{lastQuestion}</h2>
                   <div className="text-gray-700 text-base mb-6 whitespace-pre-line max-h-[60vh] overflow-auto">
                     {lastAnswer}
                   </div>
@@ -274,7 +266,6 @@ export default function Home() {
             )}
           </AnimatePresence>
 
-          {/* INTERSTITIAL (anúncio) */}
           {showInterstitial && (
             <VideoAdModal
               onComplete={() => {
@@ -289,5 +280,14 @@ export default function Home() {
         <Footer />
       </div>
     </>
+  );
+}
+
+// 🧱 Wrapping HomeContent with Suspense boundary
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="text-center py-10 text-gray-700">Carregando...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
