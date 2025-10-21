@@ -89,9 +89,7 @@ export async function getPublishedPostsForSitemapAction(): Promise<SitemapPostDa
             SELECT 
               slug,
               updated_at
-            FROM posts
-            WHERE 
-              is_active = TRUE               
+            FROM posts                      
             ORDER BY updated_at DESC;
         `;
 
