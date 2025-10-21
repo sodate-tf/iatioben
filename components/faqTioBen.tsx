@@ -1,98 +1,95 @@
-"use client"
+"use client";
 
-import { Card, CardContent } from "@/components/ui/card"
-import React from "react"
-import TestBanner from "./testBanner"
+import { Card, CardContent } from "@/components/ui/card";
+import React from "react";
+import TestBanner from "./testBanner";
 
-export default function FaqTioBenEstilizado() {
+export default function FaqTioBen() {
   const blocos = [
     {
       titulo: "Quem é o Tio Ben? 👨‍🏫",
       texto: [
-        "Oi! Eu sou o Tio Ben, seu catequista virtual! 😊 E estou aqui para te acompanhar na sua caminhada de fé. Minha missão é responder suas dúvidas sempre com base na nossa rica tradição católica: a Bíblia Sagrada, o Catecismo da Igreja Católica, os documentos oficiais da Igreja e nossa bela Tradição apostólica.",
-        "Gosto de conversar de forma simples e direta, como se já nos conhecêssemos há tempo! 😄 Acredito que a fé deve ser acessível a todos, então sempre procuro explicar as coisas de um jeito que você possa entender facilmente, seja qual for o seu nível de conhecimento sobre nossa religião.",
-        "No final das nossas conversas, sempre sugiro materiais para você continuar estudando e crescendo na fé. Afinal, conhecer mais sobre Jesus e nossa Igreja é uma jornada linda que nunca termina! 📚✨",
+        "Oi! Eu sou o Tio Ben, seu catequista virtual! 😊 Estou aqui para te ajudar na caminhada de fé e responder suas dúvidas sobre a liturgia diária, o Evangelho do dia e as leituras da missa.",
+        "Baseio todas as minhas respostas nos ensinamentos da Igreja Católica, na Bíblia Sagrada, no Catecismo da Igreja e na Tradição Apostólica.",
+        "Além das respostas, convido você a visitar o Blog IA Tio Ben, onde publico reflexões católicas, comentários sobre a liturgia do dia e conteúdos que fortalecem a vida espiritual. 🙏✨",
       ],
     },
     {
       titulo: "Como você responde às perguntas? 🤔",
       texto: [
-        "Todas as minhas respostas são fundamentadas exclusivamente no que nossa Igreja Católica ensina oficialmente! 📖 Uso a Bíblia Sagrada como fonte principal, complementada pelo Catecismo da Igreja Católica, documentos papais, concílios e nossa rica Tradição apostólica que vem desde os tempos dos apóstolos.",
-        "Se você me perguntar algo que eu ainda não sei como responder com base na doutrina católica, sou honesto contigo: digo que 'não sei ainda como responder isso e vou pesquisar'. Prefiro a sinceridade do que dar uma resposta sem fundamento sólido na nossa fé.",
+        "Minhas respostas são inspiradas na Palavra de Deus e na doutrina católica. Uso a Bíblia, o Catecismo e documentos da Igreja como base. 📖",
+        "Procuro unir o conhecimento da fé com o amor e a simplicidade da catequese. Quando a dúvida envolve o Evangelho ou a Liturgia do Dia, busco sempre explicar o contexto das leituras e ajudar na aplicação prática do ensinamento.",
       ],
     },
     {
-      titulo: "Que tipos de perguntas posso fazer? 🙏",
+      titulo: "O que posso encontrar na Liturgia Diária? 📅",
       texto: [
-        "Você pode me perguntar sobre qualquer coisa relacionada à nossa fé católica! 🌟 Dúvidas sobre a Bíblia, os sacramentos, vida de santos, orações, liturgia, moral católica, vida espiritual, devoções... Enfim, tudo que envolve nossa rica tradição!",
-        "Também posso te ajudar com questões do dia a dia vistas pela ótica católica: relacionamentos, família, trabalho, decisões importantes... A nossa fé ilumina todos os aspectos da vida! ✨ Gosto muito quando você traz situações práticas, porque assim posso mostrar como os ensinamentos de Jesus se aplicam no nosso cotidiano.",
-        "Se você estiver passando por momentos difíceis ou delicados como luto, depressão, conflitos familiares, sempre te oriento com muito carinho, mas também sugiro que busque apoio de profissionais de saúde, um catequista presencial ou uma pessoa de confiança. A fé é fundamental, mas às vezes precisamos de ajuda especializada também! 🤗",
+        "Na página de Liturgia Diária do site, você encontra as leituras do dia, o salmo, o Evangelho e uma breve reflexão para viver melhor o Evangelho de Jesus no cotidiano.",
+        "Cada dia traz uma nova oportunidade de meditar a Palavra de Deus e crescer na fé. Você pode acessar em: https://www.iatioben.com.br/liturgia-diaria",
       ],
     },
     {
-      titulo: "Como você trata assuntos delicados? 💙",
+      titulo: "O Blog IA Tio Ben fala sobre o quê? 📰",
       texto: [
-        "Quando você me procura com questões sensíveis como depressão, pensamentos suicidas, abuso, violência ou qualquer situação que envolve sofrimento profundo, meu coração se enche de cuidado por você! 💙 Sempre respondo com base na doutrina católica, mas com todo carinho e delicadeza que essas situações pedem.",
-        "Nossa Igreja tem uma riqueza imensa sobre o valor da vida humana, a dignidade da pessoa e o amor misericordioso de Deus. Compartilho esses ensinamentos sempre lembrando que você é amado infinitamente por Deus! ✨ Mas também tenho a responsabilidade de te orientar a buscar ajuda profissional adequada.",
-        "Sempre sugiro que, além de fortalecer sua fé e oração, procure apoio de um psicólogo, psiquiatra, um catequista presencial ou uma pessoa de confiança que possa te acompanhar de perto. Deus age através das pessoas e dos profissionais que Ele coloca no nosso caminho! 🙏",
+        "O Blog IA Tio Ben é um espaço de partilha de fé, onde publico artigos, orações, reflexões católicas e temas ligados à Liturgia, vida dos santos e espiritualidade cristã.",
+        "Os textos são simples, acessíveis e inspiradores, ideais para quem quer entender melhor a Bíblia e o Evangelho do dia. Cada postagem é uma forma de continuar o diálogo iniciado aqui na IA Tio Ben!",
       ],
     },
     {
-      titulo: "Por que sempre falo como se já te conhecesse? 😊",
+      titulo: "Posso fazer perguntas sobre o Evangelho ou temas pessoais? 🙏",
       texto: [
-        "Porque acredito que na família de Deus não existem estranhos! 👨‍👩‍👧‍👦 Quando você me procura, sei que está buscando crescer na fé, e isso já nos conecta como irmãos em Cristo. Por isso falo contigo sempre na primeira pessoa, como um amigo que se importa genuinamente com você!",
-        "Essa proximidade reflete o jeito de Jesus, que tratava as pessoas com intimidade e carinho, chamando-as pelo nome e conhecendo suas necessidades. Quero que você se sinta à vontade para compartilhar suas dúvidas, alegrias e preocupações comigo! 🤗",
-        "Nossa conversa flui naturalmente porque estamos unidos pela mesma fé e pelo desejo de conhecer mais sobre Deus. É como conversar com aquele amigo catequista que está sempre disposto a te ouvir e orientar com base no que aprendemos de Jesus e da nossa Igreja! ✨",
+        "Sim! Você pode me perguntar sobre o Evangelho, as leituras litúrgicas, vida dos santos, oração e até temas do cotidiano vistos com olhar cristão. ✨",
+        "Também acolho perguntas sobre família, trabalho, relacionamentos e fé. Sempre com respeito, carinho e base na doutrina da Igreja Católica.",
       ],
     },
     {
-      titulo: "Como posso aproveitar melhor nossas conversas? 🌱",
+      titulo: "Como aproveitar melhor o Blog e a IA Tio Ben juntos? 🌱",
       texto: [
-        "Primeiro, venha sempre com o coração aberto e disposto a aprender! 💗 Não existe pergunta boba quando se trata da nossa fé. Seja específico nas suas dúvidas e compartilhe o contexto da sua situação - assim posso te dar orientações mais precisas e práticas.",
-        "Aproveite as sugestões de estudo que sempre deixo no final! 📚 Elas são cuidadosamente escolhidas para complementar nossa conversa e te ajudar a se aprofundar no assunto. A fé cresce com conhecimento e oração, então quanto mais você estudar, mais rica será nossa próxima conversa!",
-        "E lembre-se: eu estou aqui para te acompanhar nessa linda jornada de fé, mas nada substitui sua participação na comunidade católica local, nos sacramentos e no relacionamento pessoal com Jesus na oração! Somos uma Igreja, uma família, e crescemos juntos! 🏛️✨",
+        "O ideal é usar a IA Tio Ben para tirar dúvidas e receber orientações diretas, e depois visitar o Blog IA Tio Ben e a página de Liturgia Diária para se aprofundar.",
+        "Dessa forma, você une a inteligência artificial à vivência da fé católica — estudando, meditando e rezando com a Liturgia do Dia. ❤️",
       ],
     },
-  ]
+  ];
 
   return (
- <section className="max-w-6xl mx-auto px-4 py-12">
-  <h2 className="text-3xl md:text-4xl font-bold text-center text-amber-900 mb-10">
-    Perguntas e Respostas sobre o Tio Ben 🙋‍♂️
-  </h2>
+    <section
+      className="max-w-6xl mx-auto px-4 py-12"
+      itemScope
+      itemType="https://schema.org/FAQPage"
+    >
+      <h2 className="text-3xl md:text-4xl font-bold text-center text-amber-900 mb-10">
+        Perguntas Frequentes sobre o Tio Ben, o Blog e a Liturgia Diária 🙋‍♂️
+      </h2>
 
-  <div className="grid gap-6 md:grid-cols-2">
-    {blocos.map((bloco, index) => (
-      <>
-        <div className="grid gap-6 md:grid-cols-2">
-    {blocos.map((bloco, index) => (
-      // CORREÇÃO: Envolvemos o Card e o TestBanner em uma <div>
-      // e movemos a 'key' para esta <div>.
-      <div key={index} className="col-span-1">
-        <Card className="border border-amber-300 bg-amber-50 shadow-lg hover:shadow-xl transition rounded-2xl">
-          <CardContent className="p-6">
-            <h3 className="text-xl font-semibold text-amber-800 mb-3">{bloco.titulo}</h3>
-            {/* O loop interno JÁ ESTÁ CORRETO: key={i} */}
-            {bloco.texto.map((par, i) => (
-              <p key={i} className="text-amber-900 mb-3 leading-relaxed">
-                {par}
-              </p>
-            ))}
-          </CardContent>
-        </Card>
+      <div className="grid gap-6 md:grid-cols-2">
+        {blocos.map((bloco, index) => (
+          <div key={index} itemScope itemProp="mainEntity" itemType="https://schema.org/Question">
+            <Card className="border border-amber-300 bg-amber-50 shadow-lg hover:shadow-xl transition rounded-2xl">
+              <CardContent className="p-6">
+                <h3
+                  className="text-xl font-semibold text-amber-800 mb-3"
+                  itemProp="name"
+                >
+                  {bloco.titulo}
+                </h3>
+                <div itemScope itemProp="acceptedAnswer" itemType="https://schema.org/Answer">
+                  {bloco.texto.map((par, i) => (
+                    <p
+                      key={i}
+                      className="text-amber-900 mb-3 leading-relaxed"
+                      itemProp="text"
+                    >
+                      {par}
+                    </p>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-        {/* Inserir o TestBanner a cada 2 cards, DENTRO DO ELEMENTO QUE RECEBE A KEY */}
-        {(index + 1) % 2 === 0 && <TestBanner />}
-      </div>
-    ))}
-  </div>
-
-        {/* Inserir o TestBanner a cada 2 cards */}
-        {(index + 1) % 2 === 0 && <TestBanner />}
-      </>
-    ))}
-  </div>
-</section>
-
-  )
+            {(index + 1) % 2 === 0 && <TestBanner />}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }

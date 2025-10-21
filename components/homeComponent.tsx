@@ -4,12 +4,10 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Spinner from "@/components/SpinnerLoading";
 import VideoAdModal from "@/components/testVideoAd";
-import Link from "next/link";
 import FaqTioBen from "@/components/faqTioBen";
 import Cabecalho from "@/components/cabecalho";
 import Head from "next/head";
 import Footer from "./Footer";
-
 
 export default function Home() {
   const [question, setQuestion] = useState("");
@@ -19,17 +17,14 @@ export default function Home() {
 
   const [lastQuestion, setLastQuestion] = useState("");
   const [lastAnswer, setLastAnswer] = useState("");
-
   const [showInterstitial, setShowInterstitial] = useState(false);
   const [showAnswerModal, setShowAnswerModal] = useState(false);
-  
- 
 
   const navigateToAnswer = () => {
     setShowInterstitial(false);
     setShowAnswerModal(true);
   };
-  
+
   const askQuestion = async (userQuestion: string) => {
     setErrorMessage("");
     try {
@@ -39,10 +34,7 @@ export default function Home() {
         body: JSON.stringify({ pergunta: userQuestion }),
       });
 
-      if (!res.ok) {
-        throw new Error("Falha na resposta da API.");
-      }
-
+      if (!res.ok) throw new Error("Falha na resposta da API.");
       const data = await res.json();
       return data.resposta;
     } catch (err) {
@@ -52,7 +44,7 @@ export default function Home() {
     }
   };
 
-  const logToSheets = async (pergunta : string, resposta: string) => {
+  const logToSheets = async (pergunta: string, resposta: string) => {
     try {
       await fetch("/api/sheets", {
         method: "POST",
@@ -74,8 +66,7 @@ export default function Home() {
     setLastQuestion(question);
     const answer = await askQuestion(question);
     setLastAnswer(answer);
-    
-    // Incrementa a contagem apenas se a pergunta for bem-sucedida
+
     if (answer) {
       questionCount.current += 1;
       logToSheets(question, answer);
@@ -92,70 +83,78 @@ export default function Home() {
       }
     }
   };
-  
+
+  const jsonLdHome = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "IA Tio Ben",
+    url: "https://www.iatioben.com.br",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: "https://www.iatioben.com.br/busca?q={search_term_string}",
+      "query-input": "required name=search_term_string",
+    },
+  };
 
   return (
     <>
-    <Head>
-        {/* --- SEO BÁSICO --- */}
-        <title>IA Tio Ben | Inteligência Artificial para Liturgia, Oração e Reflexões</title>
+      <Head>
+        {/* === SEO PRINCIPAL === */}
+        <title>IA Tio Ben | Liturgia Diária, Evangelho do Dia e Reflexões Católicas</title>
         <meta
           name="description"
-          content="IA Tio Ben - Sua inteligência artificial para liturgia diária, liturgia católica, leituras do dia e reflexões cristãs. Simples, acessível e direto para sua vida espiritual."
+          content="Converse com o Tio Ben, seu catequista virtual. Descubra a liturgia diária, o evangelho do dia, salmos e reflexões católicas. Explore o Blog IA Tio Ben e cresça na fé!"
         />
         <meta
           name="keywords"
-          content="IA Tio Ben, inteligência artificial católica, liturgia, liturgia católica, liturgia diária, leitura do dia, leituras liturgia do dia, oração diária, reflexões bíblicas"
+          content="IA Tio Ben, liturgia diária, evangelho do dia, leituras católicas, reflexões bíblicas, blog católico, inteligência artificial católica, orações, homilia, catequese"
         />
-
-        {/* --- SEO AVANÇADO --- */}
         <meta name="robots" content="index, follow" />
         <meta name="author" content="4U Develops" />
         <meta name="language" content="pt-BR" />
 
-        {/* --- OPEN GRAPH (para Facebook/WhatsApp) --- */}
+        {/* === OPEN GRAPH === */}
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="IA Tio Ben" />
-        <meta
-          property="og:title"
-          content="IA Tio Ben | Liturgia Diária e Inteligência Artificial Cristã"
-        />
-        <meta
-          property="og:description"
-          content="Receba a liturgia do dia, leituras, salmos e reflexões com ajuda da IA Tio Ben."
-        />
+        <meta property="og:title" content="IA Tio Ben | Evangelho e Liturgia Diária com Inteligência Artificial" />
+        <meta property="og:description" content="Receba o Evangelho do dia e reflexões católicas com o Tio Ben — sua inteligência artificial para a fé." />
         <meta property="og:url" content="https://www.iatioben.com.br/" />
         <meta property="og:image" content="https://www.iatioben.com.br/images/og_image.png" />
 
-        {/* --- TWITTER CARD --- */}
+        {/* === TWITTER CARD === */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:site" content="@iatioben" />
-        <meta
-          name="twitter:title"
-          content="IA Tio Ben | Inteligência Artificial para Liturgia e Reflexões"
-        />
-        <meta
-          name="twitter:description"
-          content="Liturgia diária, leituras católicas e reflexões na palma da sua mão com a IA Tio Ben."
-        />
+        <meta name="twitter:title" content="IA Tio Ben | Liturgia Diária e Reflexões Cristãs" />
+        <meta name="twitter:description" content="Descubra a liturgia católica do dia, salmos e evangelho com o Tio Ben. Uma forma leve e acessível de fortalecer a fé." />
         <meta name="twitter:image" content="https://www.iatioben.com.br/images/og_image.png" />
 
-        {/* --- FAVICON --- */}
         <link rel="icon" href="/favicon.ico" />
+
+        {/* === JSON-LD STRUCTURED DATA === */}
+        <script type="application/ld+json">{JSON.stringify(jsonLdHome)}</script>
       </Head>
-      
+
       <div className="flex flex-col min-h-screen bg-amber-400 relative">
         <Cabecalho />
-        <div className="flex-1 flex flex-col items-center px-4 py-8">
-          <motion.h1
-            className="text-3xl md:text-4xl font-extrabold text-gray-800 text-center mb-6"
+
+        <main className="flex-1 flex flex-col items-center px-4 py-8">
+          {/* INTRODUÇÃO */}
+          <motion.section
+            className="text-center mb-10 max-w-2xl"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            Pergunte para o Tio Ben
-          </motion.h1>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800 mb-4">
+              IA Tio Ben — Catequista Virtual para a Liturgia Diária e Reflexões Católicas
+            </h1>
+            <p className="text-lg text-gray-800 leading-relaxed">
+              Bem-vindo ao <strong>Tio Ben</strong>! 🙌  
+              Aqui você pode tirar dúvidas sobre fé, Bíblia, liturgia diária e a vida cristã.  
+              Nossa inteligência artificial foi criada para te acompanhar espiritualmente e te ajudar a compreender o <strong>Evangelho do Dia</strong> e as <strong>leituras litúrgicas</strong>.
+            </p>
+          </motion.section>
 
+          {/* PERSONAGEM */}
           <AnimatePresence mode="wait">
             {isLoading ? (
               <motion.div
@@ -164,13 +163,12 @@ export default function Home() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.4 }}
               >
                 <Spinner />
               </motion.div>
             ) : (
               <>
-                <div className="relative flex flex-col items-center">
+                <section className="relative flex flex-col items-center">
                   <motion.div
                     className="bg-amber-100 max-w-[80%] p-4 rounded-xl shadow-md relative z-10"
                     initial={{ opacity: 0, scale: 0.8 }}
@@ -178,7 +176,7 @@ export default function Home() {
                     transition={{ delay: 0.3, duration: 0.5 }}
                   >
                     <p className="text-amber-950 text-lg">
-                      👋 Oi! Eu sou o Tio Ben. Pode mandar sua pergunta que eu respondo com alegria!
+                      👋 Oi! Eu sou o Tio Ben. Pode mandar sua pergunta — quero te ajudar a entender melhor a fé e a liturgia!
                     </p>
                     <div className="absolute bottom-[-10px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[10px] border-r-[10px] border-t-[15px] border-transparent border-t-amber-100"></div>
                   </motion.div>
@@ -191,61 +189,63 @@ export default function Home() {
                   >
                     <Image
                       src="/images/ben-transparente.png"
-                      alt="Tio Ben"
+                      alt="IA Tio Ben — Catequista Virtual"
                       width={250}
                       height={250}
                       priority
                     />
                   </motion.div>
-                </div>
+                </section>
 
-                <motion.div
-                  className="flex flex-col w-full max-w-2xl bg-white rounded-lg shadow-lg p-4"
+                {/* CAMPO DE PERGUNTAS */}
+                <motion.section
+                  className="flex flex-col w-full max-w-2xl bg-white rounded-lg shadow-lg p-4 mt-6"
                   initial={{ opacity: 0, y: 40 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6, duration: 0.5 }}
                 >
+                  <h2 className="text-xl font-semibold text-amber-900 mb-3 text-center">
+                    Faça sua pergunta ao Tio Ben 🙋‍♂️
+                  </h2>
                   <textarea
                     className="flex-1 p-2 border border-gray-300 rounded-lg text-lg text-gray-700 resize-none focus:outline-none focus:ring-2 focus:ring-amber-400"
                     rows={4}
-                    placeholder="Digite sua pergunta aqui..."
+                    placeholder="Digite sua pergunta sobre liturgia, fé, oração ou o evangelho..."
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
                     disabled={isLoading}
                   />
-                  {errorMessage && (
-                    <p className="text-red-500 text-sm mt-2">{errorMessage}</p>
-                  )}
+                  {errorMessage && <p className="text-red-500 text-sm mt-2">{errorMessage}</p>}
                   <motion.button
                     whileTap={{ scale: 0.9 }}
                     onClick={handleAskQuestion}
                     disabled={isLoading || question.trim() === ""}
-                    className="mt-4 bg-amber-700 text-white px-4 py-2 rounded-lg font-semibold hover:cursor-pointer hover:bg-amber-800 disabled:opacity-50"
+                    className="mt-4 bg-amber-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-amber-800 disabled:opacity-50"
                   >
                     {isLoading ? "Carregando..." : "Perguntar"}
                   </motion.button>
-                </motion.div>
+                </motion.section>
 
+                {/* FAQ */}
                 <FaqTioBen />
               </>
             )}
           </AnimatePresence>
 
+          {/* MODAL DE RESPOSTA */}
           <AnimatePresence>
             {showAnswerModal && (
               <motion.div
-                className="fixed inset-0 flex items-start overflow-auto justify-center bg-black/50 z-51 pt-16 pb-16"
+                className="fixed inset-0 flex items-start overflow-auto justify-center bg-black/50 z-50 pt-16 pb-16"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
               >
                 <motion.div
-                  className="bg-white rounded-xl p-6 max-w-lg w-full shadow-xl flex flex-col items-center relative z-51"
+                  className="bg-white rounded-xl p-6 max-w-lg w-full shadow-xl flex flex-col items-center relative"
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.8, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
                 >
                   <h2 className="text-xl font-bold text-amber-900 mb-4 text-center">
                     {lastQuestion}
@@ -273,9 +273,7 @@ export default function Home() {
               skipAfter={7}
             />
           )}
-
-          
-        </div>
+        </main>
 
         <Footer />
       </div>
