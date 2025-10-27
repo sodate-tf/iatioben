@@ -4,11 +4,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
    
 
+  
   // 🔹 Limpa automaticamente os arquivos estáticos antigos (evita ChunkLoadError)
-  webpack: (config) => {
-    config.output.clean = true;
-    return config;
-  },
+    turbopack: {},
 
   // 🔹 Otimiza cache no Vercel (estáveis para chunks e estilos)
   async headers() {
