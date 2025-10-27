@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+   
 
   // 🔹 Limpa automaticamente os arquivos estáticos antigos (evita ChunkLoadError)
   webpack: (config) => {
