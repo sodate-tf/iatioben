@@ -40,15 +40,7 @@ export default function Cabecalho() {
 
  // 2. Gerenciamento do Service Worker e PWA
  useEffect(() => {
-  if ("serviceWorker" in navigator) {
-   navigator.serviceWorker
-    .register("/service-worker.js")  
-    .catch((error) =>
-     console.error("Falha ao registrar o Service Worker:", error)
-    );
-  }
-
-  const handleBeforeInstallPrompt = (e: Event) => {
+   const handleBeforeInstallPrompt = (e: Event) => {
    e.preventDefault();
    setDeferredPrompt(e as BeforeInstallPromptEvent);
    setInstallable(true);
