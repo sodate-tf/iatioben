@@ -39,13 +39,13 @@ export default function BlogCardList() {
             className="w-full grid grid-cols-1 md:grid-cols-2 gap-6"
           >
             {activePosts.map((post) => {
-              const hasCover = !!post.coverImageUrl;
+              const hasCover = !!post.coverImageUrl && post.coverImageUrl.trim() !== '';
               const imageSrc = hasCover ? post.coverImageUrl : FALLBACK_IMAGE;
 
               return (
                 <Link href={`/blog/${post.slug}`} key={post.id} className="block">
                   <article className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-amber-200">
-                    <div className="relative w-full h-48 md:h-56 overflow-hidden">
+                    <div className="relative w-full aspect-[16/9] overflow-hidden">
                       <Image
                         src={imageSrc || FALLBACK_IMAGE}
                         alt={post.title}
@@ -57,15 +57,23 @@ export default function BlogCardList() {
                         loading="lazy"
                       />
 
-                      {/* Se não houver imagem, exibir título sobre o fallback */}
+                      {/* Exibe o título sobre a imagem fallback */}
                       {!hasCover && (
                         <div className="absolute inset-0 flex items-center justify-center text-center px-4">
                           <h2
-                            className="font-extrabold uppercase text-[#FFD119] leading-tight break-words"
+                            className="font-extrabold uppercase text-[#FFD119] leading-tight break-words text-balance"
                             style={{
-                              fontSize: 'clamp(1.2rem, 6vw, 3.8rem)', // Responsivo
+                              fontSize: 'clamp(0.9rem, 3vw, 2rem)',
                               width: '66%',
+                              maxHeight: '90%',
+                              lineHeight: '1.1',
                               textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
+                              overflowWrap: 'break-word',
+                              wordBreak: 'break-word',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              textAlign: 'center',
                             }}
                           >
                             {post.title}
