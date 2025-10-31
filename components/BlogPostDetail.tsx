@@ -1,95 +1,68 @@
-// components/BlogPostDetail.tsx
 'use client';
 import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-// O Spinner foi removido pois os dados já chegam prontos via post: Post
-// import Spinner from './SpinnerLoading'; 
-import Cabecalho from './cabecalho';
-// O AdSense foi mantido no import, mas não estava sendo usado no JSX
-// import AdSense from './Adsense'; 
 import type { Post } from '@/app/adminTioBen/types';
 import Image from 'next/image';
+import Cabecalho from './cabecalho';
 import Footer from './Footer';
 
+const FALLBACK_IMAGE = '/images/santo-do-dia-ia-tio-ben.png';
+const SITE_URL = 'https://www.iatioben.com.br';
+
 interface BlogPostDetailProps {
-  // Recebe o objeto Post COMPLETO
   post: Post;
 }
 
-// ⚠️ Mude para HTTPS
-const FALLBACK_IMAGE_URL = "/images/default-cover.png";
-const SITE_URL = "https://www.iatioben.com.br"; // Alterado para HTTPS (melhor prática!)
-
 export default function BlogPostDetail({ post }: BlogPostDetailProps) {
-  // Os dados já vêm prontos
-  const postData = post;
-
-  // Mantém apenas os estados de interatividade/UI
   const [error, setError] = useState<string | null>(null);
-  // Mantém a funcionalidade de acessibilidade de fonte
   const [fontSize, setFontSize] = useState(16);
 
-  // 📤 Compartilhar post
   const handleShare = useCallback(async () => {
-    // Validação de dados
-    if (!postData) return;
+    if (!post) return;
+    const shareText = `🔥 Leia: ${post.title} no Blog do Tio Ben!\n\n${post.metaDescription || post.title}\n\n`;
+    const shareUrl = window.location.href;
 
-    const shareText = `🔥 Leia: ${postData.title} no Blog do Tio Ben!\n\n${postData.metaDescription || postData.title}\n\n`;
-    const shareUrl = window.location.href; // Funciona apenas no lado do cliente
-
-    if (!shareUrl) {
-      console.error("URL da página não disponível para compartilhamento.");
-      return;
-    }
+    if (!shareUrl) return;
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: postData.title,
+          title: post.title,
           text: shareText,
           url: shareUrl,
         });
       } catch (err) {
-        // Validação de erro com tipo explícito
-        const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido ao compartilhar.';
-        console.error('Erro ao compartilhar:', errorMessage);
-        setError(errorMessage);
+        const msg = err instanceof Error ? err.message : 'Erro desconhecido ao compartilhar.';
+        setError(msg);
       }
     } else {
       try {
         await navigator.clipboard.writeText(shareText + shareUrl);
         alert('Link e resumo do post copiados para a área de transferência!');
       } catch (err) {
-        // Erro de cópia não interrompe a UI principal, apenas loga
         console.error('Erro ao copiar:', err);
       }
     }
-  }, [postData]);
+  }, [post]);
 
-  // 📅 Data formatada: Validação de data
-  const dataFormatada = postData.publishDate
-    ? new Date(postData.publishDate).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-    })
+  const dataFormatada = post.publishDate
+    ? new Date(post.publishDate).toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      })
     : '';
 
-  const imageUrl = postData.coverImageUrl || FALLBACK_IMAGE_URL;
-  // O canonical URL não precisa ser re-calculado, mas foi mantido
-  // const canonicalUrl = `${SITE_URL}/blog/${postData.slug}`; 
+  const hasCover = !!post.coverImageUrl && post.coverImageUrl.trim() !== '';
+  const imageUrl = hasCover ? post.coverImageUrl : FALLBACK_IMAGE;
 
-  // Se houver erro de compartilhamento ou outros erros de UI
   if (error) {
     return (
-      // O contêiner principal 'w-full' e o 'max-w-4xl mx-auto' já ajudam a centralizar e limitar
-      <div className="flex flex-col min-h-screen bg-amber-400 relative w-full overflow-x-hidden"> 
+      <div className="flex flex-col min-h-screen bg-amber-400 relative w-full overflow-x-hidden">
         <Cabecalho />
         <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
-          <div className="w-full text-center">
-            <p className="text-red-600 text-lg">{error}</p>
-          </div>
+          <p className="text-red-600 text-lg text-center">{error}</p>
         </div>
         <Footer />
       </div>
@@ -97,20 +70,17 @@ export default function BlogPostDetail({ post }: BlogPostDetailProps) {
   }
 
   return (
-    // 💡 Adicionado 'overflow-x-hidden' para garantir que nada na tela cause rolagem horizontal
     <div className="flex flex-col min-h-screen bg-amber-400 relative w-full overflow-x-hidden">
       <Cabecalho />
 
-      {/* 💡 Ajustado: 'px-4' (mobile) e 'max-w-4xl' garante que o conteúdo não estoure */}
-      <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full"> 
+      <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          // Ajuste de padding: 'p-6' para mobile, 'md:p-8' para desktop
-          className="bg-white rounded-xl shadow-2xl p-6 md:p-8 w-full" 
+          className="bg-white rounded-xl shadow-2xl p-6 md:p-8 w-full"
         >
-          {/* Cabeçalho do Post */}
+          {/* Cabeçalho com botão de voltar e compartilhar */}
           <div className="flex justify-between items-center mb-6 border-b pb-3 border-amber-200">
             <Link
               href="/blog"
@@ -121,7 +91,6 @@ export default function BlogPostDetail({ post }: BlogPostDetailProps) {
 
             <button
               onClick={handleShare}
-              // Ajustes de tamanho do botão para mobile
               className="px-3 py-1 text-xs md:px-4 md:py-2 rounded-full bg-amber-600 text-white md:text-sm font-semibold shadow-md hover:bg-amber-700 transition-colors flex items-center gap-1"
             >
               <svg
@@ -139,45 +108,53 @@ export default function BlogPostDetail({ post }: BlogPostDetailProps) {
             </button>
           </div>
 
-          {/* Imagem de capa: Ajustado para usar aspect ratio e garantir que a imagem inteira apareça */}
-          <div className="mb-6 relative w-full">
-            {/* 💡 Novo: Adicionado 'aspect-[16/9]' para forçar a proporção 16:9 (bom para capas) */}
-            <div className="relative w-full aspect-[16/9] overflow-hidden rounded-lg shadow-xl"> 
-              <Image
-                src={imageUrl}
-                alt={postData.title}
-                fill
-                // 💡 Alterado 'object-cover' para 'object-contain' para mostrar a imagem INTEIRA
-                // Se o desejo for preencher o espaço (e talvez cortar), volte para 'object-cover'
-                // Aqui, 'object-contain' garante que ela não seja cortada.
-                className="object-contain" 
-                sizes="(max-width: 768px) 100vw, 800px"
-              />
-            </div>
-            {/* 💡 Removido o estilo fixo de altura: style={{ height: '24rem' }} */}
+          {/* Imagem de capa ou fallback com título sobreposto */}
+          <div className="mb-6 relative w-full aspect-[16/9] overflow-hidden rounded-lg shadow-xl">
+            <Image
+              src={imageUrl || FALLBACK_IMAGE}
+              alt={post.title}
+              fill
+              sizes="(max-width: 768px) 100vw, 800px"
+              className={`object-cover object-center ${hasCover ? '' : 'brightness-50'}`}
+            />
+            {!hasCover && (
+              <div className="absolute inset-0 flex items-center justify-center text-center px-4">
+                <h2
+                  className="font-extrabold uppercase text-[#FFD119] leading-tight break-words"
+                  style={{
+                    fontSize: 'clamp(1.2rem, 6vw, 3.8rem)',
+                    width: '66%',
+                    textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
+                    wordWrap: 'break-word',
+                    lineHeight: '1.1',
+                  }}
+                >
+                  {post.title}
+                </h2>
+              </div>
+            )}
           </div>
 
-          {/* Título e Metadados */}
+          {/* Título e informações */}
           <div className="text-center mb-6">
             <h1 className="text-3xl md:text-4xl font-extrabold text-amber-900 mb-3 leading-tight">
-              {postData.title}
+              {post.title}
             </h1>
             <p className="inline-block bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1 rounded-full mb-2">
-              {postData.categoryName ?? 'Sem categoria'}
+              {post.categoryName ?? 'Sem categoria'}
             </p>
             <p className="text-sm text-gray-500">Publicado em {dataFormatada}</p>
           </div>
 
           {/* Conteúdo */}
           <div
-            className="text-gray-700 leading-relaxed prose max-w-none" // Adicionado 'prose max-w-none' para estilizar HTML interno
+            className="text-gray-700 leading-relaxed prose max-w-none"
             style={{ fontSize: `${fontSize}px` }}
-            dangerouslySetInnerHTML={{ __html: postData.content }}
+            dangerouslySetInnerHTML={{ __html: post.content }}
           />
         </motion.div>
       </div>
 
-      {/* Anúncios e Rodapé */}
       <Footer />
     </div>
   );

@@ -3,17 +3,16 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import Image from 'next/image';
 import Spinner from './SpinnerLoading';
 import Cabecalho from './cabecalho';
-import AdSense from './Adsense';
-import { useData } from '@/app/adminTioBen/contexts/DataContext';
-import Image from 'next/image';
 import Footer from './Footer';
+import { useData } from '@/app/adminTioBen/contexts/DataContext';
+
+const FALLBACK_IMAGE = '/images/santo-do-dia-ia-tio-ben.png';
 
 export default function BlogCardList() {
   const { activePosts } = useData();
-
-  // Simulando loading rápido para efeito visual
   const isLoading = !activePosts.length;
 
   return (
@@ -39,39 +38,58 @@ export default function BlogCardList() {
             transition={{ duration: 0.5 }}
             className="w-full grid grid-cols-1 md:grid-cols-2 gap-6"
           >
-            {activePosts.map((post) => (
-              <Link
-                href={`/blog/${post.slug}`}
-                key={post.id}
-                className="block"
-              >
-                <article className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-amber-200">
-                  {post.coverImageUrl && (
-                    <Image
-                      src={post.coverImageUrl}
-                      alt={post.title}
-                      className="w-full h-48 object-cover object-center"
-                      loading="lazy"
-                    />
-                  )}
-                  <div className="p-4">
-                    <h2 className="text-xl font-bold text-amber-900 mb-2 leading-snug">
-                      {post.title}
-                    </h2>
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-3">
-                      {post.content
-                        ? post.content.replace(/<[^>]+>/g, '').slice(0, 120) + '...'
-                        : ''}
-                    </p>                    
-                  </div>
-                </article>
-              </Link>
-            ))}
+            {activePosts.map((post) => {
+              const hasCover = !!post.coverImageUrl;
+              const imageSrc = hasCover ? post.coverImageUrl : FALLBACK_IMAGE;
+
+              return (
+                <Link href={`/blog/${post.slug}`} key={post.id} className="block">
+                  <article className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden border border-amber-200">
+                    <div className="relative w-full h-48 md:h-56 overflow-hidden">
+                      <Image
+                        src={imageSrc || FALLBACK_IMAGE}
+                        alt={post.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className={`object-cover object-center ${
+                          hasCover ? '' : 'brightness-50'
+                        }`}
+                        loading="lazy"
+                      />
+
+                      {/* Se não houver imagem, exibir título sobre o fallback */}
+                      {!hasCover && (
+                        <div className="absolute inset-0 flex items-center justify-center text-center px-4">
+                          <h2
+                            className="font-extrabold uppercase text-[#FFD119] leading-tight break-words"
+                            style={{
+                              fontSize: 'clamp(1.2rem, 6vw, 3.8rem)', // Responsivo
+                              width: '66%',
+                              textShadow: '2px 2px 6px rgba(0,0,0,0.8)',
+                            }}
+                          >
+                            {post.title}
+                          </h2>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-4">
+                      <h3 className="text-xl font-bold text-amber-900 mb-2 leading-snug line-clamp-2">
+                        {post.title}
+                      </h3>
+                      <p className="text-gray-600 text-sm mb-3 line-clamp-3">
+                        {post.metaDescription}
+                      </p>
+                    </div>
+                  </article>
+                </Link>
+              );
+            })}
           </motion.div>
         )}
       </div>
 
-      
       <Footer />
     </div>
   );
