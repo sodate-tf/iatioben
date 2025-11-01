@@ -67,8 +67,8 @@ const PostFormPage: React.FC<PostFormPageProps> = ({ postId }) => {
 
     const existing = getPost(postId);
     if (!existing) {
-      setError('Post não encontrado. Redirecionando...');
-      setTimeout(navigateBack, 2500);
+     // setError('Post não encontrado. Redirecionando...');
+    //  setTimeout(navigateBack, 2500);
       return;
     }
 
