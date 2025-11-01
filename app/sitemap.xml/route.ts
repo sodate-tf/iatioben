@@ -1,29 +1,28 @@
 import { NextResponse } from "next/server";
-import { getPublishedPostsForSitemapAction } from "@/app/adminTioBen/actions/postAction"; // Ajuste o caminho conforme sua estrutura
+import { getPublishedPostsForSitemapAction } from "@/app/adminTioBen/actions/postAction";
 
-// Tipagem para a rota sitemap
+// Tipagem
 interface SitemapUrl {
   url: string;
   date: Date;
   changefreq: "daily" | "weekly" | "monthly" | "yearly";
-  priority: "1.0" | "0.9" | "0.8" | "0.7" | "0.6" | "0.5" | "0.4" | "0.3" | "0.2" | "0.1" | "0.0";
+  priority: string;
 }
 
 export async function GET(): Promise<NextResponse> {
-  const baseUrl: string = "https://www.iatioben.com.br";
-  const today: Date = new Date();
+  const baseUrl = "https://www.iatioben.com.br";
+  const today = new Date();
 
-  // Função auxiliar para formatar datas no padrão dd-mm-yyyy para as URLs de liturgia
   const formatDateUrl = (date: Date): string => {
-    const dd: string = String(date.getDate()).padStart(2, "0");
-    const mm: string = String(date.getMonth() + 1).padStart(2, "0");
-    const yyyy: number = date.getFullYear();
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
     return `${dd}-${mm}-${yyyy}`;
   };
 
   const sitemapUrls: SitemapUrl[] = [];
 
-  // 1. URLs estáticas (Home)
+  // 1️⃣ Página principal
   sitemapUrls.push({
     url: `${baseUrl}/`,
     date: today,
@@ -31,11 +30,10 @@ export async function GET(): Promise<NextResponse> {
     priority: "1.0",
   });
 
-  // 2. URLs da liturgia: de 3 dias antes até 14 dias depois
+  // 2️⃣ Liturgia diária: 3 dias antes e 14 depois
   for (let i = -3; i <= 14; i++) {
-    const d: Date = new Date(today);
+    const d = new Date(today);
     d.setDate(today.getDate() + i);
-
     sitemapUrls.push({
       url: `${baseUrl}/liturgia-diaria/${formatDateUrl(d)}`,
       date: d,
@@ -44,45 +42,45 @@ export async function GET(): Promise<NextResponse> {
     });
   }
 
-  // 3. URLs dos posts do blog (Busca Assíncrona e Tipada)
+  // 3️⃣ Posts do blog
   try {
     const blogPosts = await getPublishedPostsForSitemapAction();
-    
-    blogPosts.forEach((post) => {
-      // Validação de dados de postagem: o slug deve existir e ser uma string válida
-      if (typeof post.slug === 'string' && post.slug.length > 0) {
+    for (const post of blogPosts) {
+      if (typeof post.slug === "string" && post.slug.trim().length > 0) {
         sitemapUrls.push({
           url: `${baseUrl}/blog/${post.slug}`,
-          date: post.updatedAt,
+          date: new Date(post.updatedAt ?? post.updatedAt ?? today),
           changefreq: "daily",
           priority: "0.7",
         });
       }
-    });
+    }
   } catch (error) {
-    // Logar o erro, mas permitir que o sitemap seja gerado sem os posts
-    console.error("Falha ao adicionar posts do blog ao sitemap:", error);
+    console.error("[SITEMAP] Erro ao buscar posts:", error);
   }
 
-  // Gera XML do sitemap
-  const sitemap: string = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  ${sitemapUrls
-    .map(
-      (item: SitemapUrl) => `<url>
+  // 4️⃣ Gerar XML
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml"
+>
+${sitemapUrls
+  .map(
+    (item) => `  <url>
     <loc>${item.url}</loc>
     <lastmod>${item.date.toISOString()}</lastmod>
     <changefreq>${item.changefreq}</changefreq>
     <priority>${item.priority}</priority>
   </url>`
-    )
-    .join("\n")}
+  )
+  .join("\n")}
 </urlset>`;
 
-  return new NextResponse(sitemap, {
+  return new NextResponse(xml, {
     headers: {
-      "Content-Type": "application/xml",
-      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Content-Type": "application/xml; charset=utf-8",
+      "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
     },
   });
 }

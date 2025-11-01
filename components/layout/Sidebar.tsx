@@ -1,59 +1,69 @@
-// Sidebar.tsx
-"use client"; // Necessário para usar o hook useRouter e usePathname
+'use client';
 
 import React from 'react';
-import Link from 'next/link'; // 👈 Importação CORRETA do Next.js
-import { usePathname } from 'next/navigation'; // 👈 Hook para obter a rota atual
-import { FileText, Tag } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { FileText, Tag, Home, Settings } from 'lucide-react';
 
-const Sidebar = () => {
-    // Obtém o caminho da URL atual (ex: /admin/posts)
-    const pathname = usePathname();
+interface SidebarProps {
+  onClose?: () => void;
+}
 
-    // ⚠️ Lógica ajustada para receber o 'href' e comparar com o 'pathname'
-    const navLinkClasses = (href: string): string => {
-        // Verifica se a rota atual corresponde ao link.
-        // Usamos 'includes' para que /admin/posts/new ainda ative /admin/posts
-        const isActive = pathname.includes(href) && href !== '/adminHome'; 
-        
-        // Ajuste fino para a rota base /adminHome
-        if (href === '/adminHome' && pathname !== '/adminHome') {
-            return navLinkClasses('/adminHome/artigos'); // Redireciona visualmente para o primeiro item
-        }
+const navItems = [
+  { href: '/adminHome', label: 'Dashboard', icon: Home },
+  { href: '/adminHome/artigos', label: 'Artigos', icon: FileText },
+  { href: '/adminHome/categories', label: 'Categorias', icon: Tag },
+  { href: '/adminHome/configuracoes', label: 'Configurações', icon: Settings },
+];
 
-        return `flex items-center px-4 py-2.5 mt-2 text-gray-100 transition-colors duration-300 transform rounded-lg hover:bg-blue-700 ${
-            isActive ? 'bg-blue-700 shadow-lg' : ''
-        }`;
-    };
+const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
+  const pathname = usePathname();
 
-    return (
-        <div className="flex flex-col w-64 bg-primary text-white">
-            <div className="flex items-center justify-center h-20 border-b border-blue-800">
-                <h1 className="text-2xl font-bold">IA Tio Ben</h1>
-            </div>
-            <nav className="flex-1 px-4 py-4">
-                
-                {/* CORREÇÃO 1: Substituído NavLink por Link e 'to' por 'href' */}
-                <Link 
-                    href="/adminHome/artigos" 
-                    className={navLinkClasses("/adminHome/artigos")} // Passa o caminho para a função de classe
-                >
-                    <FileText size={20} />
-                    <span className="mx-4 font-medium">Posts</span>
-                </Link>
-                
-                {/* CORREÇÃO 2: Substituído NavLink por Link e 'to' por 'href' */}
-                <Link 
-                    href="/adminHome/categories" 
-                    className={navLinkClasses("/adminHome/categories")}
-                >
-                    <Tag size={20} />
-                    <span className="mx-4 font-medium">Categorias</span>
-                </Link>
-                
-            </nav>
-        </div>
-    );
+  return (
+    <nav className="h-full flex flex-col bg-card border-r border-border">
+      {/* LOGO / TOPO */}
+      <div className="flex items-center justify-center h-16 border-b border-border">
+        <Link
+          href="/adminHome"
+          onClick={onClose}
+          className="text-xl font-bold text-primary hover:text-primary/90 transition-colors"
+        >
+          IA Tio Ben
+        </Link>
+      </div>
+
+      {/* LINKS */}
+      <ul className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+        {navItems.map(({ href, label, icon: Icon }) => {
+          const active =
+            pathname === href || pathname.startsWith(`${href}/`);
+
+          return (
+            <li key={href}>
+              <Link
+                href={href}
+                onClick={onClose}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors duration-200
+                  ${
+                    active
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="text-sm font-medium">{label}</span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+
+      {/* RODAPÉ */}
+      <div className="p-4 border-t border-border text-xs text-muted-foreground text-center">
+        © {new Date().getFullYear()} IA Tio Ben
+      </div>
+    </nav>
+  );
 };
 
-export default Sidebar
+export default Sidebar;

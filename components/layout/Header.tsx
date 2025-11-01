@@ -1,32 +1,36 @@
-// Header.tsx
-"use client"; // 👈 Adicionado para permitir o uso de hooks do Next.js
+'use client';
 
 import React from 'react';
-import { LogOut } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/adminTioBen/contexts/AuthContext';
-import { useRouter } from 'next/navigation'; // 👈 Importação CORRETA do Next.js
 
 const Header = () => {
   const { logout } = useAuth();
-  const router = useRouter(); // 👈 Inicializa o hook de roteamento do Next.js
+  const router = useRouter();
 
   const handleLogout = () => {
     logout();
-    // ⚠️ CORREÇÃO: Usando router.push() no lugar de navigate()
-    router.push('/adminTioBen/login'); 
+    router.push('/adminTioBen/login');
   };
 
   return (
-    <header className="bg-surface shadow-md p-4 flex justify-between items-center">
-      <h1 className="text-xl font-semibold text-text-primary">Painel Administrativo</h1>
+    <div className="flex items-center gap-4">
+      {/* Perfil / nome do usuário (exemplo) */}
+      <div className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition">
+        <User className="w-4 h-4" />
+        <span>Administrador</span>
+      </div>
+
+      {/* Botão de sair */}
       <button
         onClick={handleLogout}
-        className="flex items-center gap-2 text-text-secondary hover:text-primary transition-colors duration-200"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-muted hover:bg-destructive hover:text-destructive-foreground transition-colors text-sm"
       >
-        <LogOut size={18} />
+        <LogOut size={16} />
         <span>Sair</span>
       </button>
-    </header>
+    </div>
   );
 };
 
