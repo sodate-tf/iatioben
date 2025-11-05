@@ -88,7 +88,7 @@ export async function getPublishedPostsForSitemapAction(): Promise<SitemapPostDa
         const { rows } = await sql`
             SELECT 
               slug,
-              updated_at
+              COALESCE(updated_at, created_at) AS updated_at
             FROM posts                      
             ORDER BY updated_at DESC;
         `;
