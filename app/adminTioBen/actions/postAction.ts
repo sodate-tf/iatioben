@@ -82,9 +82,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
  */
 
 export async function getPublishedPostsForSitemapAction(): Promise<SitemapPostData[]> {
-    try {
-        const now = new Date().toISOString();
-        
+    try {      
         const { rows } = await sql`
             SELECT 
               slug,
