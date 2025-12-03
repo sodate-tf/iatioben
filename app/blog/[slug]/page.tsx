@@ -29,13 +29,8 @@ async function getPostDataBySlug(slug: string): Promise<Post | null> {
 // -----------------------------------------------------------------------
 // generateMetadata (params agora é Promise)
 // -----------------------------------------------------------------------
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-
   const postData = await getPostDataBySlug(slug);
 
   if (!postData) {
@@ -44,8 +39,37 @@ export async function generateMetadata({
     };
   }
 
-  return generatePostMetadata(postData);
+  return {
+    title: postData.title,
+    description: postData.metaDescription ?? postData.title,
+    alternates: {
+      canonical: `https://www.iatioben.com.br/blog/${postData.slug}`,
+    },
+    openGraph: {
+      title: postData.title,
+      description: postData.metaDescription,
+      type: "article",
+      url: `https://www.iatioben.com.br/blog/${postData.slug}`,
+      locale: "pt_BR",
+      siteName: "Blog IA Tio Ben",
+      images: [
+        {
+          url: postData.coverImageUrl || "https://www.iatioben.com.br/images/default-cover.png",
+          width: 1200,
+          height: 630,
+          alt: postData.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: postData.title,
+      description: postData.metaDescription,
+      images: [postData.coverImageUrl || "https://www.iatioben.com.br/images/default-cover.png"],
+    },
+  };
 }
+
 
 // -----------------------------------------------------------------------
 // Componente principal (Server Component) - params como Promise

@@ -68,12 +68,53 @@ export default function BlogPostDetail({ post }: BlogPostDetailProps) {
       </div>
     );
   }
+  // ---------------------------------------------------------------------------
+// 📌 JSON-LD (Schema.org)
+// ---------------------------------------------------------------------------
+const schemaData = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": post.title,
+  "description": post.metaDescription || post.title,
+  "image": post.coverImageUrl
+    ? `${post.coverImageUrl}`
+    : "https://www.iatioben.com.br/images/default-cover.png",
+  "author": {
+    "@type": "Organization",
+    "name": "IA Tio Ben",
+    "url": "https://www.iatioben.com.br"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "IA Tio Ben",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://www.iatioben.com.br/images/ben-transparente.png"
+    }
+  },
+  "url": `https://www.iatioben.com.br/blog/${post.slug}`,
+  "mainEntityOfPage": `https://www.iatioben.com.br/blog/${post.slug}`,
+  "datePublished": post.publishDate,
+  "dateModified": post.updatedAt ?? post.publishDate,
+  // Extra para SEO de "Santos"
+  "about": {
+    "@type": "Person",
+    "name": post.title,
+    "description": post.metaDescription || ""
+  }
+};
+
+
 
   return (
     <div className="flex flex-col min-h-screen bg-amber-400 relative w-full overflow-x-hidden">
       <Cabecalho />
 
       <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
+        />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
