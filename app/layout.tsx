@@ -29,7 +29,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR">
       <body>
-        {children}
+        <main className="pb-20">
+          {children}
+        </main>
 
         {/* ✅ WebSite Schema GLOBAL */}
         <Script

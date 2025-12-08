@@ -107,38 +107,103 @@ export default function Cabecalho() {
         </nav>
       </header>
 
-      {/* ✅ BOTTOM BAR MOBILE (UX DE APP) */}
-      <nav className="fixed md:hidden bottom-0 left-0 right-0 z-30 bg-white border-t shadow-xl grid grid-cols-4">
-        <Link href="/" className="flex flex-col items-center justify-center py-2 text-xs hover:bg-amber-100 active:scale-95 transition text-gray-900">
-          <Bot size={20} />
-          IA Tio Ben
-        </Link>
+      {/* ✅ BOTTOM BAR MOBILE (UX DE APP - TOQUE CONFORTÁVEL) */}
+            <nav
+            className="
+                fixed md:hidden bottom-0 left-0 right-0 z-30 
+                bg-white border-t shadow-2xl 
+                grid grid-cols-4
+                h-20
+                px-1
+                pb-safe
+            "
+            >
+            <Link
+                href="/"
+                className="
+                flex flex-col items-center justify-center
+                gap-1
+                text-sm
+                text-gray-900
+                hover:bg-amber-100
+                active:scale-95
+                transition
+                w-full h-full
+                "
+            >
+                <Bot size={24} />
+                <span className="text-[11px] font-medium">IA Tio Ben</span>
+            </Link>
 
-        <Link href={todayUrl} className="flex flex-col items-center justify-center py-2 text-xs hover:bg-amber-100 active:scale-95 transition text-gray-900">
-          <BookOpen size={20} />
-          Liturgia
-        </Link>
+            <Link
+                href={todayUrl}
+                className="
+                flex flex-col items-center justify-center
+                gap-1
+                text-sm
+                text-gray-900
+                hover:bg-amber-100
+                active:scale-95
+                transition
+                w-full h-full
+                "
+            >
+                <BookOpen size={24} />
+                <span className="text-[11px] font-medium">Liturgia</span>
+            </Link>
 
-        <Link href="/blog" className="flex flex-col items-center justify-center py-2 text-xs hover:bg-amber-100 active:scale-95 transition text-gray-900">
-          <Newspaper size={20} />
-          Blog
-        </Link>
+            <Link
+                href="/blog"
+                className="
+                flex flex-col items-center justify-center
+                gap-1
+                text-sm
+                text-gray-900
+                hover:bg-amber-100
+                active:scale-95
+                transition
+                w-full h-full
+                "
+            >
+                <Newspaper size={24} />
+                <span className="text-[11px] font-medium">Blog</span>
+            </Link>
 
-        {(installable || isIOS) ? (
-          <button
-            onClick={handleInstallClick}
-            className="flex flex-col items-center justify-center py-2 text-xs hover:bg-amber-100 active:scale-95 transition text-gray-900"
-          >
-            <Download size={20} />
-            Instalar
-          </button>
-        ) : (
-          <button className="flex flex-col items-center justify-center py-2 text-xs opacity-40 cursor-default text-gray-900">
-            <Menu size={20} />
-            Menu
-          </button>
-        )}
-      </nav>
+            {(installable || isIOS) ? (
+                <button
+                onClick={handleInstallClick}
+                className="
+                    flex flex-col items-center justify-center
+                    gap-1
+                    text-sm
+                    text-gray-900
+                    hover:bg-amber-100
+                    active:scale-95
+                    transition
+                    w-full h-full
+                "
+                >
+                <Download size={24} />
+                <span className="text-[11px] font-medium">Instalar</span>
+                </button>
+            ) : (
+                <button
+                className="
+                    flex flex-col items-center justify-center
+                    gap-1
+                    text-sm
+                    text-gray-900
+                    opacity-50
+                    cursor-default
+                    w-full h-full
+                "
+                >
+                <Menu size={24} />
+                <span className="text-[11px] font-medium">Menu</span>
+                </button>
+            )}
+            </nav>
+
 
       {/* ✅ MODAL iOS INSTALL */}
       {showInstallModal && (
