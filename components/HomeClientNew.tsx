@@ -94,7 +94,7 @@ function HomeContent() {
 
           <div className="w-full max-w-xl bg-white rounded-2xl shadow-xl p-4 flex flex-col gap-3">
             <textarea
-              className="resize-none p-4 border rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="resize-none p-4 border rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-amber-500 text-gray-900"
               rows={2}
               placeholder="Digite sua primeira pergunta..."
               value={question}
@@ -196,7 +196,7 @@ function HomeContent() {
               <Image src="/images/ben-transparente.png" alt="Tio Ben" width={40} height={40} className="hidden sm:block" />
 
               <textarea
-                className="flex-1 resize-none p-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="flex-1 resize-none p-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 text-gray-900"
                 rows={1}
                 placeholder="Digite sua pergunta ao Tio Ben..."
                 value={question}

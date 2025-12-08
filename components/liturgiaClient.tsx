@@ -220,19 +220,19 @@ export default function LiturgiaClient({ data }: LiturgiaClientProps) {
 
             {/* Navegação */}
             <nav className="flex flex-nowrap overflow-x-auto gap-2 mb-4 text-sm px-2 py-1 bg-white shadow-md rounded-lg">
-              <Link href={`/liturgia-diaria/${dataAnterior2.date}`} title={dataAnterior2.tooltip} className="px-3 py-2 bg-gray-200 rounded-md">
+              <Link href={`/liturgia-diaria/${dataAnterior2.date}`} title={dataAnterior2.tooltip} className="px-3 py-2 bg-gray-200 text-gray-900 rounded-md">
                 « {dataAnterior2.abrev}
               </Link>
-              <Link href={`/liturgia-diaria/${dataAnterior1.date}`} title={dataAnterior1.tooltip} className="px-3 py-2 bg-gray-200 rounded-md">
+              <Link href={`/liturgia-diaria/${dataAnterior1.date}`} title={dataAnterior1.tooltip} className="px-3 py-2 bg-gray-200 text-gray-900 rounded-md">
                 {dataAnterior1.abrev}
               </Link>
-              <Link href="/liturgia-diaria" className="px-3 py-2 bg-amber-400 font-semibold rounded-md">
+              <Link href="/liturgia-diaria" className="px-3 py-2 bg-amber-400 font-semibold rounded-md text-gray-900">
                 Hoje
               </Link>
-              <Link href={`/liturgia-diaria/${dataSeguinte1.date}`} title={dataSeguinte1.tooltip} className="px-3 py-2 bg-gray-200 rounded-md">
+              <Link href={`/liturgia-diaria/${dataSeguinte1.date}`} title={dataSeguinte1.tooltip} className="px-3 py-2 bg-gray-200 text-gray-900 rounded-md">
                 {dataSeguinte1.abrev}
               </Link>
-              <Link href={`/liturgia-diaria/${dataSeguinte2.date}`} title={dataSeguinte2.tooltip} className="px-3 py-2 bg-gray-200 rounded-md">
+              <Link href={`/liturgia-diaria/${dataSeguinte2.date}`} title={dataSeguinte2.tooltip} className="px-3 py-2 bg-gray-200  text-gray-900 rounded-md">
                 {dataSeguinte2.abrev} »
               </Link>
             </nav>
@@ -242,7 +242,7 @@ export default function LiturgiaClient({ data }: LiturgiaClientProps) {
               <span className="font-bold">{data.cor}</span>
             </p>
 
-            <h2 className="text-2xl font-bold mb-6 text-center">{data.liturgia}</h2>
+            <h2 className="text-2xl font-bold mb-6 text-center text-gray-900">{data.liturgia}</h2>
           </div>
 
           <div className="flex flex-wrap gap-2 mb-6">
@@ -251,7 +251,7 @@ export default function LiturgiaClient({ data }: LiturgiaClientProps) {
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
                 className={`px-4 py-2 rounded-full ${
-                  activeTab === tab.key ? 'bg-amber-600 text-white' : 'bg-gray-200'
+                  activeTab === tab.key ? 'bg-amber-600 text-white' : 'bg-gray-200 text-gray-900'
                 }`}
               >
                 {tab.label}
@@ -264,7 +264,7 @@ export default function LiturgiaClient({ data }: LiturgiaClientProps) {
           </div>
 
           {/* BLOCO EDITORIAL SEO */}
-          <div className="mt-8 p-5 bg-amber-100 rounded border border-amber-300 text-sm leading-relaxed">
+          <div className="mt-8 p-5 bg-amber-100 rounded border border-amber-300 text-sm leading-relaxed text-gray-900">
             A Liturgia Diária nos conduz ao encontro vivo com a Palavra de Deus. Ao meditar o Evangelho de hoje,
             somos convidados à conversão, à prática do amor e ao fortalecimento da fé.
           </div>

@@ -65,7 +65,7 @@ export default function CalendarioLiturgia({ handleShare, onFontSizeChange }: Ca
         type="date"
         value={selectedDate}
         onChange={handleDateChange}
-        className="px-2 py-1 text-gray-950 bg-gray-100 rounded-md hover:bg-gray-200 cursor-pointer text-sm"
+        className="px-2 py-1 text-gray-900 bg-gray-100 rounded-md hover:bg-gray-200 cursor-pointer text-sm"
         title="Escolher data"
       />
     </div>
