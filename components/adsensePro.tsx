@@ -3,29 +3,33 @@
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 
-export default function AdSensePro({
-  slot,
-  height = 120,
-}: {
+interface AdSenseProProps {
   slot: string;
   height?: number;
-}) {
-  const adRef = useRef<HTMLModElement>(null); 
+}
+
+export default function AdSensePro({ slot, height = 120 }: AdSenseProProps) {
+  const adRef = useRef<HTMLModElement | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     if (!adRef.current) return;
 
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting && !loaded) {
-        try {
-          (window.adsbygoogle = window.adsbygoogle || []).push({});
-        } catch {}
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !loaded) {
+          try {
+            (window.adsbygoogle = window.adsbygoogle || []).push({});
+          } catch (err) {
+            console.warn("Erro ao carregar anúncio:", err);
+          }
 
-        setLoaded(true);
-        observer.disconnect();
-      }
-    });
+          setLoaded(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.25 }
+    );
 
     observer.observe(adRef.current);
 
@@ -40,8 +44,7 @@ export default function AdSensePro({
             height,
             width: "100%",
             borderRadius: 8,
-            background:
-              "linear-gradient(90deg, #f5f5f5, #e2e2e2, #f5f5f5)",
+            background: "linear-gradient(90deg, #f5f5f5, #e2e2e2, #f5f5f5)",
             backgroundSize: "200% 100%",
             animation: "skeleton 1.6s infinite",
           }}
@@ -64,9 +67,10 @@ export default function AdSensePro({
       />
 
       <Script
+        id="adsense-loader"
         strategy="lazyOnload"
         async
-        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8819996017476509`}
+        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8819996017476509"
         crossOrigin="anonymous"
       />
 
