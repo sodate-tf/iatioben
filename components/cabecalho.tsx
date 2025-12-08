@@ -109,17 +109,17 @@ export default function Cabecalho() {
 
       {/* ✅ BOTTOM BAR MOBILE (UX DE APP) */}
       <nav className="fixed md:hidden bottom-0 left-0 right-0 z-30 bg-white border-t shadow-xl grid grid-cols-4">
-        <Link href="/" className="flex flex-col items-center justify-center py-2 text-xs hover:bg-amber-100 active:scale-95 transition">
+        <Link href="/" className="flex flex-col items-center justify-center py-2 text-xs hover:bg-amber-100 active:scale-95 transition text-gray-900">
           <Bot size={20} />
           IA Tio Ben
         </Link>
 
-        <Link href={todayUrl} className="flex flex-col items-center justify-center py-2 text-xs hover:bg-amber-100 active:scale-95 transition">
+        <Link href={todayUrl} className="flex flex-col items-center justify-center py-2 text-xs hover:bg-amber-100 active:scale-95 transition text-gray-900">
           <BookOpen size={20} />
           Liturgia
         </Link>
 
-        <Link href="/blog" className="flex flex-col items-center justify-center py-2 text-xs hover:bg-amber-100 active:scale-95 transition">
+        <Link href="/blog" className="flex flex-col items-center justify-center py-2 text-xs hover:bg-amber-100 active:scale-95 transition text-gray-900">
           <Newspaper size={20} />
           Blog
         </Link>
@@ -127,13 +127,13 @@ export default function Cabecalho() {
         {(installable || isIOS) ? (
           <button
             onClick={handleInstallClick}
-            className="flex flex-col items-center justify-center py-2 text-xs hover:bg-amber-100 active:scale-95 transition"
+            className="flex flex-col items-center justify-center py-2 text-xs hover:bg-amber-100 active:scale-95 transition text-gray-900"
           >
             <Download size={20} />
             Instalar
           </button>
         ) : (
-          <button className="flex flex-col items-center justify-center py-2 text-xs opacity-40 cursor-default">
+          <button className="flex flex-col items-center justify-center py-2 text-xs opacity-40 cursor-default text-gray-900">
             <Menu size={20} />
             Menu
           </button>
