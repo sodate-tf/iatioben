@@ -61,7 +61,7 @@ export default function BlogGrid({
           defaultValue={search}
           onChange={(e) => handleSearch(e.target.value)}
           placeholder="🔍 Buscar por santo, evangelho ou tema..."
-          className="w-full p-4 rounded-xl border shadow-sm focus:ring-2 focus:ring-amber-600 text-gray-800"
+          className="w-full p-4 rounded-xl border shadow-sm focus:ring-2 bg-amber-50 focus:ring-amber-600 text-gray-800"
         />
       </div>
 
