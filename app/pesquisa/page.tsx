@@ -1,5 +1,5 @@
 // app/page.tsx ou app/home/page.tsx
-import Home from "@/components/homeComponent";
+import Home from "@/components/HomeClientNew";
 import React from "react";
 
 

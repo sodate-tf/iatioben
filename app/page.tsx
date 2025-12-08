@@ -1,4 +1,4 @@
-import HomeClient from "@/components/HomeClient";
+import HomeClient from "@/components/HomeClientNew";
 
 export const metadata = {
   title: "IA Tio Ben | Liturgia Diária, Evangelho do Dia e Reflexões Católicas",
