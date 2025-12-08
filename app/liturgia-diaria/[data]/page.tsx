@@ -1,22 +1,108 @@
-"use client"
-import LiturgiaContent from '@/components/liturgiaClient';
-import { useParams } from 'next/navigation';
+import LiturgiaClient from '@/components/liturgiaClient';
+import LiturgiaFAQSchema from '@/components/LiturgiaFAQSchema';
+import Script from 'next/script';
 
-import LiturgiaJsonLd from '@/components/liturgiaJsonLd';
-import CreateMetaData from '@/components/createMetaData';
+interface PageProps {
+  params: { date: string };
+}
 
-export default function Page() {  
-   const params = useParams();
-  const data = params?.data as string; // dd-mm-yyyy
+export async function generateMetadata({ params }: PageProps) {
+  const date = params.date;
+
+  const [dd, mm, yyyy] = date.split("-");
+  const d = new Date(`${yyyy}-${mm}-${dd}`);
+
+  const day = d.getDate();
+  const month = d.toLocaleString("pt-BR", { month: "long" });
+  const year = d.getFullYear();
+  const weekday = d.toLocaleString("pt-BR", { weekday: "long" });
+
+  const formattedDate = `${weekday}, ${day} de ${month} de ${year}`;
+
+  const title = `Liturgia Diária de ${formattedDate} | Evangelho do Dia com Tio Ben`;
+  const description = `Acompanhe a Liturgia Diária Católica de ${formattedDate}. Evangelho, leituras, salmo e orações para meditar a Palavra de Deus.`;
+  const canonical = `https://www.iatioben.com.br/liturgia-diaria/${date}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      siteName: "Tio Ben",
+      locale: "pt_BR",
+      type: "article",
+      images: [
+        {
+          url: "https://www.iatioben.com.br/og_image_liturgia.png",
+          width: 1200,
+          height: 630,
+        }
+      ]
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["https://www.iatioben.com.br/og_image_liturgia.png"]
+    }
+  };
+}
+
+export default async function Page({ params }: PageProps) {
+  const date = params.date;
+
+  const [dd, mm, yyyy] = date.split("-");
+
+  const res = await fetch(
+    `https://liturgia.up.railway.app/v2/?dia=${dd}&mes=${mm}&ano=${yyyy}`,
+    { next: { revalidate: 3600 } }
+  );
+
+  const data = await res.json();
+
+  const jsonLdArticle = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: `Liturgia Diária ${date}`,
+    description: "Evangelho do dia com o Tio Ben",
+    image: "https://www.iatioben.com.br/og_image_liturgia.png",
+    datePublished: `${yyyy}-${mm}-${dd}`,
+    author: { "@type": "Person", name: "Tio Ben" },
+    publisher: {
+      "@type": "Organization",
+      name: "Tio Ben",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://www.iatioben.com.br/logo.png"
+      }
+    }
+  };
+
+  
+  const d = new Date(`${yyyy}-${mm}-${dd}`);
+
+  const weekday = d.toLocaleString('pt-BR', { weekday: 'long' });
+  const monthFull = d.toLocaleString('pt-BR', { month: 'long' });
+
+  const formattedDate = `${weekday}, ${dd} de ${monthFull} de ${yyyy}`;
+
   return (
     <>
-    <head>
-        <LiturgiaJsonLd date={data} />
-        <CreateMetaData date={data} />
-       </head>
-    <div className="flex flex-col min-h-screen bg-amber-400">      
-      <LiturgiaContent date={data} /> {/* CLIENT COMPONENT */}      
-    </div>
+      <Script
+        id="jsonld-liturgia"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdArticle) }}
+      />
+
+      <LiturgiaClient data={data} />
+
+      <LiturgiaFAQSchema 
+        dateFormatted={formattedDate}
+        liturgiaTitulo={data.liturgia}
+      />
     </>
   );
 }

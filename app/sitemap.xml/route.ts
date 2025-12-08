@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getPublishedPostsForSitemapAction } from "@/app/adminTioBen/actions/postAction";
 
-// Tipagem
 interface SitemapUrl {
   url: string;
   date: Date;
@@ -22,7 +21,7 @@ export async function GET(): Promise<NextResponse> {
 
   const sitemapUrls: SitemapUrl[] = [];
 
-  // 1️⃣ Página principal
+  // ✅ 1️⃣ HOME
   sitemapUrls.push({
     url: `${baseUrl}/`,
     date: today,
@@ -30,27 +29,37 @@ export async function GET(): Promise<NextResponse> {
     priority: "1.0",
   });
 
-  // 2️⃣ Liturgia diária: 3 dias antes e 14 depois
+  // ✅ 2️⃣ RAIZ DA LITURGIA (EXTREMAMENTE IMPORTANTE)
+  sitemapUrls.push({
+    url: `${baseUrl}/liturgia-diaria`,
+    date: today,
+    changefreq: "daily",
+    priority: "0.95",
+  });
+
+  // ✅ 3️⃣ LITURGIA: APENAS O PERÍODO QUE A API SUPORTA (-3 ATÉ +14)
   for (let i = -3; i <= 14; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
+
     sitemapUrls.push({
       url: `${baseUrl}/liturgia-diaria/${formatDateUrl(d)}`,
       date: d,
       changefreq: "daily",
-      priority: "0.8",
+      priority: "0.9",
     });
   }
 
-  // 3️⃣ Posts do blog
+  // ✅ 4️⃣ BLOG
   try {
     const blogPosts = await getPublishedPostsForSitemapAction();
+
     for (const post of blogPosts) {
       if (typeof post.slug === "string" && post.slug.trim().length > 0) {
         sitemapUrls.push({
           url: `${baseUrl}/blog/${post.slug}`,
           date: new Date(post.updatedAt ?? post.updatedAt ?? today),
-          changefreq: "daily",
+          changefreq: "weekly",
           priority: "0.7",
         });
       }
@@ -59,7 +68,7 @@ export async function GET(): Promise<NextResponse> {
     console.error("[SITEMAP] Erro ao buscar posts:", error);
   }
 
-  // 4️⃣ Gerar XML
+  // ✅ 5️⃣ GERAR XML
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset
   xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
