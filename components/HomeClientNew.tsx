@@ -112,7 +112,7 @@ function HomeContent() {
       ) : (
         <>
           {/* ✅ CHAT NORMAL */}
-          <main className="flex-1 flex flex-col max-w-4xl w-full mx-auto px-4 pt-6 pb-32">
+          <main className="flex-1 flex flex-col max-w-4xl w-full mx-auto px-4 pt-6 pb-[180px]">
             <div className="flex flex-col gap-4">
 
               {messages.map((msg, i) => (
@@ -191,7 +191,9 @@ function HomeContent() {
           </main>
 
           {/* ✅ INPUT FIXO */}
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-xl">
+          <div className="fixed bottom-0 left-0 right-0 z-[9999] 
+                bg-white border-t shadow-xl 
+                pb-[env(safe-area-inset-bottom)]">
             <div className="max-w-4xl mx-auto flex items-center gap-3 px-4 py-3">
               <Image src="/images/ben-transparente.png" alt="Tio Ben" width={40} height={40} className="hidden sm:block" />
 
@@ -221,8 +223,11 @@ function HomeContent() {
         </>
       )}
 
-      <FaqTioBen />
-      <Footer />
+    <div className="relative z-[1] mb-24">
+        <FaqTioBen />
+        <Footer />
+        </div>
+     
     </div>
   );
 }
