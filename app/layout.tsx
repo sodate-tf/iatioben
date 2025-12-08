@@ -3,7 +3,7 @@ import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 
-export const metadata = {
+export const viewport  = {
   title: {
     default: "IA Tio Ben | Inteligência Artificial Católica",
     template: "%s | IA Tio Ben",

@@ -1,21 +1,26 @@
-import LiturgiaClient, { LiturgyData } from '@/components/liturgiaClient';
-import LiturgiaFAQSchema from '@/components/LiturgiaFAQSchema';
-import Script from 'next/script';
+import LiturgiaClient, { LiturgyData } from "@/components/liturgiaClient";
+import LiturgiaFAQSchema from "@/components/LiturgiaFAQSchema";
+import Script from "next/script";
+
+interface PageParams {
+  data?: string;
+}
 
 interface PageProps {
-  params: { data?: string };
+  params: Promise<PageParams> | PageParams;
 }
 
 /* ================= SEO DINÂMICO BLINDADO ================= */
 
 export async function generateMetadata({ params }: PageProps) {
-  const date = params?.data;
+  const resolved = await params; // ⭐ CORREÇÃO PRINCIPAL
+  const date = resolved?.data;
 
-  // ✅ Se não houver data, gera SEO padrão da liturgia de hoje
   if (!date || !date.includes("-")) {
     return {
       title: "Liturgia Diária de Hoje | Evangelho do Dia com o Tio Ben",
-      description: "Acompanhe a Liturgia Diária Católica de hoje. Evangelho, leituras, salmo e orações para fortalecer sua fé.",
+      description:
+        "Acompanhe a Liturgia Diária Católica de hoje. Evangelho, leituras, salmo e orações para fortalecer sua fé.",
       alternates: {
         canonical: "https://www.iatioben.com.br/liturgia-diaria",
       },
@@ -64,12 +69,12 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
-/* ================= PAGE SSR SEM 404 FALSO ================= */
+/* ================= PAGE SSR ================= */
 
 export default async function Page({ params }: PageProps) {
-  let date = params?.data;
+  const resolved = await params; // ⭐ CORREÇÃO PRINCIPAL
+  let date = resolved?.data;
 
-  // ✅ Se vier inválido → usa HOJE automaticamente (sem 404)
   if (!date || !date.includes("-")) {
     const hoje = new Date();
     const dd = String(hoje.getDate()).padStart(2, "0");
@@ -105,7 +110,7 @@ export default async function Page({ params }: PageProps) {
     };
   }
 
-  /* ================= JSON-LD ARTICLE ================= */
+  /* ========== JSON-LD ARTICLE ========== */
 
   const jsonLdArticle = {
     "@context": "https://schema.org",
@@ -124,8 +129,6 @@ export default async function Page({ params }: PageProps) {
       },
     },
   };
-
-  /* ================= DATA FORMATADA FAQ ================= */
 
   const d = new Date(`${yyyy}-${mm}-${dd}`);
   const weekday = d.toLocaleString("pt-BR", { weekday: "long" });
