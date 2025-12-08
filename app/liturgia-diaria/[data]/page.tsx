@@ -4,15 +4,14 @@ import LiturgiaFAQSchema from '@/components/LiturgiaFAQSchema';
 import Script from 'next/script';
 
 interface PageProps {
-  params: { date?: string };
+  params: { data?: string }; // ✅ NOME CERTO
 }
 
 /* ================= SEO DINÂMICO BLINDADO ================= */
 
 export async function generateMetadata({ params }: PageProps) {
-  const date = params?.date;
+  const date = params?.data; // ✅ AGORA SIM
 
-  // ✅ Se não houver data válida, não gera SEO (evita crash)
   if (!date || !date.includes("-")) {
     return {
       title: "Liturgia Diária | Tio Ben",
@@ -68,9 +67,8 @@ export async function generateMetadata({ params }: PageProps) {
 /* ================= PAGE SSR BLINDADA ================= */
 
 export default async function Page({ params }: PageProps) {
-  const date = params?.date;
+  const date = params?.data; // ✅ AGORA SIM
 
-  // ✅ SE A DATA FOR INVÁLIDA → 404 CONTROLADO
   if (!date || !date.includes("-")) {
     notFound();
   }
@@ -87,7 +85,6 @@ export default async function Page({ params }: PageProps) {
 
     data = await res.json();
   } catch {
-    // ✅ Fallback TOTAL — nunca quebra produção
     data = {
       data: `${dd}/${mm}/${yyyy}`,
       liturgia: "Liturgia Diária",
