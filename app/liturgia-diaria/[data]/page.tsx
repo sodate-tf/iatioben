@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import LiturgiaClient, { LiturgyData } from '@/components/liturgiaClient';
 import LiturgiaFAQSchema from '@/components/LiturgiaFAQSchema';
 import Script from 'next/script';
@@ -69,9 +68,7 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function Page({ params }: PageProps) {
   const date = params?.data; // ✅ AGORA SIM
 
-  if (!date || !date.includes("-")) {
-    notFound();
-  }
+
 
   const [dd, mm, yyyy] = date.split("-");
 
