@@ -1,15 +1,28 @@
+import { notFound } from "next/navigation";
 import LiturgiaClient, { LiturgyData } from '@/components/liturgiaClient';
 import LiturgiaFAQSchema from '@/components/LiturgiaFAQSchema';
 import Script from 'next/script';
 
 interface PageProps {
-  params: { date: string };
+  params: { date?: string };
 }
 
-/* ================= SEO DINÂMICO ================= */
+/* ================= SEO DINÂMICO BLINDADO ================= */
 
 export async function generateMetadata({ params }: PageProps) {
-  const date = params.date;
+  const date = params?.date;
+
+  // ✅ Se não houver data válida, não gera SEO (evita crash)
+  if (!date || !date.includes("-")) {
+    return {
+      title: "Liturgia Diária | Tio Ben",
+      description: "Acompanhe a Liturgia Diária Católica com o Tio Ben.",
+      alternates: {
+        canonical: "https://www.iatioben.com.br/liturgia-diaria",
+      },
+    };
+  }
+
   const [dd, mm, yyyy] = date.split("-");
   const d = new Date(`${yyyy}-${mm}-${dd}`);
 
@@ -52,10 +65,16 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
-/* ================= PAGE SSR ================= */
+/* ================= PAGE SSR BLINDADA ================= */
 
 export default async function Page({ params }: PageProps) {
-  const date = params.date;
+  const date = params?.date;
+
+  // ✅ SE A DATA FOR INVÁLIDA → 404 CONTROLADO
+  if (!date || !date.includes("-")) {
+    notFound();
+  }
+
   const [dd, mm, yyyy] = date.split("-");
 
   let data: LiturgyData;
@@ -119,7 +138,6 @@ export default async function Page({ params }: PageProps) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdArticle) }}
       />
 
-      {/* ✅ AGORA O COMPONENTE RECEBE O QUE ELE REALMENTE PRECISA */}
       <LiturgiaClient data={data} />
 
       <LiturgiaFAQSchema
