@@ -195,7 +195,6 @@ const schemaData = {
           />
         </motion.div>
       </div>
-
       <Footer />
     </div>
   );
