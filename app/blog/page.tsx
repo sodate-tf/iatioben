@@ -6,6 +6,7 @@ import { getPostsAction } from "@/app/adminTioBen/actions/postAction";
 import Cabecalho from "@/components/cabecalho";
 import Footer from "@/components/Footer";
 import { Post } from "../adminTioBen/types";
+import AdSensePro from "@/components/adsensePro";
 
 const POSTS_PER_PAGE = 10;
 
@@ -101,6 +102,7 @@ export default async function BlogPage({
           </p>
         </div>
       </section>
+      <AdSensePro slot="6026602273" height={140} />
 
       {/* Grid + Busca + Paginação */}
       <BlogGrid

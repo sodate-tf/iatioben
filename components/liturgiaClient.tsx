@@ -7,6 +7,7 @@ import Spinner from './SpinnerLoading';
 import Cabecalho from './cabecalho';
 import CalendarioLiturgia from './calendarioLiturgia';
 import Footer from './Footer';
+import AdSensePro from './adsensePro';
 
 /* ================= TIPAGENS ================= */
 
@@ -258,6 +259,7 @@ export default function LiturgiaClient({ data }: LiturgiaClientProps) {
               </button>
             ))}
           </div>
+          <AdSensePro slot="2156366376" height={140} />
 
           <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
             {getReadingContent()}
@@ -270,7 +272,7 @@ export default function LiturgiaClient({ data }: LiturgiaClientProps) {
           </div>
         </motion.div>
       </div>
-
+      <AdSensePro slot="2672028232" height={140} />
       <Footer />
     </div>
   );

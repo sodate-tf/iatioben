@@ -8,6 +8,7 @@ import Spinner from "@/components/SpinnerLoading";
 import FaqTioBen from "@/components/faqTioBen";
 import Cabecalho from "@/components/cabecalho";
 import Footer from "./Footer";
+import AdSensePro from "./adsensePro";
 
 /* ================= FORMATADOR ================= */
 function formatMessageText(text: string) {
@@ -224,6 +225,7 @@ function HomeContent() {
       )}
 
     <div className="relative z-[1] mb-24">
+        <AdSensePro slot="4577789231" height={140} />
         <FaqTioBen />
         <Footer />
         </div>

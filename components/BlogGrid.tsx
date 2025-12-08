@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Script from "next/script";
 import { Post } from "@/app/adminTioBen/types";
+import AdSensePro from "./adsensePro";
 
 const FALLBACK_IMAGE = "/images/santo-do-dia-ia-tio-ben.png";
 
@@ -105,7 +106,8 @@ export default function BlogGrid({
           );
         })}
       </motion.div>
-
+      <AdSensePro slot="2887650656" height={140} />
+  
       {/* ✅ PAGINAÇÃO */}
       <div className="flex justify-center gap-3 mt-10 flex-wrap">
         <button

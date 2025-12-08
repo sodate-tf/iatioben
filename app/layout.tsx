@@ -2,6 +2,8 @@ import "./globals.css";
 import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
+import PageTransition from "@/components/pageTransiction";
+import Cabecalho from "@/components/cabecalho";
 
 export const viewport  = {
   title: {
@@ -29,59 +31,64 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR">
       <body>
-        <main className="pb-20">
-          {children}
-        </main>
+  {/* ✅ HEADER FIXO GLOBAL (FORA DA ANIMAÇÃO) */}
+  <Cabecalho />
 
-        {/* ✅ WebSite Schema GLOBAL */}
-        <Script
-          id="jsonld-website"
-          type="application/ld+json"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebSite",
-              name: "IA Tio Ben",
-              url: "https://www.iatioben.com.br",
-              potentialAction: {
-                "@type": "SearchAction",
-                target: "https://www.iatioben.com.br/?texto={search_term_string}",
-                "query-input": "required name=search_term_string",
-              },
-            }),
-          }}
-        />
+  {/* ✅ CONTEÚDO COM ANIMAÇÃO */}
+  <main className="pb-20">
+    <PageTransition>{children}</PageTransition>
+  </main>
 
-        {/* ✅ GA */}
-        <Script
-          strategy="afterInteractive"
-          src="https://www.googletagmanager.com/gtag/js?id=G-17GKJ4F1Q8"
-        />
-        <Script
-          id="gtag-init"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-17GKJ4F1Q8');
-            `,
-          }}
-        />
+  {/* ✅ WebSite Schema GLOBAL */}
+  <Script
+    id="jsonld-website"
+    type="application/ld+json"
+    strategy="beforeInteractive"
+    dangerouslySetInnerHTML={{
+      __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        name: "IA Tio Ben",
+        url: "https://www.iatioben.com.br",
+        potentialAction: {
+          "@type": "SearchAction",
+          target: "https://www.iatioben.com.br/?texto={search_term_string}",
+          "query-input": "required name=search_term_string",
+        },
+      }),
+    }}
+  />
 
-        {/* ✅ AdSense */}
-        <Script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8819996017476509"
-          crossOrigin="anonymous"
-          strategy="lazyOnload"
-        />
+  {/* ✅ GA */}
+  <Script
+    strategy="afterInteractive"
+    src="https://www.googletagmanager.com/gtag/js?id=G-17GKJ4F1Q8"
+  />
+  <Script
+    id="gtag-init"
+    strategy="afterInteractive"
+    dangerouslySetInnerHTML={{
+      __html: `
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-17GKJ4F1Q8');
+      `,
+    }}
+  />
 
-        <SpeedInsights />
-        <Analytics />
-      </body>
+  {/* ✅ AdSense */}
+  <Script
+    async
+    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8819996017476509"
+    crossOrigin="anonymous"
+    strategy="lazyOnload"
+  />
+
+  <SpeedInsights />
+  <Analytics />
+</body>
+
     </html>
   );
 }
