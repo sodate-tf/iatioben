@@ -3,18 +3,19 @@ import LiturgiaFAQSchema from '@/components/LiturgiaFAQSchema';
 import Script from 'next/script';
 
 interface PageProps {
-  params: { data?: string }; // ✅ NOME CERTO
+  params: { data?: string };
 }
 
 /* ================= SEO DINÂMICO BLINDADO ================= */
 
 export async function generateMetadata({ params }: PageProps) {
-  const date = params?.data; // ✅ AGORA SIM
+  const date = params?.data;
 
+  // ✅ Se não houver data, gera SEO padrão da liturgia de hoje
   if (!date || !date.includes("-")) {
     return {
-      title: "Liturgia Diária | Tio Ben",
-      description: "Acompanhe a Liturgia Diária Católica com o Tio Ben.",
+      title: "Liturgia Diária de Hoje | Evangelho do Dia com o Tio Ben",
+      description: "Acompanhe a Liturgia Diária Católica de hoje. Evangelho, leituras, salmo e orações para fortalecer sua fé.",
       alternates: {
         canonical: "https://www.iatioben.com.br/liturgia-diaria",
       },
@@ -63,12 +64,19 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
-/* ================= PAGE SSR BLINDADA ================= */
+/* ================= PAGE SSR SEM 404 FALSO ================= */
 
 export default async function Page({ params }: PageProps) {
-  const date = params?.data; // ✅ AGORA SIM
+  let date = params?.data;
 
-
+  // ✅ Se vier inválido → usa HOJE automaticamente (sem 404)
+  if (!date || !date.includes("-")) {
+    const hoje = new Date();
+    const dd = String(hoje.getDate()).padStart(2, "0");
+    const mm = String(hoje.getMonth() + 1).padStart(2, "0");
+    const yyyy = hoje.getFullYear();
+    date = `${dd}-${mm}-${yyyy}`;
+  }
 
   const [dd, mm, yyyy] = date.split("-");
 
