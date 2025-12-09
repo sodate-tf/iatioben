@@ -1,15 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getPostBySlug } from "@/app/adminTioBen/actions/postAction";
 
-interface Params {
-  params: {
-    slug: string;
-  };
-}
-
-export async function GET(req: Request, { params }: Params) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { slug: string } }
+) {
   try {
-    const post = await getPostBySlug(params.slug);
+    const slug = params.slug;
+
+    if (!slug) {
+      return NextResponse.json({ error: "Slug não informado" }, { status: 400 });
+    }
+
+    const post = await getPostBySlug(slug);
 
     if (!post) {
       return NextResponse.json({ error: "Post não encontrado" }, { status: 404 });
@@ -17,6 +20,10 @@ export async function GET(req: Request, { params }: Params) {
 
     return NextResponse.json(post);
   } catch (error) {
-    return NextResponse.json({ error: "Erro ao buscar post" }, { status: 500 });
+    console.error("Erro ao buscar post:", error);
+    return NextResponse.json(
+      { error: "Erro interno ao buscar post" },
+      { status: 500 }
+    );
   }
 }
