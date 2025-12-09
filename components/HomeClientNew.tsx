@@ -6,8 +6,6 @@ import { motion } from "framer-motion";
 import { Clipboard } from "lucide-react";
 import Spinner from "@/components/SpinnerLoading";
 import FaqTioBen from "@/components/faqTioBen";
-import Cabecalho from "@/components/cabecalho";
-import Footer from "./Footer";
 import AdSensePro from "./adsensePro";
 
 /* ================= FORMATADOR ================= */

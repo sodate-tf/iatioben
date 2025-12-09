@@ -2,9 +2,6 @@
 import { Metadata } from "next";
 import BlogGrid from "@/components/BlogGrid";
 import { getPostsAction } from "@/app/adminTioBen/actions/postAction";
-
-import Cabecalho from "@/components/cabecalho";
-import Footer from "@/components/Footer";
 import { Post } from "../adminTioBen/types";
 import AdSensePro from "@/components/adsensePro";
 
@@ -87,7 +84,6 @@ export default async function BlogPage({
 
   return (
     <>
-    <Cabecalho />
       {/* Texto SEO */}
       <section className="bg-amber-100 py-10 px-4 text-center">
         <div className="max-w-4xl mx-auto">
@@ -111,7 +107,6 @@ export default async function BlogPage({
         currentPage={page}
         search={search}
       />
-      <Footer />
     </>
   );
 }

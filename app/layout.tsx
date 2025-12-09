@@ -4,6 +4,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import PageTransition from "@/components/pageTransiction";
 import Cabecalho from "@/components/cabecalho";
+import Footer from "@/components/Footer";
 
 export const viewport  = {
   title: {
@@ -87,6 +88,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   <SpeedInsights />
   <Analytics />
+  <Footer />
 </body>
 
     </html>

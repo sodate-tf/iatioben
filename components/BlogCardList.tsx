@@ -5,8 +5,6 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import Spinner from "./SpinnerLoading";
-import Cabecalho from "./cabecalho";
-import Footer from "./Footer";
 import { useData } from "@/app/adminTioBen/contexts/DataContext";
 import type { Post } from "@/app/adminTioBen/types";
 
@@ -88,7 +86,6 @@ export default function BlogCardList() {
 
   return (
     <div className="flex flex-col min-h-screen bg-amber-400 relative">
-      <Cabecalho />
 
       {/* JSON-LD para SEO */}
       <script
@@ -258,7 +255,6 @@ export default function BlogCardList() {
         )}
       </div>
 
-      <Footer />
     </div>
   );
 }

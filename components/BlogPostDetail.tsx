@@ -4,8 +4,6 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import type { Post } from '@/app/adminTioBen/types';
 import Image from 'next/image';
-import Cabecalho from './cabecalho';
-import Footer from './Footer';
 import AdSensePro from './adsensePro';
 
 const FALLBACK_IMAGE = '/images/santo-do-dia-ia-tio-ben.png';
@@ -69,6 +67,7 @@ export default function BlogPostDetail({ post }: BlogPostDetailProps) {
       </div>
     );
   }
+
   // ---------------------------------------------------------------------------
 // 📌 JSON-LD (Schema.org)
 // ---------------------------------------------------------------------------

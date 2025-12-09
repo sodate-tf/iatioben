@@ -3,10 +3,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import Spinner from './SpinnerLoading';
-import Cabecalho from './cabecalho';
 import CalendarioLiturgia from './calendarioLiturgia';
-import Footer from './Footer';
 import AdSensePro from './adsensePro';
 
 /* ================= TIPAGENS ================= */
