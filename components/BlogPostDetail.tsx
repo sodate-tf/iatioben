@@ -187,7 +187,7 @@ const schemaData = {
             </p>
             <p className="text-sm text-gray-500">Publicado em {dataFormatada}</p>
           </div>
-
+          <AdSensePro slot="3041346283" height={180} />
           {/* Conteúdo */}
           <div
             className="text-gray-700 leading-relaxed prose max-w-none"
