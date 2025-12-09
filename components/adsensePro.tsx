@@ -37,7 +37,7 @@ export default function AdSensePro({ slot, height = 120 }: AdSenseProProps) {
   }, [loaded]);
 
   return (
-    <div style={{ minHeight: height, width: "100%" }}>
+    <div style={{ minHeight: height, width: "100%", marginTop: "8px"  }}>
       {!loaded && (
         <div
           style={{

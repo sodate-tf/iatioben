@@ -6,6 +6,7 @@ import type { Post } from '@/app/adminTioBen/types';
 import Image from 'next/image';
 import Cabecalho from './cabecalho';
 import Footer from './Footer';
+import AdSensePro from './adsensePro';
 
 const FALLBACK_IMAGE = '/images/santo-do-dia-ia-tio-ben.png';
 const SITE_URL = 'https://www.iatioben.com.br';
@@ -60,11 +61,11 @@ export default function BlogPostDetail({ post }: BlogPostDetailProps) {
   if (error) {
     return (
       <div className="flex flex-col min-h-screen bg-amber-400 relative w-full overflow-x-hidden">
-        <Cabecalho />
+        
         <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
           <p className="text-red-600 text-lg text-center">{error}</p>
         </div>
-        <Footer />
+        
       </div>
     );
   }
@@ -108,7 +109,7 @@ const schemaData = {
 
   return (
     <div className="flex flex-col min-h-screen bg-amber-400 relative w-full overflow-x-hidden">
-      <Cabecalho />
+     
 
       <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
         <script
@@ -195,7 +196,7 @@ const schemaData = {
           />
         </motion.div>
       </div>
-      <Footer />
+      <AdSensePro slot="2672028232" height={140} />
     </div>
   );
 }

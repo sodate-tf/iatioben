@@ -189,7 +189,6 @@ export default function LiturgiaClient({ data }: LiturgiaClientProps) {
 
   return (
     <div className="flex flex-col min-h-screen bg-amber-400 relative">
-      <Cabecalho />
 
       <div className="flex-1 flex flex-col items-center px-4 py-8 max-w-4xl mx-auto w-full">
         <motion.h1
@@ -200,7 +199,7 @@ export default function LiturgiaClient({ data }: LiturgiaClientProps) {
         >
           Liturgia Diária Católica – Evangelho do Dia com o Tio Ben
         </motion.h1>
-
+        <AdSensePro slot="2156366376" height={140} />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -259,7 +258,7 @@ export default function LiturgiaClient({ data }: LiturgiaClientProps) {
               </button>
             ))}
           </div>
-          <AdSensePro slot="2156366376" height={140} />
+          
 
           <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
             {getReadingContent()}
@@ -272,8 +271,7 @@ export default function LiturgiaClient({ data }: LiturgiaClientProps) {
           </div>
         </motion.div>
       </div>
-      <AdSensePro slot="2672028232" height={140} />
-      <Footer />
+      <AdSensePro slot="2672028232" height={140} />      
     </div>
   );
 }

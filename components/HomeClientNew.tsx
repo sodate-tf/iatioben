@@ -70,7 +70,7 @@ function HomeContent() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-amber-200 to-amber-400">
-      <Cabecalho />
+    
 
       {/* ✅ TELA INICIAL MELHORADA */}
       {isFirstMessage ? (
@@ -227,7 +227,6 @@ function HomeContent() {
     <div className="relative z-[1] mb-24">
         <AdSensePro slot="4577789231" height={140} />
         <FaqTioBen />
-        <Footer />
         </div>
      
     </div>
