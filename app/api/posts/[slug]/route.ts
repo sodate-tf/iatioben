@@ -3,19 +3,26 @@ import { getPostBySlug } from "@/app/adminTioBen/actions/postAction";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
-    const slug = params.slug;
+    // ✅ AGORA O NEXT 16 EXIGE ISSO
+    const { slug } = await params;
 
     if (!slug) {
-      return NextResponse.json({ error: "Slug não informado" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Slug não informado" },
+        { status: 400 }
+      );
     }
 
     const post = await getPostBySlug(slug);
 
     if (!post) {
-      return NextResponse.json({ error: "Post não encontrado" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Post não encontrado" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(post);
