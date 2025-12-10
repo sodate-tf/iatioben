@@ -31,12 +31,15 @@ function HomeContent() {
 
   const isFirstMessage = messages.length === 0;
 
-  const askQuestion = async (userQuestion: string) => {
+  const askQuestion = async (userQuestion: string, history: Message[]) => {
     try {
       const res = await fetch("/api/perguntar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pergunta: userQuestion }),
+        body: JSON.stringify({
+          pergunta: userQuestion,
+          history,
+        }),
       });
 
       const data = await res.json();
@@ -46,31 +49,48 @@ function HomeContent() {
     }
   };
 
-  const handleAskQuestion = async () => {
+
+    const handleAskQuestion = async () => {
     if (!question.trim()) return;
 
     const pergunta = question;
     setQuestion("");
 
-    setMessages((prev) => [...prev, { role: "user", content: pergunta }]);
+    // ✅ snapshot correto do histórico + nova pergunta
+    const historyWithNewQuestion: Message[] = [
+      ...messages,
+      { role: "user", content: pergunta },
+    ];
+
+    // Atualiza o estado visual imediatamente
+    setMessages(historyWithNewQuestion);
     setIsTyping(true);
 
-    const answer = await askQuestion(pergunta);
+    // ✅ Agora envia a pergunta COM CONTEXTO
+    const answer = await askQuestion(pergunta, historyWithNewQuestion);
 
     setIsTyping(false);
-    setMessages((prev) => [...prev, { role: "assistant", content: answer }]);
+    setMessages((prev) => [
+      ...prev,
+      { role: "assistant", content: answer },
+    ]);
   };
+
 
   const handleCopy = async (text: string) => {
     await navigator.clipboard.writeText(text);
     alert("Resposta copiada!");
   };
 
+  const handleClearChat = () => {
+    setMessages([]);
+    setIsTyping(false);
+    setQuestion("");
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-amber-200 to-amber-400">
-    
-
-      {/* ✅ TELA INICIAL MELHORADA */}
+      {/* ✅ TELA INICIAL */}
       {isFirstMessage ? (
         <main className="flex-1 flex flex-col items-center justify-center px-5 text-center gap-6">
           <Image
@@ -87,7 +107,6 @@ function HomeContent() {
             </h1>
             <p className="text-gray-700 text-base md:text-lg">
               Faça uma pergunta sobre a fé, a liturgia, o Evangelho ou sua vida espiritual.
-              A resposta aparecerá logo acima assim que eu terminar de responder.
             </p>
           </div>
 
@@ -110,10 +129,24 @@ function HomeContent() {
         </main>
       ) : (
         <>
-          {/* ✅ CHAT NORMAL */}
+          {/* ✅ CHAT */}
           <main className="flex-1 flex flex-col max-w-4xl w-full mx-auto px-4 pt-6 pb-[180px]">
-            <div className="flex flex-col gap-4">
+            {/* Topo com botão limpar conversa */}
+            {!isFirstMessage && (
+              <div className="flex justify-end mb-3">
+                <button
+                  onClick={handleClearChat}
+                  className="text-xs px-3 py-1 rounded-full border
+                             text-amber-700 border-amber-700
+                             hover:bg-amber-700 hover:text-white
+                             transition-colors"
+                >
+                  Limpar conversa
+                </button>
+              </div>
+            )}
 
+            <div className="flex flex-col gap-4">
               {messages.map((msg, i) => (
                 <motion.div
                   key={i}
@@ -134,34 +167,35 @@ function HomeContent() {
                   )}
 
                   <div
-                    className={`relative max-w-[85%] p-4 rounded-2xl text-sm md:text-base leading-relaxed shadow ${
+                    className={`relative max-w-[75%] p-5 rounded-2xl text-sm md:text-base shadow
+                    ${
                       msg.role === "user"
                         ? "bg-amber-700 text-white rounded-br-none"
-                        : "bg-white text-gray-800 rounded-bl-none"
+                        : "bg-[#fffaf1] text-gray-900 rounded-bl-none border border-amber-100"
                     }`}
-                    style={{ lineHeight: "1.7" }}
+                    style={{ lineHeight: "1.9" }}
                   >
-                    <div
-                      dangerouslySetInnerHTML={{
-                        __html:
-                          msg.role === "assistant"
-                            ? formatMessageText(msg.content)
-                            : msg.content,
-                      }}
-                    />
+                  <div
+                    className="space-y-3"
+                    dangerouslySetInnerHTML={{
+                      __html:
+                        msg.role === "assistant"
+                          ? formatMessageText(msg.content).replace(/\n/g, "<br/>")
+                          : msg.content,
+                    }}
+                  />
 
-                    {/* ✅ BOTÃO COPIAR SÓ NA RESPOSTA */}
                     {msg.role === "assistant" && (
                       <button
-  onClick={() => handleCopy(msg.content)}
-  className="absolute bottom-1 right-2 flex items-center gap-1 
-             text-xs text-gray-400 hover:text-amber-700 
-             transition-colors cursor-pointer select-none"
-  aria-label="Copiar resposta"
->
-  <Clipboard size={14} className="opacity-80" />
-  <span className="hidden sm:inline">Copiar</span>
-</button>
+                        onClick={() => handleCopy(msg.content)}
+                        className="absolute bottom-1 right-2 flex items-center gap-1 
+                                   text-xs text-gray-400 hover:text-amber-700 
+                                   transition-colors cursor-pointer select-none"
+                        aria-label="Copiar resposta"
+                      >
+                        <Clipboard size={14} className="opacity-80" />
+                        <span className="hidden sm:inline">Copiar</span>
+                      </button>
                     )}
                   </div>
 
@@ -177,10 +211,14 @@ function HomeContent() {
                 </motion.div>
               ))}
 
-              {/* ✅ SPINNER NATURAL */}
               {isTyping && (
                 <div className="flex items-center gap-2">
-                  <Image src="/images/ben-transparente.png" alt="Tio Ben" width={32} height={32} />
+                  <Image
+                    src="/images/ben-transparente.png"
+                    alt="Tio Ben"
+                    width={32}
+                    height={32}
+                  />
                   <div className="px-4 py-3 rounded-xl bg-white shadow">
                     <Spinner />
                   </div>
@@ -188,45 +226,55 @@ function HomeContent() {
               )}
             </div>
           </main>
-
-          {/* ✅ INPUT FIXO */}
-          <div className="fixed bottom-0 left-0 right-0 z-[9999] 
-                bg-white border-t shadow-xl 
-                pb-[env(safe-area-inset-bottom)]">
-            <div className="max-w-4xl mx-auto flex items-center gap-3 px-4 py-3">
-              <Image src="/images/ben-transparente.png" alt="Tio Ben" width={40} height={40} className="hidden sm:block" />
-
-              <textarea
-                className="flex-1 resize-none p-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 text-gray-900"
-                rows={1}
-                placeholder="Digite sua pergunta ao Tio Ben..."
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    handleAskQuestion();
-                  }
-                }}
-              />
-
-              <button
-                onClick={handleAskQuestion}
-                disabled={!question.trim()}
-                className="bg-amber-700 text-white px-5 py-2 rounded-xl font-semibold disabled:opacity-40"
-              >
-                Enviar
-              </button>
-            </div>
-          </div>
         </>
       )}
 
-    <div className="relative z-[1] mb-24">
-        <AdSensePro slot="4577789231" height={140} />
-        <FaqTioBen />
+      {/* ✅ FAQ + ADSENSE APENAS NA PRIMEIRA VEZ / CONVERSA LIMPA */}
+      {isFirstMessage && (
+        <div className="relative z-[1] mb-[180px] w-full max-w-4xl mx-auto px-4">
+          <AdSensePro slot="4577789231" height={140} />
+          <FaqTioBen />
         </div>
-     
+      )}
+
+      {/* ✅ INPUT FIXO - SEMPRE POR ÚLTIMO */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-[9999]
+                   bg-white border-t shadow-xl
+                   pb-[env(safe-area-inset-bottom)]"
+      >
+        <div className="max-w-4xl mx-auto flex items-center gap-3 px-4 py-3">
+          <Image
+            src="/images/ben-transparente.png"
+            alt="Tio Ben"
+            width={40}
+            height={40}
+            className="hidden sm:block"
+          />
+
+          <textarea
+            className="flex-1 resize-none p-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 text-gray-900"
+            rows={1}
+            placeholder="Digite sua pergunta ao Tio Ben..."
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleAskQuestion();
+              }
+            }}
+          />
+
+          <button
+            onClick={handleAskQuestion}
+            disabled={!question.trim()}
+            className="bg-amber-700 text-white px-5 py-2 rounded-xl font-semibold disabled:opacity-40"
+          >
+            Enviar
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

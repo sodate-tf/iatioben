@@ -178,19 +178,34 @@ const schemaData = {
 
           {/* Título e informações */}
           <div className="text-center mb-6">
-            <h1 className="text-3xl md:text-4xl font-extrabold text-amber-900 mb-3 leading-tight">
+            <h1 className="text-3xl md:text-4xl font-bold text-amber-900 mb-4 leading-snug font-reading">
               {post.title}
             </h1>
             <p className="inline-block bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1 rounded-full mb-2">
               {post.categoryName ?? 'Sem categoria'}
             </p>
-            <p className="text-sm text-gray-500">Publicado em {dataFormatada}</p>
+            <p className="text-sm text-gray-600 font-reading">
+              Publicado em {dataFormatada}
+            </p>
           </div>
           <AdSensePro slot="3041346283" height={180} />
           {/* Conteúdo */}
           <div
-            className="text-gray-700 leading-relaxed prose max-w-none"
-            style={{ fontSize: `${fontSize}px` }}
+            className="
+              mt-6
+              p-6
+              bg-[#fffaf1]
+              rounded-xl
+              border border-amber-200
+              shadow-sm
+              max-w-3xl
+              mx-auto
+              text-gray-900
+              prose
+              prose-amber
+              font-reading
+            "
+            style={{ fontSize: `${fontSize}px`, lineHeight: "1.9" }}
             dangerouslySetInnerHTML={{ __html: post.content }}
           />
         </motion.div>

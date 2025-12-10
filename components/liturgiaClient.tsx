@@ -97,12 +97,22 @@ export default function LiturgiaClient({ data }: LiturgiaClientProps) {
         )}
 
         {activeTab === 'salmo' && (reading as SalmoReadingItem).refrao && (
-          <p className="font-semibold text-amber-700 mb-2" style={{ fontSize }}>
+          <p
+            className="font-semibold text-amber-800 mt-3"
+            style={{ fontSize, lineHeight: "1.9" }}
+          >
             {(reading as SalmoReadingItem).refrao}
           </p>
         )}
 
-        <p className="whitespace-pre-line text-gray-700 leading-relaxed" style={{ fontSize }}>
+        <p
+          className="
+            whitespace-pre-line
+            text-gray-900
+            mt-4
+          "
+          style={{ fontSize, lineHeight: "1.9" }}
+        >
           {reading.texto}
         </p>
       </div>
@@ -257,12 +267,38 @@ export default function LiturgiaClient({ data }: LiturgiaClientProps) {
           </div>
           
 
-          <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+          <div
+            className="
+              p-6
+              bg-[#fffaf1]
+              rounded-xl
+              border border-amber-200
+              shadow-sm
+              max-w-3xl
+              mx-auto
+              font-reading
+            "
+            style={{ lineHeight: "1.9" }}
+          >
             {getReadingContent()}
           </div>
 
           {/* BLOCO EDITORIAL SEO */}
-          <div className="mt-8 p-5 bg-amber-100 rounded border border-amber-300 text-sm leading-relaxed text-gray-900">
+          <div
+              className="
+                mt-10
+                p-6
+                bg-[#fffaf1]
+                rounded-xl
+                border border-amber-300
+                text-sm
+                text-gray-900
+                font-reading
+                max-w-3xl
+                mx-auto
+              "
+              style={{ lineHeight: "1.9" }}
+            >
             A Liturgia Diária nos conduz ao encontro vivo com a Palavra de Deus. Ao meditar o Evangelho de hoje,
             somos convidados à conversão, à prática do amor e ao fortalecimento da fé.
           </div>

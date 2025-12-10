@@ -28,10 +28,18 @@ export const viewport  = {
   },
 };
 
+import { Lora } from "next/font/google";
+
+const lora = Lora({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-lora",
+});
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
-      <body>
+      <body className={lora.variable}>
   {/* ✅ HEADER FIXO GLOBAL (FORA DA ANIMAÇÃO) */}
   <Cabecalho />
 

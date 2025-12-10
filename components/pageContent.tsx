@@ -6,7 +6,6 @@ import Spinner from "@/components/SpinnerLoading";
 import VideoAdModal from "@/components/testVideoAd";
 import Link from "next/link";
 import FaqTioBen from "@/components/faqTioBen";
-import Cabecalho from "@/components/cabecalho";
 import Head from "next/head";
 
 
@@ -144,7 +143,6 @@ export default function Home() {
       </Head>
       
       <div className="flex flex-col min-h-screen bg-amber-400 relative">
-        <Cabecalho />
         <div className="flex-1 flex flex-col items-center px-4 py-8">
           <motion.h1
             className="text-3xl md:text-4xl font-extrabold text-gray-800 text-center mb-6"
