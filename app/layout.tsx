@@ -26,6 +26,10 @@ export const viewport  = {
   twitter: {
     card: "summary_large_image",
   },
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 import { Lora } from "next/font/google";

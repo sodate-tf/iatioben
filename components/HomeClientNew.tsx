@@ -253,7 +253,7 @@ function HomeContent() {
           />
 
           <textarea
-            className="flex-1 resize-none p-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 text-gray-900"
+            className="flex-1 resize-none p-3 border rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-amber-500 text-gray-900"
             rows={1}
             placeholder="Digite sua pergunta ao Tio Ben..."
             value={question}

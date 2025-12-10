@@ -121,7 +121,10 @@
   }
 }
 
-
+html {
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+}
 
 :root {
   --background: #ffffff;
