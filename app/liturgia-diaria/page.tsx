@@ -21,6 +21,20 @@ export async function generateMetadata() {
   };
 }
 
+// helper: gera ISO com timezone -03:00 (sem depender do servidor estar em BRT)
+function isoWithBRTimezone(date: Date) {
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  const yyyy = date.getFullYear();
+  const mm = pad(date.getMonth() + 1);
+  const dd = pad(date.getDate());
+  const hh = pad(date.getHours());
+  const min = pad(date.getMinutes());
+  const ss = pad(date.getSeconds());
+
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}:${ss}-03:00`;
+}
+
 export default async function Page() {
   const hoje = new Date();
 
@@ -28,7 +42,6 @@ export default async function Page() {
   const mm = String(hoje.getMonth() + 1).padStart(2, '0');
   const yyyy = hoje.getFullYear();
 
-  // ✅ AGORA O formattedDate EXISTE AQUI
   const weekday = hoje.toLocaleString('pt-BR', { weekday: 'long' });
   const monthFull = hoje.toLocaleString('pt-BR', { month: 'long' });
   const formattedDate = `${weekday}, ${dd} de ${monthFull} de ${yyyy}`;
@@ -40,21 +53,40 @@ export default async function Page() {
 
   const data = await res.json();
 
+  const canonicalUrl = 'https://www.iatioben.com.br/liturgia-diaria';
+
   const jsonLdArticle = {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: `Liturgia Diária de Hoje - ${dd}/${mm}/${yyyy}`,
-    description: "Evangelho do dia com o Tio Ben",
-    image: "https://www.iatioben.com.br/og_image_liturgia.png",
-    datePublished: `${yyyy}-${mm}-${dd}`,
-    dateModified: `${yyyy}-${mm}-${dd}`,
-    author: { "@type": "Person", name: "Tio Ben" },
-    publisher: {
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": canonicalUrl
+    },
+    "headline": `Liturgia Diária de Hoje - ${dd}/${mm}/${yyyy}`,
+    "description": `Acompanhe a Liturgia Diária Católica de hoje, ${formattedDate}.`,
+    "image": "https://www.iatioben.com.br/og_image_liturgia.png",
+    "url": canonicalUrl,
+    "inLanguage": "pt-BR",
+
+    // ✅ agora é datetime válido com fuso horário
+    "datePublished": isoWithBRTimezone(hoje),
+    "dateModified": isoWithBRTimezone(hoje),
+
+    // ✅ adiciona url (remove aviso opcional)
+    "author": {
+      "@type": "Person",
+      "name": "Tio Ben",
+      "url": "https://www.iatioben.com.br"
+    },
+
+    // ✅ publisher mais consistente (marca do site)
+    "publisher": {
       "@type": "Organization",
-      name: "Tio Ben",
-      logo: {
+      "name": "IA Tio Ben",
+      "url": "https://www.iatioben.com.br",
+      "logo": {
         "@type": "ImageObject",
-        url: "https://www.iatioben.com.br/logo.png"
+        "url": "https://www.iatioben.com.br/logo.png"
       }
     }
   };
@@ -67,7 +99,6 @@ export default async function Page() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdArticle) }}
       />
 
-      {/* ✅ AGORA NÃO DÁ MAIS ERRO */}
       <LiturgiaFAQSchema
         dateFormatted={formattedDate}
         liturgiaTitulo={data.liturgia}

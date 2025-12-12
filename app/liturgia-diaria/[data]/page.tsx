@@ -10,13 +10,39 @@ interface PageProps {
   params: Promise<PageParams> | PageParams;
 }
 
+/* ================= HELPERS ================= */
+
+function isoWithBRTimezone(date: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  const yyyy = date.getFullYear();
+  const mm = pad(date.getMonth() + 1);
+  const dd = pad(date.getDate());
+  const hh = pad(date.getHours());
+  const min = pad(date.getMinutes());
+  const ss = pad(date.getSeconds());
+
+  // ISO 8601 com timezone fixo do Brasil (-03:00)
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}:${ss}-03:00`;
+}
+
+function safeDateParts(dateParam?: string) {
+  if (!dateParam || !dateParam.includes("-")) return null;
+  const [dd, mm, yyyy] = dateParam.split("-");
+  if (!dd || !mm || !yyyy) return null;
+  if (dd.length !== 2 || mm.length !== 2 || yyyy.length !== 4) return null;
+  return { dd, mm, yyyy };
+}
+
 /* ================= SEO DINÂMICO BLINDADO ================= */
 
 export async function generateMetadata({ params }: PageProps) {
-  const resolved = await params; // ⭐ CORREÇÃO PRINCIPAL
-  const date = resolved?.data;
+  const resolved = await params;
+  const dateParam = resolved?.data;
 
-  if (!date || !date.includes("-")) {
+  const parts = safeDateParts(dateParam);
+
+  if (!parts) {
     return {
       title: "Liturgia Diária de Hoje | Evangelho do Dia com o Tio Ben",
       description:
@@ -24,13 +50,36 @@ export async function generateMetadata({ params }: PageProps) {
       alternates: {
         canonical: "https://www.iatioben.com.br/liturgia-diaria",
       },
+      openGraph: {
+        title: "Liturgia Diária de Hoje | Evangelho do Dia com o Tio Ben",
+        description:
+          "Acompanhe a Liturgia Diária Católica de hoje. Evangelho, leituras, salmo e orações para fortalecer sua fé.",
+        url: "https://www.iatioben.com.br/liturgia-diaria",
+        siteName: "IA Tio Ben",
+        locale: "pt_BR",
+        type: "article",
+        images: [
+          {
+            url: "https://www.iatioben.com.br/og_image_liturgia.png",
+            width: 1200,
+            height: 630,
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: "Liturgia Diária de Hoje | Evangelho do Dia com o Tio Ben",
+        description:
+          "Acompanhe a Liturgia Diária Católica de hoje. Evangelho, leituras, salmo e orações para fortalecer sua fé.",
+        images: ["https://www.iatioben.com.br/og_image_liturgia.png"],
+      },
     };
   }
 
-  const [dd, mm, yyyy] = date.split("-");
-  const d = new Date(`${yyyy}-${mm}-${dd}`);
+  const { dd, mm, yyyy } = parts;
+  const d = new Date(`${yyyy}-${mm}-${dd}T00:00:00-03:00`);
 
-  const day = d.getDate();
+  const day = String(d.getDate()).padStart(2, "0");
   const month = d.toLocaleString("pt-BR", { month: "long" });
   const year = d.getFullYear();
   const weekday = d.toLocaleString("pt-BR", { weekday: "long" });
@@ -39,7 +88,7 @@ export async function generateMetadata({ params }: PageProps) {
 
   const title = `Liturgia Diária de ${formattedDate} | Evangelho do Dia com o Tio Ben`;
   const description = `Acompanhe a Liturgia Diária Católica de ${formattedDate}. Evangelho, leituras, salmo e orações para meditar a Palavra de Deus.`;
-  const canonical = `https://www.iatioben.com.br/liturgia-diaria/${date}`;
+  const canonical = `https://www.iatioben.com.br/liturgia-diaria/${dd}-${mm}-${yyyy}`;
 
   return {
     title,
@@ -49,7 +98,7 @@ export async function generateMetadata({ params }: PageProps) {
       title,
       description,
       url: canonical,
-      siteName: "Tio Ben",
+      siteName: "IA Tio Ben",
       locale: "pt_BR",
       type: "article",
       images: [
@@ -72,18 +121,24 @@ export async function generateMetadata({ params }: PageProps) {
 /* ================= PAGE SSR ================= */
 
 export default async function Page({ params }: PageProps) {
-  const resolved = await params; // ⭐ CORREÇÃO PRINCIPAL
-  let date = resolved?.data;
+  const resolved = await params;
+  let dateParam = resolved?.data;
 
-  if (!date || !date.includes("-")) {
+  let dd: string, mm: string, yyyy: number;
+
+  const parts = safeDateParts(dateParam);
+
+  if (!parts) {
     const hoje = new Date();
-    const dd = String(hoje.getDate()).padStart(2, "0");
-    const mm = String(hoje.getMonth() + 1).padStart(2, "0");
-    const yyyy = hoje.getFullYear();
-    date = `${dd}-${mm}-${yyyy}`;
+    dd = String(hoje.getDate()).padStart(2, "0");
+    mm = String(hoje.getMonth() + 1).padStart(2, "0");
+    yyyy = hoje.getFullYear();
+    dateParam = `${dd}-${mm}-${yyyy}`;
+  } else {
+    dd = parts.dd;
+    mm = parts.mm;
+    yyyy = Number(parts.yyyy);
   }
-
-  const [dd, mm, yyyy] = date.split("-");
 
   let data: LiturgyData;
 
@@ -92,7 +147,6 @@ export default async function Page({ params }: PageProps) {
       `https://liturgia.up.railway.app/v2/?dia=${dd}&mes=${mm}&ano=${yyyy}`,
       { next: { revalidate: 3600 } }
     );
-
     data = await res.json();
   } catch {
     data = {
@@ -110,30 +164,44 @@ export default async function Page({ params }: PageProps) {
     };
   }
 
-  /* ========== JSON-LD ARTICLE ========== */
+  const d = new Date(`${yyyy}-${mm}-${dd}T00:00:00-03:00`);
+  const weekday = d.toLocaleString("pt-BR", { weekday: "long" });
+  const monthFull = d.toLocaleString("pt-BR", { month: "long" });
+  const formattedDate = `${weekday}, ${dd} de ${monthFull} de ${yyyy}`;
+
+  /* ========== JSON-LD ARTICLE (CORRIGIDO) ========== */
+
+  const canonicalUrl = `https://www.iatioben.com.br/liturgia-diaria/${dateParam}`;
 
   const jsonLdArticle = {
     "@context": "https://schema.org",
     "@type": "Article",
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": canonicalUrl,
+    },
     headline: `Liturgia Diária ${dd}/${mm}/${yyyy}`,
-    description: "Evangelho do dia com o Tio Ben",
+    description: `Acompanhe a Liturgia Diária Católica de ${formattedDate}. Evangelho, leituras, salmo e orações para meditar a Palavra de Deus.`,
     image: "https://www.iatioben.com.br/og_image_liturgia.png",
-    datePublished: `${yyyy}-${mm}-${dd}`,
-    author: { "@type": "Person", name: "Tio Ben" },
+    url: canonicalUrl,
+    inLanguage: "pt-BR",
+    datePublished: isoWithBRTimezone(d),
+    dateModified: isoWithBRTimezone(d),
+    author: {
+      "@type": "Person",
+      name: "Tio Ben",
+      url: "https://www.iatioben.com.br",
+    },
     publisher: {
       "@type": "Organization",
-      name: "Tio Ben",
+      name: "IA Tio Ben",
+      url: "https://www.iatioben.com.br",
       logo: {
         "@type": "ImageObject",
         url: "https://www.iatioben.com.br/logo.png",
       },
     },
   };
-
-  const d = new Date(`${yyyy}-${mm}-${dd}`);
-  const weekday = d.toLocaleString("pt-BR", { weekday: "long" });
-  const monthFull = d.toLocaleString("pt-BR", { month: "long" });
-  const formattedDate = `${weekday}, ${dd} de ${monthFull} de ${yyyy}`;
 
   return (
     <>
