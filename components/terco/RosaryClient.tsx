@@ -119,7 +119,24 @@ function meaningBySet(setKey: MysterySetKey) {
   }
 }
 
+function slugFromSetKey(k: MysterySetKey) {
+  switch (k) {
+    case "gozosos":
+      return "misterios-gozosos";
+    case "dolorosos":
+      return "misterios-dolorosos";
+    case "gloriosos":
+      return "misterios-gloriosos";
+    case "luminosos":
+    default:
+      return "misterios-luminosos";
+  }
+}
+
 export default function RosaryClient({ defaultSetKey }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+
   const today = useMemo(() => new Date(), []);
   const weekday = useMemo(() => capitalize(weekdayLabelPT(today)), [today]);
   const autoDefaultSet = useMemo(
@@ -130,6 +147,8 @@ export default function RosaryClient({ defaultSetKey }: Props) {
   // Se veio defaultSetKey (rota /misterios-*), ele manda.
   const initialSet = defaultSetKey ?? autoDefaultSet;
 
+  // Refs separados (corrige o scroll do Glória para Reflexão)
+  const prayerRef = useRef<HTMLDivElement | null>(null);
   const reflectionRef = useRef<HTMLDivElement | null>(null);
 
   const [setKey, setSetKey] = useState<MysterySetKey>(initialSet);
@@ -139,13 +158,15 @@ export default function RosaryClient({ defaultSetKey }: Props) {
   >(1);
   const [includeClosing, setIncludeClosing] = useState(true);
 
+  // Experimental: pulso na conta ativa só até o primeiro toque
+  const [hasInteracted, setHasInteracted] = useState(false);
+
   // Se mudar de rota e defaultSetKey mudar, reseta para o conjunto da rota.
   useEffect(() => {
     if (!defaultSetKey) return;
     setSetKey(defaultSetKey);
     setCurrent(0);
-    // opcional: resetar modo
-    // setMode("full");
+    setHasInteracted(false);
   }, [defaultSetKey]);
 
   const theme = useMemo(() => themeBySet(setKey), [setKey]);
@@ -206,6 +227,7 @@ export default function RosaryClient({ defaultSetKey }: Props) {
     );
   }, [setKey, mysteryIndexForDisplay]);
 
+  // ✅ Após o Glória (dezena), aguarda 2s e vai para a REFLEXÃO
   useEffect(() => {
     if (currentStep.prayer === "gloryFatima" && currentStep.phase === "decade") {
       const timer = setTimeout(() => {
@@ -226,6 +248,7 @@ export default function RosaryClient({ defaultSetKey }: Props) {
   );
 
   function goNext() {
+    setHasInteracted(true);
     setCurrent((c) => {
       let n = Math.min(c + 1, steps.length - 1);
       while (n < steps.length - 1 && steps[n]?.kind === "spacer") n++;
@@ -234,6 +257,7 @@ export default function RosaryClient({ defaultSetKey }: Props) {
   }
 
   function goPrev() {
+    setHasInteracted(true);
     setCurrent((c) => {
       let n = Math.max(c - 1, 0);
       while (n > 0 && steps[n]?.kind === "spacer") n--;
@@ -243,38 +267,23 @@ export default function RosaryClient({ defaultSetKey }: Props) {
 
   function reset() {
     setCurrent(0);
+    setHasInteracted(false);
+    // opcional: voltar foco para a oração atual ao reiniciar
+    prayerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function onChangeSetKey(k: MysterySetKey) {
     setSetKey(k);
     setCurrent(0);
+    setHasInteracted(false);
   }
 
-  const router = useRouter();
-const pathname = usePathname();
-function slugFromSetKey(k: MysterySetKey) {
-  switch (k) {
-    case "gozosos":
-      return "misterios-gozosos";
-    case "dolorosos":
-      return "misterios-dolorosos";
-    case "gloriosos":
-      return "misterios-gloriosos";
-    case "luminosos":
-    default:
-      return "misterios-luminosos";
+  function navigateToSet(k: MysterySetKey) {
+    const slug = slugFromSetKey(k);
+    const target = `/santo-terco/${slug}`;
+    if (pathname === target) return;
+    router.push(target);
   }
-}
-
-function navigateToSet(k: MysterySetKey) {
-  const slug = slugFromSetKey(k);
-  const target = `/santo-terco/${slug}`;
-
-  // evita push redundante
-  if (pathname === target) return;
-
-  router.push(target);
-}
 
   return (
     <div className="min-h-screen bg-amber-400 relative">
@@ -289,8 +298,7 @@ function navigateToSet(k: MysterySetKey) {
             Santo Terço Diário
           </h1>
           <p className="mt-2 text-gray-700">
-            Reze passo a passo com orações visíveis, progresso e meditação do
-            mistério.
+            Reze passo a passo com orações visíveis, progresso e meditação do mistério.
           </p>
         </motion.div>
 
@@ -302,7 +310,7 @@ function navigateToSet(k: MysterySetKey) {
           transition={{ duration: 0.35 }}
           className="bg-white rounded-2xl shadow-lg p-4 md:p-8 w-full mt-6"
         >
-          {/* CABEÇALHO (igual ao seu) */}
+          {/* CABEÇALHO */}
           <header className="flex flex-col gap-4">
             <div className="relative overflow-hidden rounded-2xl border border-amber-200 bg-[#fffaf1]">
               <div className={`h-1 w-full bg-gradient-to-r ${theme.subtleLine}`} />
@@ -334,9 +342,9 @@ function navigateToSet(k: MysterySetKey) {
                 </div>
 
                 <p className="mt-4 text-sm text-gray-800" style={{ lineHeight: "1.75" }}>
-                  Reze com calma e presença. As orações ficam sempre visíveis e a
-                  meditação do mistério permanece durante toda a dezena — inclusive
-                  no <span className="font-semibold">Glória</span>.
+                  Reze com calma e presença. As orações ficam sempre visíveis e a meditação do mistério
+                  permanece durante toda a dezena — inclusive no{" "}
+                  <span className="font-semibold">Glória</span>.
                 </p>
 
                 <div className="mt-4 rounded-xl border border-amber-200 bg-white/60 p-4">
@@ -359,24 +367,19 @@ function navigateToSet(k: MysterySetKey) {
 
                 <div className="mt-2 flex flex-col md:flex-row gap-3 md:items-center">
                   <select
-  value={setKey}
-  onChange={(e) => {
-    const k = e.target.value as MysterySetKey;
-
-    // atualiza estado (mantém UI responsiva imediatamente)
-    onChangeSetKey(k);
-
-    // redireciona para a nova rota
-    navigateToSet(k);
-  }}
-  className={`w-full md:flex-1 px-4 py-3 rounded-xl border border-amber-200 bg-[#fffaf1] text-gray-900 outline-none focus:ring-2 ${theme.accentRing}`}
->
-  <option value="gozosos">Mistérios Gozosos</option>
-  <option value="dolorosos">Mistérios Dolorosos</option>
-  <option value="gloriosos">Mistérios Gloriosos</option>
-  <option value="luminosos">Mistérios Luminosos</option>
-</select>
-
+                    value={setKey}
+                    onChange={(e) => {
+                      const k = e.target.value as MysterySetKey;
+                      onChangeSetKey(k);
+                      navigateToSet(k);
+                    }}
+                    className={`w-full md:flex-1 px-4 py-3 rounded-xl border border-amber-200 bg-[#fffaf1] text-gray-900 outline-none focus:ring-2 ${theme.accentRing}`}
+                  >
+                    <option value="gozosos">Mistérios Gozosos</option>
+                    <option value="dolorosos">Mistérios Dolorosos</option>
+                    <option value="gloriosos">Mistérios Gloriosos</option>
+                    <option value="luminosos">Mistérios Luminosos</option>
+                  </select>
 
                   <div className="flex flex-wrap gap-2 md:justify-end">
                     <Link
@@ -458,7 +461,7 @@ function navigateToSet(k: MysterySetKey) {
 
           {/* ORAÇÃO ATUAL */}
           <div
-            ref={reflectionRef}
+            ref={prayerRef}
             className="mt-4 p-6 bg-[#fffaf1] rounded-xl border border-amber-200 shadow-sm max-w-3xl mx-auto font-reading"
             style={{ lineHeight: "1.9" }}
           >
@@ -466,7 +469,9 @@ function navigateToSet(k: MysterySetKey) {
             <h2 className="text-xl font-extrabold text-gray-900 mt-1">
               {currentStep.label}
             </h2>
-            <p className="mt-3 whitespace-pre-line text-gray-950">{currentPrayer.text}</p>
+            <p className="mt-3 whitespace-pre-line text-gray-950">
+              {currentPrayer.text}
+            </p>
           </div>
 
           {/* TIMELINE */}
@@ -476,15 +481,20 @@ function navigateToSet(k: MysterySetKey) {
             </p>
 
             <RosaryTimeline
-              steps={steps}
-              current={current}
-              onSelect={setCurrent}
-              setKey={setKey}
-            />
+                steps={steps}
+                current={current}
+                onSelect={(i) => {
+                    setHasInteracted(true);
+                    setCurrent(i);
+                }}
+                setKey={setKey}
+                highlight={!hasInteracted}
+                />
           </div>
 
           {/* REFLEXÃO */}
           <div
+            ref={reflectionRef}
             className="mt-4 p-6 bg-[#fffaf1] rounded-xl border border-amber-200 shadow-sm max-w-3xl mx-auto font-reading"
             style={{ lineHeight: "1.9" }}
           >
@@ -506,9 +516,7 @@ function navigateToSet(k: MysterySetKey) {
                 </div>
 
                 <div className="mt-4">
-                  <p className="font-semibold text-gray-900">
-                    Referências bíblicas:
-                  </p>
+                  <p className="font-semibold text-gray-900">Referências bíblicas:</p>
                   <ul className="list-disc pl-5 text-gray-900">
                     {openingMeditation.scriptures.map((s, idx) => (
                       <li key={idx}>
@@ -533,14 +541,11 @@ function navigateToSet(k: MysterySetKey) {
                 </div>
 
                 <p className="mt-4 text-gray-900">
-                  <span className="font-semibold">Intenção:</span>{" "}
-                  {mystery.intention}
+                  <span className="font-semibold">Intenção:</span> {mystery.intention}
                 </p>
 
                 <div className="mt-4">
-                  <p className="font-semibold text-gray-900">
-                    Referências bíblicas:
-                  </p>
+                  <p className="font-semibold text-gray-900">Referências bíblicas:</p>
                   <ul className="list-disc pl-5 text-gray-900">
                     {mystery.scriptures.map((s, idx) => (
                       <li key={idx}>
@@ -553,10 +558,9 @@ function navigateToSet(k: MysterySetKey) {
               </>
             ) : (
               <p className="mt-2 text-gray-900">
-                Na abertura do terço, recolha o coração e reze com atenção. Ao
-                iniciar a primeira dezena (Pai-Nosso), a meditação do mistério
-                correspondente aparecerá aqui e permanecerá durante toda a
-                dezena, incluindo o Glória + Oração de Fátima.
+                Na abertura do terço, recolha o coração e reze com atenção. Ao iniciar a primeira
+                dezena (Pai-Nosso), a meditação do mistério correspondente aparecerá aqui e permanecerá
+                durante toda a dezena, incluindo o Glória + Oração de Fátima.
               </p>
             )}
           </div>
@@ -567,12 +571,9 @@ function navigateToSet(k: MysterySetKey) {
               className="mt-8 p-6 bg-[#fffaf1] rounded-xl border border-amber-300 text-gray-900 font-reading max-w-3xl mx-auto"
               style={{ lineHeight: "1.9" }}
             >
-              <h4 className="font-bold text-amber-800 mb-2">
-                Aprofunde com o Tio Ben
-              </h4>
+              <h4 className="font-bold text-amber-800 mb-2">Aprofunde com o Tio Ben</h4>
               <p className="mt-2">
-                <span className="font-semibold">Sugestão de pesquisa:</span>{" "}
-                {finalSuggestion}
+                <span className="font-semibold">Sugestão de pesquisa:</span> {finalSuggestion}
               </p>
               <div className="mt-4">
                 <Link
@@ -597,16 +598,19 @@ function navigateToSet(k: MysterySetKey) {
         onChangeSet={(k) => {
           setSetKey(k);
           setCurrent(0);
+          setHasInteracted(false);
         }}
         mode={mode}
         onChangeMode={(m) => {
           setMode(m);
           setCurrent(0);
+          setHasInteracted(false);
         }}
         singleMysteryIndex={singleMysteryIndex}
         onChangeSingleMysteryIndex={(i) => {
           setSingleMysteryIndex(i);
           setCurrent(0);
+          setHasInteracted(false);
         }}
       />
 

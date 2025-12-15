@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import type { MysterySetKey } from "./RosaryDataset";
 import type { RosaryStep } from "./RosaryEngine";
+import { motion } from "framer-motion";
 
 function themeBySet(setKey: MysterySetKey) {
   switch (setKey) {
@@ -97,23 +98,30 @@ function CrossInside() {
 
 type Props = {
   steps: RosaryStep[];
-  current: number; // steps[index].index
+  current: number;
   onSelect: (index: number) => void;
   setKey: MysterySetKey;
+  highlight?: boolean; // ✅ habilita pulso experimental
 };
 
-export default function RosaryTimeline({ steps, current, onSelect, setKey }: Props) {
+export default function RosaryTimeline({
+  steps,
+  current,
+  onSelect,
+  setKey,
+  highlight = false,
+}: Props) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
-  const { rope } = useMemo(() => themeBySet(setKey), [setKey]);
+  const { rope, glow } = useMemo(() => themeBySet(setKey), [setKey]);
 
-  const TRACK_H = 96;
-  const TRACK_H_MOBILE = 86;
-
+  // Centraliza conta atual
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
 
-    const btn = el.querySelector<HTMLButtonElement>(`button[data-step="${current}"]`);
+    const btn = el.querySelector<HTMLButtonElement>(
+      `button[data-step="${current}"]`
+    );
     if (!btn) return;
 
     const r1 = el.getBoundingClientRect();
@@ -158,15 +166,7 @@ export default function RosaryTimeline({ steps, current, onSelect, setKey }: Pro
 
       {/* Wrapper */}
       <div className="bg-[#fffaf1] border border-amber-200 rounded-xl shadow-sm px-2 md:px-12">
-        <div className="relative" style={{ height: TRACK_H_MOBILE }}>
-          <style jsx>{`
-            @media (min-width: 768px) {
-              div[data-track="1"] {
-                height: ${TRACK_H}px !important;
-              }
-            }
-          `}</style>
-
+        <div className="relative h-[86px] md:h-[96px]">
           {/* Corda */}
           <div
             className="pointer-events-none absolute left-3 right-3 top-1/2 -translate-y-1/2 h-[4px] rounded-full"
@@ -178,69 +178,111 @@ export default function RosaryTimeline({ steps, current, onSelect, setKey }: Pro
             }}
           />
 
-          <div data-track="1" className="h-[86px] md:h-[96px]">
-            <div
-              ref={scrollerRef}
-              className="h-full overflow-x-auto scroll-smooth px-1 md:px-2"
-              style={{ scrollSnapType: "x mandatory", scrollbarWidth: "thin" }}
-            >
-              {/* Slots com largura fixa: isso impede encavalamento */}
-              <div className="h-full flex items-center min-w-max">
-                {steps.map((s) => {
-                  // Spacer
-                  if (s.kind !== "bead") {
-                    return (
-                      <div
-                        key={`sp-${s.index}`}
-                        className="relative shrink-0"
-                        style={{ width: 44, height: "100%" }}
-                      />
-                    );
-                  }
-
-                  const active = s.index === current;
-                  const isCrossBead = s.beadStyle === "cross";
-                  const isKnot = s.beadStyle === "knot";
-                  const isOurFather = s.prayer === "ourFather";
-
-                  const beadSize = isCrossBead ? 54 : isOurFather ? 52 : 46;
-                  const beadWidth = isKnot ? 60 : beadSize;
-
-                  // Espaço “real” entre contas = definido pelo SLOT
-                  // (quanto maior o slot, mais afastadas ficam)
-                  const slotPadding = isCrossBead ? 34 : isOurFather ? 30 : isKnot ? 26 : 20;
-
-                  const slotWidth = beadWidth + slotPadding;
-
+          <div
+            ref={scrollerRef}
+            className="h-full overflow-x-auto scroll-smooth px-1 md:px-2"
+            style={{ scrollSnapType: "x mandatory", scrollbarWidth: "thin" }}
+          >
+            {/* Slots com largura fixa */}
+            <div className="h-full flex items-center min-w-max">
+              {steps.map((s) => {
+                // Spacer
+                if (s.kind !== "bead") {
                   return (
                     <div
-                      key={`slot-${s.index}`}
+                      key={`sp-${s.index}`}
                       className="relative shrink-0"
-                      style={{
-                        height: "100%",
-                        width: slotWidth,
-                      }}
-                    >
-                      <button
-                        data-step={s.index}
-                        onClick={() => onSelect(s.index)}
-                        title={s.label}
-                        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 focus:outline-none"
-                        style={{ scrollSnapAlign: "center" }}
-                        type="button"
-                      >
-                        {isKnot ? (
-                          <div style={knotStyle(active, setKey)} />
-                        ) : (
-                          <div style={beadWood(active, beadSize, setKey)} />
-                        )}
-
-                        {isCrossBead && <CrossInside />}
-                      </button>
-                    </div>
+                      style={{ width: 44, height: "100%" }}
+                    />
                   );
-                })}
-              </div>
+                }
+
+                const active = s.index === current;
+                const isCrossBead = s.beadStyle === "cross";
+                const isKnot = s.beadStyle === "knot";
+                const isOurFather = s.prayer === "ourFather";
+
+                const beadSize = isCrossBead ? 54 : isOurFather ? 52 : 46;
+                const beadWidth = isKnot ? 60 : beadSize;
+
+                // Espaçamento por slot (ajuste fino aqui)
+                const slotPadding = isCrossBead
+                  ? 34
+                  : isOurFather
+                  ? 30
+                  : isKnot
+                  ? 26
+                  : 22;
+
+                const slotWidth = beadWidth + slotPadding;
+
+                // ✅ Pulso experimental apenas na conta ativa e quando highlight=true
+                const pulseOn = Boolean(highlight && active);
+
+                return (
+                  <div
+                    key={`slot-${s.index}`}
+                    className="relative shrink-0"
+                    style={{ height: "100%", width: slotWidth }}
+                  >
+                    <button
+                      data-step={s.index}
+                      onClick={() => onSelect(s.index)}
+                      title={s.label}
+                      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 focus:outline-none"
+                      style={{ scrollSnapAlign: "center" }}
+                      type="button"
+                    >
+                      {isKnot ? (
+                        <motion.div
+                          animate={
+                            pulseOn
+                              ? { scale: [1, 1.08, 1] }
+                              : { scale: 1 }
+                          }
+                          transition={
+                            pulseOn
+                              ? {
+                                  duration: 2.4,
+                                  repeat: Infinity,
+                                  ease: "easeInOut",
+                                }
+                              : { duration: 0 }
+                          }
+                          style={knotStyle(active, setKey)}
+                        />
+                      ) : (
+                        <motion.div
+                          animate={
+                            pulseOn
+                              ? {
+                                  scale: [1, 1.08, 1],
+                                  boxShadow: [
+                                    beadWood(active, beadSize, setKey).boxShadow as string,
+                                    `0 0 0 6px ${glow}, 0 10px 18px rgba(0,0,0,0.22)`,
+                                    beadWood(active, beadSize, setKey).boxShadow as string,
+                                  ],
+                                }
+                              : { scale: 1 }
+                          }
+                          transition={
+                            pulseOn
+                              ? {
+                                  duration: 2.4,
+                                  repeat: Infinity,
+                                  ease: "easeInOut",
+                                }
+                              : { duration: 0 }
+                          }
+                          style={beadWood(active, beadSize, setKey)}
+                        />
+                      )}
+
+                      {isCrossBead && <CrossInside />}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
