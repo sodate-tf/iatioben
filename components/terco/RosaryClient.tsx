@@ -466,7 +466,7 @@ function navigateToSet(k: MysterySetKey) {
             <h2 className="text-xl font-extrabold text-gray-900 mt-1">
               {currentStep.label}
             </h2>
-            <p className="mt-3 whitespace-pre-line text-gray-700">{currentPrayer.text}</p>
+            <p className="mt-3 whitespace-pre-line text-gray-950">{currentPrayer.text}</p>
           </div>
 
           {/* TIMELINE */}
