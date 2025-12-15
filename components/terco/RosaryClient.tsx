@@ -434,7 +434,7 @@ function navigateToSet(k: MysterySetKey) {
                       Reiniciar
                     </button>
 
-                    <label className="flex items-center gap-2 px-3 py-2 rounded-full bg-[#fffaf1] border border-amber-200 text-sm">
+                    <label className="flex items-center gap-2 px-3 py-2 rounded-full bg-[#fffaf1] border text-gray-900 border-amber-200 text-sm">
                       <input
                         type="checkbox"
                         checked={includeClosing}
@@ -466,7 +466,7 @@ function navigateToSet(k: MysterySetKey) {
             <h2 className="text-xl font-extrabold text-gray-900 mt-1">
               {currentStep.label}
             </h2>
-            <p className="mt-3 whitespace-pre-line">{currentPrayer.text}</p>
+            <p className="mt-3 whitespace-pre-line text-gray-700">{currentPrayer.text}</p>
           </div>
 
           {/* TIMELINE */}
