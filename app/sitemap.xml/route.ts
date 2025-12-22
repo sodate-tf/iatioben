@@ -8,6 +8,20 @@ interface SitemapUrl {
   priority: string;
 }
 
+function escapeXml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function toLastmod(d: Date) {
+  // recomendado pelo padrão do sitemap: YYYY-MM-DD
+  return d.toISOString().slice(0, 10);
+}
+
 export async function GET(): Promise<NextResponse> {
   const baseUrl = "https://www.iatioben.com.br";
   const today = new Date();
@@ -21,7 +35,7 @@ export async function GET(): Promise<NextResponse> {
 
   const sitemapUrls: SitemapUrl[] = [];
 
-  // ✅ 1️⃣ HOME
+  // ✅ 1) HOME
   sitemapUrls.push({
     url: `${baseUrl}/`,
     date: today,
@@ -29,7 +43,7 @@ export async function GET(): Promise<NextResponse> {
     priority: "1.0",
   });
 
-  // ✅ 2️⃣ RAIZ DA LITURGIA (EXTREMAMENTE IMPORTANTE)
+  // ✅ 2) LITURGIA (raiz + datas suportadas)
   sitemapUrls.push({
     url: `${baseUrl}/liturgia-diaria`,
     date: today,
@@ -37,7 +51,7 @@ export async function GET(): Promise<NextResponse> {
     priority: "0.95",
   });
 
-  // ✅ 3️⃣ LITURGIA: APENAS O PERÍODO QUE A API SUPORTA (-3 ATÉ +14)
+  // somente o período suportado pela API (-3 até +14)
   for (let i = -3; i <= 14; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
@@ -50,39 +64,72 @@ export async function GET(): Promise<NextResponse> {
     });
   }
 
-  // ✅ 4️⃣ BLOG
+  // ✅ 3) TERÇO (rotas existentes)
+  const rosaryPages: Array<{
+    path: string;
+    priority: string;
+    changefreq: SitemapUrl["changefreq"];
+  }> = [
+    { path: "/santo-terco", priority: "0.95", changefreq: "daily" },
+    { path: "/santo-terco/misterios-gozosos", priority: "0.9", changefreq: "weekly" },
+    { path: "/santo-terco/misterios-dolorosos", priority: "0.9", changefreq: "weekly" },
+    { path: "/santo-terco/misterios-gloriosos", priority: "0.9", changefreq: "weekly" },
+    { path: "/santo-terco/misterios-luminosos", priority: "0.9", changefreq: "weekly" },
+  ];
+
+  for (const p of rosaryPages) {
+    sitemapUrls.push({
+      url: `${baseUrl}${p.path}`,
+      date: today,
+      changefreq: p.changefreq,
+      priority: p.priority,
+    });
+  }
+
+  // ✅ 4) BLOG (posts publicados)
   try {
     const blogPosts = await getPublishedPostsForSitemapAction();
 
     for (const post of blogPosts) {
-      if (typeof post.slug === "string" && post.slug.trim().length > 0) {
-        sitemapUrls.push({
-          url: `${baseUrl}/blog/${post.slug}`,
-          date: new Date(post.updatedAt ?? post.updatedAt ?? today),
-          changefreq: "weekly",
-          priority: "0.7",
-        });
-      }
+      const slug = typeof post.slug === "string" ? post.slug.trim() : "";
+      if (!slug) continue;
+
+      const updatedAtRaw = (post as any).updatedAt ?? (post as any).createdAt;
+      const lastDate = updatedAtRaw ? new Date(updatedAtRaw) : today;
+
+      sitemapUrls.push({
+        url: `${baseUrl}/blog/${slug}`,
+        date: lastDate,
+        changefreq: "weekly",
+        priority: "0.7",
+      });
     }
   } catch (error) {
     console.error("[SITEMAP] Erro ao buscar posts:", error);
   }
 
-  // ✅ 5️⃣ GERAR XML
+  // ✅ 5) REMOVER DUPLICADOS (mantém o lastmod mais recente)
+  const unique = new Map<string, SitemapUrl>();
+  for (const item of sitemapUrls) {
+    const existing = unique.get(item.url);
+    if (!existing || existing.date < item.date) unique.set(item.url, item);
+  }
+  const urls = Array.from(unique.values());
+
+  // ✅ 6) GERAR XML (corrigido e com escape)
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset
-  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-  xmlns:xhtml="http://www.w3.org/1999/xhtml"
->
-${sitemapUrls
-  .map(
-    (item) => `  <url>
-    <loc>${item.url}</loc>
-    <lastmod>${item.date.toISOString()}</lastmod>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls
+  .map((item) => {
+    const loc = escapeXml(item.url);
+    const lastmod = toLastmod(item.date);
+    return `  <url>
+    <loc>${loc}</loc>
+    <lastmod>${lastmod}</lastmod>
     <changefreq>${item.changefreq}</changefreq>
     <priority>${item.priority}</priority>
-  </url>`
-  )
+  </url>`;
+  })
   .join("\n")}
 </urlset>`;
 
