@@ -189,21 +189,29 @@ const schemaData = {
             </p>
           </div>
           <AdSensePro slot="3041346283" height={180} />
-          {/* Conteúdo */}
+         {/* Conteúdo */}
           <div
             className="
               mt-6
-              p-6
+              w-full
+              mx-auto
               bg-[#fffaf1]
-              rounded-xl
               border border-amber-200
               shadow-sm
-              max-w-3xl
-              mx-auto
-              text-gray-900
-              prose
-              prose-amber
-              font-reading
+              rounded-xl
+              px-3 py-5
+              sm:px-5 sm:py-6
+              lg:px-8 lg:py-8
+
+              /* Tipografia/legibilidade */
+              prose prose-amber
+              prose-p:my-4
+              prose-li:my-1
+              prose-h2:mt-10 prose-h2:mb-4
+              prose-h3:mt-8 prose-h3:mb-3
+
+              /* Largura do texto em telas grandes (não “encosta” demais) */
+              max-w-none
             "
             style={{ fontSize: `${fontSize}px`, lineHeight: "1.9" }}
             dangerouslySetInnerHTML={{ __html: post.content }}
