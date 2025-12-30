@@ -3,10 +3,11 @@ import LiturgiaFAQSchema from "@/components/LiturgiaFAQSchema";
 import Script from "next/script";
 
 interface PageParams {
-  data?: string; // "dd-mm-yyyy"
+  data?: string; // "dd-mm-yyyy" (rota /liturgia-diaria/[data])
 }
 
 interface PageProps {
+  // Em alguns setups do Next, params pode vir como Promise.
   params: Promise<PageParams> | PageParams;
 }
 
@@ -209,10 +210,9 @@ export default async function Page({ params }: PageProps) {
   let data: LiturgyData;
 
   try {
-    const res = await fetch(
-      `https://liturgia.up.railway.app/v2/?dia=${dd}&mes=${mm}&ano=${yyyy}`,
-      { next: { revalidate: 3600 } }
-    );
+    const res = await fetch(`https://liturgia.up.railway.app/v2/?dia=${dd}&mes=${mm}&ano=${yyyy}`, {
+      next: { revalidate: 3600 },
+    });
 
     if (!res.ok) {
       data = normalizeApiToLiturgyData(null, dd, mm, yyyy);
@@ -232,10 +232,7 @@ export default async function Page({ params }: PageProps) {
   const jsonLdArticle = {
     "@context": "https://schema.org",
     "@type": "Article",
-    mainEntityOfPage: {
-      "@type": "WebPage",
-      "@id": canonicalUrl,
-    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
     headline: `Liturgia Diária ${dd}/${mm}/${yyyy}`,
     description: `Acompanhe a Liturgia Diária de ${formattedDate}. Evangelho, leituras, salmo e orações para meditar a Palavra de Deus.`,
     image: "https://www.iatioben.com.br/og_image_liturgia.png",
@@ -243,28 +240,53 @@ export default async function Page({ params }: PageProps) {
     inLanguage: "pt-BR",
     datePublished: isoWithBRTimezone(d),
     dateModified: isoWithBRTimezone(d),
-    author: {
-      "@type": "Person",
-      name: "Tio Ben",
-      url: "https://www.iatioben.com.br",
-    },
+    author: { "@type": "Person", name: "Tio Ben", url: "https://www.iatioben.com.br" },
     publisher: {
       "@type": "Organization",
       name: "IA Tio Ben",
       url: "https://www.iatioben.com.br",
-      logo: {
-        "@type": "ImageObject",
-        url: "https://www.iatioben.com.br/logo.png",
-      },
+      logo: { "@type": "ImageObject", url: "https://www.iatioben.com.br/logo.png" },
     },
+  };
+
+  // Breadcrumb JSON-LD (SEO)
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Início",
+        item: "https://www.iatioben.com.br",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Liturgia Diária",
+        item: "https://www.iatioben.com.br/liturgia-diaria",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: parts ? `Liturgia ${dd}/${mm}/${yyyy}` : "Hoje",
+        item: canonicalUrl,
+      },
+    ],
   };
 
   return (
     <>
       <Script
-        id="jsonld-liturgia"
+        id="jsonld-liturgia-article"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdArticle) }}
+      />
+
+      <Script
+        id="jsonld-liturgia-breadcrumb"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
       <LiturgiaClient data={data} />
