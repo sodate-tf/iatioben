@@ -1,6 +1,7 @@
 // app/layout.tsx
 import "./globals.css";
 import Script from "next/script";
+import { Inter, Source_Serif_4 } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import PageTransition from "@/components/pageTransiction";
@@ -44,9 +45,24 @@ const lora = Lora({
   variable: "--font-lora",
 });
 
+
+
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const sourceSerif = Source_Serif_4({
+  subsets: ["latin"],
+  variable: "--font-source-serif",
+  display: "swap",
+});
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className={`${inter.variable} ${sourceSerif.variable}`}>
       <body className={lora.variable}>
         <Cabecalho />
 

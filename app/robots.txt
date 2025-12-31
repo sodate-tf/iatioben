@@ -1,29 +1,27 @@
-# Robots.txt - Otimizado para SEO e Performance (Mobile First)
-# Data: 17 de Outubro de 2025
-# Autor: UX Designer
+# Robots.txt – SEO & Performance (Mobile First)
+# Projeto: IA Tio Ben
 
-# === 1. DIRETIVAS UNIVERSAIS (APLICA-SE A TODOS OS BOTS) ===
+# =========================
+# 1. REGRAS GERAIS
+# =========================
 User-agent: *
-
-# **IMPORTANTE:** Bloquear a área administrativa para garantir a privacidade e economizar crawl budget.
 Disallow: /adminHome/
+Disallow: /_next/
+Disallow: /api/
 
-# Permitir o rastreamento da Home, Blog e Liturgia. 
-# Como o Disallow acima é para um diretório específico, 
-# todas as demais páginas estão implicitamente permitidas (o padrão é Allow).
+# Bloqueio opcional de parâmetros (evita conteúdo duplicado)
+Disallow: /*?utm_
+Disallow: /*&utm_
+Disallow: /*?ref=
+Disallow: /*&ref=
 
-# === 2. MELHORES PRÁTICAS E OTIMIZAÇÕES ===
+# =========================
+# 2. GOOGLEBOT (EXPLÍCITO)
+# =========================
+User-agent: Googlebot
+Allow: /
 
-# As páginas do blog, como https://www.iatioben.com.br/blog/titulo-do-post
-# e a Liturgia Diária, como https://www.iatioben.com.br/liturgia-diaria/17-10-2025,
-# são conteúdo de alta relevância e devem ter o rastreamento total garantido.
-# Não é necessário usar a diretiva 'Allow' explicitamente para essas URLs,
-# pois elas não estão dentro do diretório bloqueado acima.
-
-# Se houver URLs com parâmetros que geram conteúdo duplicado e que
-# não são essenciais, adicione o bloqueio com curinga (exemplo abaixo):
-# Disallow: /*?parametro_de_filtro=
-
-# === 3. SITEMAP (CRUCIAL PARA INDEXAÇÃO EFICIENTE) ===
-# Assumindo que seu Sitemap está na raiz.
+# =========================
+# 3. SITEMAP
+# =========================
 Sitemap: https://www.iatioben.com.br/sitemap.xml
