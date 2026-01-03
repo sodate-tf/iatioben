@@ -23,6 +23,10 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 }
 
+/* =======================
+   ROTAS / MENUS
+======================= */
+
 const TERCO_HUB = "/santo-terco/como-rezar-o-terco";
 
 const TERCO_ITEMS = [
@@ -32,6 +36,9 @@ const TERCO_ITEMS = [
   { label: "Rezar Mistérios Gloriosos", href: "/santo-terco/rezar/misterios-gloriosos" },
   { label: "Rezar Mistérios Luminosos", href: "/santo-terco/rezar/misterios-luminosos" },
 ];
+
+const LITURGIA_GUIDE = "/liturgia-diaria"; // guia/hub
+const LITURGIA_ROOT = "/liturgia-diaria"; // página principal de liturgia
 
 export default function Cabecalho() {
   const pathname = usePathname();
@@ -91,14 +98,36 @@ export default function Cabecalho() {
   };
 
   /* =======================
-     DATE (Liturgia)
+     LITURGIA MENU STATE (NOVO)
+  ======================= */
+  const [openDesktopLiturgia, setOpenDesktopLiturgia] = useState(false);
+  const [openMobileLiturgia, setOpenMobileLiturgia] = useState(false);
+
+  const isLiturgiaActive = pathname.startsWith("/liturgia-diaria") || pathname.startsWith("/liturgia");
+
+  const openLiturgiaSheet = () => setOpenMobileLiturgia(true);
+  const closeLiturgiaSheet = () => setOpenMobileLiturgia(false);
+
+  const goToLiturgia = (href: string) => {
+    closeLiturgiaSheet();
+    router.push(href);
+  };
+
+  /* =======================
+     DATE (Liturgia de Hoje)
+     - Link com data atual do sistema: /liturgia-diaria/dd-mm-yyyy
   ======================= */
   const d = new Date();
   const dd = String(d.getDate()).padStart(2, "0");
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const yyyy = d.getFullYear();
-  const todayUrl = `/liturgia-diaria/${dd}-${mm}-${yyyy}`;
-  const isLiturgiaActive = pathname.startsWith("/liturgia-diaria");
+  const liturgiaHojeUrl = `${LITURGIA_ROOT}/${dd}-${mm}-${yyyy}`;
+
+  const LITURGIA_ITEMS = [
+    { label: "Liturgia de hoje", href: liturgiaHojeUrl, icon: BookOpen },
+    { label: "Guia da Liturgia", href: LITURGIA_GUIDE },
+    //{ label: "Todas as datas (Liturgia Diária)", href: LITURGIA_ROOT },
+  ];
 
   return (
     <>
@@ -116,14 +145,55 @@ export default function Cabecalho() {
 
         {/* NAV */}
         <nav className="flex items-center gap-8 relative">
-          <Link
-            href={todayUrl}
-            className="font-semibold text-amber-900 hover:text-amber-700 flex items-center gap-2"
+          {/* =======================
+             LITURGIA DESKTOP (NOVO - igual o Terço)
+          ======================= */}
+          <div
+            className="relative"
+            onMouseEnter={() => setOpenDesktopLiturgia(true)}
+            onMouseLeave={() => setOpenDesktopLiturgia(false)}
           >
-            <BookOpen /> Liturgia
-          </Link>
+            <Link
+              href={liturgiaHojeUrl}
+              className="font-semibold text-amber-900 hover:text-amber-700 flex items-center gap-2"
+            >
+              <BookOpen /> Liturgia
+            </Link>
 
-          {/* SANTO TERÇO DESKTOP */}
+            <AnimatePresence>
+              {openDesktopLiturgia && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  className="absolute top-full left-0 mt-2 w-80 rounded-2xl bg-white shadow-xl border p-2 z-50"
+                >
+                  {/* CTA principal: Liturgia de hoje */}
+                  <Link
+                    href={liturgiaHojeUrl}
+                    className="block rounded-xl px-4 py-3 font-semibold bg-amber-50 hover:bg-amber-100 text-amber-900"
+                  >
+                    Liturgia de hoje ({dd}/{mm}/{yyyy})
+                  </Link>
+
+                  <div className="mt-2 space-y-1">
+                    <Link
+                      href={LITURGIA_GUIDE}
+                      className="block rounded-xl px-4 py-2 text-sm hover:bg-gray-100"
+                    >
+                      Guia da Liturgia
+                    </Link>
+
+                   
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* =======================
+             SANTO TERÇO DESKTOP
+          ======================= */}
           <div
             className="relative"
             onMouseEnter={() => setOpenDesktopTerco(true)}
@@ -167,10 +237,7 @@ export default function Cabecalho() {
             </AnimatePresence>
           </div>
 
-          <Link
-            href="/blog"
-            className="font-semibold text-amber-900 hover:text-amber-700 flex items-center gap-2"
-          >
+          <Link href="/blog" className="font-semibold text-amber-900 hover:text-amber-700 flex items-center gap-2">
             <Newspaper /> Blog
           </Link>
 
@@ -187,9 +254,8 @@ export default function Cabecalho() {
 
       {/* =======================
          MOBILE BOTTOM BAR
-         - Removido o botão "Terço" do centro
-         - "Menu (hamburger)" agora abre o submenu do Terço
-         - Mantém destaque de item ativo
+         - Agora "Menu" abre submenu da Liturgia (NOVO)
+         - Terço permanece como sheet
       ======================= */}
       <nav className="fixed md:hidden bottom-0 left-0 right-0 z-30 bg-white border-t grid grid-cols-5 h-20">
         <Link href="/" className={navItemClass(isActive("/"))}>
@@ -197,12 +263,19 @@ export default function Cabecalho() {
           <span className="text-xs font-semibold">IA</span>
         </Link>
 
-        <Link href={todayUrl} className={navItemClass(isLiturgiaActive)}>
+        {/* Liturgia vira botão que abre SHEET */}
+        <button
+          onClick={openLiturgiaSheet}
+          className={navItemClass(isLiturgiaActive)}
+          aria-haspopup="dialog"
+          aria-expanded={openMobileLiturgia}
+          aria-controls="liturgia-sheet"
+        >
           <BookOpen />
           <span className="text-xs font-semibold">Liturgia</span>
-        </Link>
+        </button>
 
-        {/* Centro: espaço para manter equilíbrio visual (sem ação) */}
+        {/* Centro: espaço */}
         <div className="flex items-center justify-center">
           <div className="w-10 h-10 rounded-full bg-gray-100 border" aria-hidden="true" />
         </div>
@@ -212,7 +285,7 @@ export default function Cabecalho() {
           <span className="text-xs font-semibold">Blog</span>
         </Link>
 
-        {/* Hamburger abre submenu do Terço */}
+        {/* Terço sheet */}
         <button
           onClick={openTercoSheet}
           className={navItemClass(isTercoActive)}
@@ -226,9 +299,69 @@ export default function Cabecalho() {
       </nav>
 
       {/* =======================
-         MOBILE TERÇO SHEET (mais intuitivo)
-         - Ao clicar em "Terço" (hamburger), mostra todas as opções
-         - Somente navega após o usuário escolher uma opção
+         MOBILE LITURGIA SHEET (NOVO)
+      ======================= */}
+      <AnimatePresence>
+        {openMobileLiturgia && (
+          <motion.div
+            id="liturgia-sheet"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 z-50 flex items-end"
+            onClick={closeLiturgiaSheet}
+          >
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 24, stiffness: 260 }}
+              className="bg-white w-full rounded-t-3xl p-5 pb-8 space-y-3"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="text-amber-800" />
+                  <h3 className="text-lg font-extrabold text-gray-900">Liturgia</h3>
+                </div>
+                <button
+                  onClick={closeLiturgiaSheet}
+                  className="text-sm font-semibold text-gray-600 hover:text-gray-900"
+                >
+                  Fechar
+                </button>
+              </div>
+
+              <p className="text-sm text-gray-600">
+                Escolha uma opção para continuar (você só sai desta tela após selecionar).
+              </p>
+
+              <div className="space-y-2">
+                {/* CTA principal: Liturgia de hoje */}
+                <button
+                  onClick={() => goToLiturgia(liturgiaHojeUrl)}
+                  className="w-full rounded-2xl bg-amber-700 text-white px-4 py-3 font-semibold text-center hover:bg-amber-800"
+                >
+                  Liturgia de hoje ({dd}/{mm}/{yyyy})
+                </button>
+
+                {/* Guia da Liturgia */}
+                <button
+                  onClick={() => goToLiturgia(LITURGIA_GUIDE)}
+                  className="w-full rounded-xl border px-4 py-3 text-center font-semibold hover:bg-gray-50"
+                >
+                  Guia da Liturgia
+                </button>
+
+               
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* =======================
+         MOBILE TERÇO SHEET
       ======================= */}
       <AnimatePresence>
         {openMobileTerco && (
@@ -297,9 +430,7 @@ export default function Cabecalho() {
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-amber-900 text-white rounded-xl p-6 max-w-sm w-full text-center">
             <h2 className="text-xl font-bold mb-4">Instalar no iPhone</h2>
-            <p className="mb-4">
-              Toque em compartilhar e depois em &quot;Adicionar à Tela de Início&quot;.
-            </p>
+            <p className="mb-4">Toque em compartilhar e depois em &quot;Adicionar à Tela de Início&quot;.</p>
             <div className="flex justify-center mb-4 w-10 h-10 mx-auto">
               <ShareIcon />
             </div>
