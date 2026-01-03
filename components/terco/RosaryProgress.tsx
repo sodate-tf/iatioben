@@ -11,7 +11,6 @@ export default function RosaryProgress({
   current: number;
 }) {
   const step = steps[current];
-
   const base = `Passo ${current + 1}/${steps.length}`;
 
   if (step.phase === "opening") return <span>{base} • Abertura</span>;

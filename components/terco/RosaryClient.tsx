@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
@@ -12,113 +12,25 @@ import {
   OPENING_HAIL_MARY_MEDITATIONS,
   getDefaultMysterySetForWeekday,
   getFinalSuggestionBySet,
-  type MysterySetKey,
   type Mystery,
+  type MysterySetKey,
 } from "./RosaryDataset";
 
 import { buildRosarySteps, type RosaryMode } from "./RosaryEngine";
 import RosaryTimeline from "./RosaryTimeline";
-import RosaryProgress from "./RosaryProgress";
 import MysteryPickerModal from "./MysteryPickerModal";
 import PrayerManualModal from "./PrayerManualModal";
+import RosaryBottomSheet from "./RosaryBottomSheet";
 
-type Props = {
-  /** Se informado, força o conjunto inicial (para rotas /misterios-*) */
-  defaultSetKey?: MysterySetKey;
-};
+type Props = { defaultSetKey?: MysterySetKey };
 
 function weekdayLabelPT(d: Date) {
   return d.toLocaleDateString("pt-BR", { weekday: "long" });
 }
-
 function capitalize(s: string) {
   if (!s) return s;
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
-
-function themeBySet(setKey: MysterySetKey) {
-  switch (setKey) {
-    case "gozosos":
-      return {
-        chipBg: "bg-emerald-50",
-        chipBorder: "border-emerald-200",
-        chipText: "text-emerald-900",
-        accentBg: "bg-emerald-600",
-        accentText: "text-white",
-        accentRing: "focus:ring-emerald-500",
-        subtleLine: "from-emerald-200/70 via-amber-200/70 to-white/0",
-      };
-    case "dolorosos":
-      return {
-        chipBg: "bg-rose-50",
-        chipBorder: "border-rose-200",
-        chipText: "text-rose-900",
-        accentBg: "bg-rose-700",
-        accentText: "text-white",
-        accentRing: "focus:ring-rose-500",
-        subtleLine: "from-rose-200/70 via-amber-200/70 to-white/0",
-      };
-    case "gloriosos":
-      return {
-        chipBg: "bg-yellow-50",
-        chipBorder: "border-yellow-200",
-        chipText: "text-yellow-900",
-        accentBg: "bg-amber-600",
-        accentText: "text-white",
-        accentRing: "focus:ring-amber-500",
-        subtleLine: "from-yellow-200/70 via-amber-200/70 to-white/0",
-      };
-    case "luminosos":
-    default:
-      return {
-        chipBg: "bg-sky-50",
-        chipBorder: "border-sky-200",
-        chipText: "text-sky-900",
-        accentBg: "bg-sky-700",
-        accentText: "text-white",
-        accentRing: "focus:ring-sky-500",
-        subtleLine: "from-sky-200/70 via-amber-200/70 to-white/0",
-      };
-  }
-}
-
-function meaningBySet(setKey: MysterySetKey) {
-  switch (setKey) {
-    case "gozosos":
-      return {
-        title: "O que são os Mistérios Gozosos?",
-        text:
-          "Eles contemplam a alegria discreta do início da salvação: o ‘sim’ de Maria, o nascimento de Jesus e a vida escondida em Nazaré. É um terço para pedir humildade, acolhimento da vontade de Deus e alegria interior que não depende das circunstâncias.",
-        keywords:
-          "alegria, humildade, obediência, vida familiar, simplicidade, confiança",
-      };
-    case "dolorosos":
-      return {
-        title: "O que são os Mistérios Dolorosos?",
-        text:
-          "Eles contemplam a Paixão do Senhor: a entrega, a obediência na dor e o amor que perdoa. É um terço para conversão, perseverança, reparação e para aprender a unir sofrimento e cruz ao amor redentor de Cristo.",
-        keywords:
-          "conversão, compaixão, penitência, perdão, entrega, perseverança",
-      };
-    case "gloriosos":
-      return {
-        title: "O que são os Mistérios Gloriosos?",
-        text:
-          "Eles contemplam a vitória de Deus: Ressurreição, Ascensão, Pentecostes e a esperança do céu. É um terço para renovar a fé na vida eterna, pedir alegria pascal, dons do Espírito Santo e coragem para viver como testemunha.",
-        keywords: "esperança, vitória, Espírito Santo, missão, vida nova, céu",
-      };
-    case "luminosos":
-    default:
-      return {
-        title: "O que são os Mistérios Luminosos?",
-        text:
-          "Eles contemplam a ‘luz’ da vida pública de Jesus: sua revelação, seus sinais e a Eucaristia. É um terço para buscar verdade, conversão, escuta do Evangelho e uma vida mais centrada em Cristo e na presença real na Eucaristia.",
-        keywords:
-          "luz, verdade, conversão, discipulado, Evangelho, Eucaristia",
-      };
-  }
-}
-
 function slugFromSetKey(k: MysterySetKey) {
   switch (k) {
     case "gozosos":
@@ -132,6 +44,14 @@ function slugFromSetKey(k: MysterySetKey) {
       return "misterios-luminosos";
   }
 }
+function actionLabelFor(prayerKey: keyof typeof PRAYERS, isLast: boolean) {
+  if (isLast) return "Finalizar";
+  if (prayerKey === "openingBundle") return "Começar";
+  if (prayerKey === "hailMary") return "Rezei";
+  if (prayerKey === "gloryFatima") return "Concluir dezena";
+  if (prayerKey === "hailHolyQueen" || prayerKey === "finalPrayer") return "Finalizar";
+  return "Rezei / Próxima";
+}
 
 export default function RosaryClient({ defaultSetKey }: Props) {
   const router = useRouter();
@@ -139,38 +59,56 @@ export default function RosaryClient({ defaultSetKey }: Props) {
 
   const today = useMemo(() => new Date(), []);
   const weekday = useMemo(() => capitalize(weekdayLabelPT(today)), [today]);
-  const autoDefaultSet = useMemo(
-    () => getDefaultMysterySetForWeekday(today),
-    [today]
-  );
-
-  // Se veio defaultSetKey (rota /misterios-*), ele manda.
+  const autoDefaultSet = useMemo(() => getDefaultMysterySetForWeekday(today), [today]);
   const initialSet = defaultSetKey ?? autoDefaultSet;
-
-  // Refs separados (corrige o scroll do Glória para Reflexão)
-  const prayerRef = useRef<HTMLDivElement | null>(null);
-  const reflectionRef = useRef<HTMLDivElement | null>(null);
 
   const [setKey, setSetKey] = useState<MysterySetKey>(initialSet);
   const [mode, setMode] = useState<RosaryMode>("full");
-  const [singleMysteryIndex, setSingleMysteryIndex] = useState<
-    1 | 2 | 3 | 4 | 5
-  >(1);
+  const [singleMysteryIndex, setSingleMysteryIndex] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [includeClosing, setIncludeClosing] = useState(true);
 
-  // Experimental: pulso na conta ativa só até o primeiro toque
   const [hasInteracted, setHasInteracted] = useState(false);
 
-  // Se mudar de rota e defaultSetKey mudar, reseta para o conjunto da rota.
+  // Modais
+  const [openPicker, setOpenPicker] = useState(false);
+  const [openManual, setOpenManual] = useState(false);
+
+  // Mobile: alterna Oração / Meditação
+  const [mobileTab, setMobileTab] = useState<"prayer" | "reflection">("prayer");
+
+  // Sticky height measurement (evita conteúdo ficar “por baixo” das contas fixas)
+  const stickyRef = useRef<HTMLDivElement | null>(null);
+  const [stickyH, setStickyH] = useState(0);
+
+  useLayoutEffect(() => {
+    if (!stickyRef.current) return;
+
+    const el = stickyRef.current;
+
+    const update = () => {
+      const rect = el.getBoundingClientRect();
+      setStickyH(Math.max(0, Math.round(rect.height)));
+    };
+
+    update();
+
+    const ro = new ResizeObserver(() => update());
+    ro.observe(el);
+
+    window.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, []);
+
   useEffect(() => {
     if (!defaultSetKey) return;
     setSetKey(defaultSetKey);
     setCurrent(0);
     setHasInteracted(false);
+    setMobileTab("prayer");
   }, [defaultSetKey]);
-
-  const theme = useMemo(() => themeBySet(setKey), [setKey]);
-  const meaning = useMemo(() => meaningBySet(setKey), [setKey]);
 
   const steps = useMemo(
     () =>
@@ -184,24 +122,31 @@ export default function RosaryClient({ defaultSetKey }: Props) {
   );
 
   const [current, setCurrent] = useState(0);
-
-  const [openPicker, setOpenPicker] = useState(false);
-  const [openManual, setOpenManual] = useState(false);
-
   const currentStep = steps[current];
   const currentPrayer = PRAYERS[currentStep.prayer];
 
+  const isFirst = current === 0;
+  const isLast = current === steps.length - 1;
+
+  const nextLabel = useMemo(() => actionLabelFor(currentStep.prayer, isLast), [currentStep.prayer, isLast]);
+
+  const progressLabel = useMemo(() => {
+    const step = steps[current];
+    const base = `Passo ${current + 1}/${steps.length}`;
+    if (step.phase === "opening") return `${base} • Abertura`;
+    if (step.phase === "closing") return `${base} • Encerramento`;
+    const dec = step.decadeIndex ?? 1;
+    const bead = step.beadInDecade;
+    if (bead) return `${base} • Dezena ${dec}/5 • Ave-Maria ${bead}/10`;
+    return `${base} • Dezena ${dec}/5`;
+  }, [steps, current]);
+
   const openingMeditation = useMemo(() => {
     if (currentStep.phase !== "opening") return null;
-
     const label = currentStep.label || "";
-    if (label.includes("Ave-Maria 1/3"))
-      return OPENING_HAIL_MARY_MEDITATIONS.faith;
-    if (label.includes("Ave-Maria 2/3"))
-      return OPENING_HAIL_MARY_MEDITATIONS.hope;
-    if (label.includes("Ave-Maria 3/3"))
-      return OPENING_HAIL_MARY_MEDITATIONS.charity;
-
+    if (label.includes("Ave-Maria 1/3")) return OPENING_HAIL_MARY_MEDITATIONS.faith;
+    if (label.includes("Ave-Maria 2/3")) return OPENING_HAIL_MARY_MEDITATIONS.hope;
+    if (label.includes("Ave-Maria 3/3")) return OPENING_HAIL_MARY_MEDITATIONS.charity;
     return null;
   }, [currentStep.phase, currentStep.label]);
 
@@ -215,37 +160,15 @@ export default function RosaryClient({ defaultSetKey }: Props) {
       const di = steps[i]?.decadeIndex;
       if (di) return di;
     }
-
     return null;
   }, [current, currentStep.mysteryIndex, currentStep.decadeIndex, steps]);
 
   const mystery: Mystery | null = useMemo(() => {
     if (!mysteryIndexForDisplay) return null;
-    return (
-      MYSTERIES[setKey].items.find((m) => m.index === mysteryIndexForDisplay) ||
-      null
-    );
+    return MYSTERIES[setKey].items.find((m) => m.index === mysteryIndexForDisplay) ?? null;
   }, [setKey, mysteryIndexForDisplay]);
 
-  // ✅ Após o Glória (dezena), aguarda 2s e vai para a REFLEXÃO
-  useEffect(() => {
-    if (currentStep.prayer === "gloryFatima" && currentStep.phase === "decade") {
-      const timer = setTimeout(() => {
-        reflectionRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }, 2000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [currentStep.prayer, currentStep.phase]);
-
-  const isLast = current === steps.length - 1;
-  const finalSuggestion = useMemo(
-    () => getFinalSuggestionBySet(setKey),
-    [setKey]
-  );
+  const finalSuggestion = useMemo(() => getFinalSuggestionBySet(setKey), [setKey]);
 
   function goNext() {
     setHasInteracted(true);
@@ -255,7 +178,6 @@ export default function RosaryClient({ defaultSetKey }: Props) {
       return n;
     });
   }
-
   function goPrev() {
     setHasInteracted(true);
     setCurrent((c) => {
@@ -264,18 +186,17 @@ export default function RosaryClient({ defaultSetKey }: Props) {
       return n;
     });
   }
-
   function reset() {
     setCurrent(0);
     setHasInteracted(false);
-    // opcional: voltar foco para a oração atual ao reiniciar
-    prayerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setMobileTab("prayer");
   }
 
   function onChangeSetKey(k: MysterySetKey) {
     setSetKey(k);
     setCurrent(0);
     setHasInteracted(false);
+    setMobileTab("prayer");
   }
 
   function navigateToSet(k: MysterySetKey) {
@@ -286,319 +207,310 @@ export default function RosaryClient({ defaultSetKey }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-amber-400 relative">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45 }}
-          className="text-center"
-        >
-          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800">
-            Santo Terço Diário
-          </h1>
-          <p className="mt-2 text-gray-700">
-            Reze passo a passo com orações visíveis, progresso e meditação do mistério.
-          </p>
-        </motion.div>
+    <div className="min-h-screen bg-amber-400">
+      {/* Sticky topo: Contas + Tabs + atalhos */}
+      <div ref={stickyRef} className="sticky top-0 z-40">
+        {/* fundo para “tapar” conteúdo passando por baixo */}
+        <div className="bg-amber-400 px-3 sm:px-6 pt-3">
+          <section className="mx-auto w-full max-w-6xl rounded-2xl border border-amber-200 bg-white shadow-xl overflow-hidden">
+            <div className="p-4 sm:p-5 bg-[#fffaf1] border-b border-amber-100">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-amber-800">Hoje</p>
+                  <h1 className="mt-1 font-reading text-2xl sm:text-3xl font-extrabold text-gray-900 truncate">
+                    {weekday}
+                  </h1>
 
-        <AdSensePro slot="2156366376" height={140} />
-
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-          className="bg-white rounded-2xl shadow-lg p-4 md:p-8 w-full mt-6"
-        >
-          {/* CABEÇALHO */}
-          <header className="flex flex-col gap-4">
-            <div className="relative overflow-hidden rounded-2xl border border-amber-200 bg-[#fffaf1]">
-              <div className={`h-1 w-full bg-gradient-to-r ${theme.subtleLine}`} />
-
-              <div className="p-5 md:p-7">
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold text-amber-800 tracking-wide">
-                      Hoje
-                    </p>
-
-                    <h2 className="mt-1 text-xl md:text-2xl font-extrabold text-gray-900">
-                      {weekday}
-                    </h2>
-
-                    <p className="mt-1 text-sm text-gray-700">
-                      <span className="font-semibold">{MYSTERIES[setKey].label}</span>
-                    </p>
-                  </div>
-
-                  <div
-                    className={`inline-flex items-center gap-2 self-start px-3 py-1.5 rounded-full border ${theme.chipBg} ${theme.chipBorder}`}
-                  >
-                    <span className={`text-xs font-semibold ${theme.chipText}`}>
-                      Terço do dia
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className="inline-flex items-center rounded-full border border-amber-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-amber-900">
+                      {MYSTERIES[setKey].label}
                     </span>
-                    <span className="text-xs text-gray-700">padrão aplicado</span>
-                  </div>
-                </div>
-
-                <p className="mt-4 text-sm text-gray-800" style={{ lineHeight: "1.75" }}>
-                  Reze com calma e presença. As orações ficam sempre visíveis e a meditação do mistério
-                  permanece durante toda a dezena — inclusive no{" "}
-                  <span className="font-semibold">Glória</span>.
-                </p>
-
-                <div className="mt-4 rounded-xl border border-amber-200 bg-white/60 p-4">
-                  <p className="text-sm font-semibold text-gray-900">{meaning.title}</p>
-                  <p className="mt-2 text-sm text-gray-800" style={{ lineHeight: "1.75" }}>
-                    {meaning.text}
-                  </p>
-                  <p className="mt-2 text-xs text-gray-700">
-                    Temas: <span className="font-semibold">{meaning.keywords}</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <div className="rounded-2xl border border-amber-200 bg-white p-4">
-                <label className="text-xs font-semibold text-gray-800">
-                  Escolha o terço para rezar
-                </label>
-
-                <div className="mt-2 flex flex-col md:flex-row gap-3 md:items-center">
-                  <select
-                    value={setKey}
-                    onChange={(e) => {
-                      const k = e.target.value as MysterySetKey;
-                      onChangeSetKey(k);
-                      navigateToSet(k);
-                    }}
-                    className={`w-full md:flex-1 px-4 py-3 rounded-xl border border-amber-200 bg-[#fffaf1] text-gray-900 outline-none focus:ring-2 ${theme.accentRing}`}
-                  >
-                    <option value="gozosos">Mistérios Gozosos</option>
-                    <option value="dolorosos">Mistérios Dolorosos</option>
-                    <option value="gloriosos">Mistérios Gloriosos</option>
-                    <option value="luminosos">Mistérios Luminosos</option>
-                  </select>
-
-                  <div className="flex flex-wrap gap-2 md:justify-end">
                     <Link
                       href="/liturgia-diaria"
-                      target="_blank"
-                      className="px-4 py-2 rounded-full bg-gray-100 text-gray-900 text-sm border border-gray-200 hover:bg-gray-50"
+                      className="inline-flex items-center rounded-full border border-amber-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-gray-900 hover:bg-amber-50"
                     >
-                      Liturgia de hoje
+                      Liturgia
                     </Link>
-
-                    <button
-                      onClick={() => setOpenManual(true)}
-                      className="px-4 py-2 rounded-full bg-gray-100 text-gray-900 text-sm border border-gray-200 hover:bg-gray-50"
-                      type="button"
+                    <Link
+                      href="/santo-terco"
+                      className="inline-flex items-center rounded-full border border-amber-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-gray-900 hover:bg-amber-50"
                     >
-                      Manual das orações
-                    </button>
+                      Hub do Terço
+                    </Link>
                   </div>
                 </div>
 
-                <p className="mt-2 text-xs text-gray-600">
-                  Dica: por padrão, abrimos o terço do dia. Você pode mudar e rezar qualquer conjunto.
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-amber-200 bg-white p-4">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                  <div className="text-sm text-gray-800">
-                    <span className="font-semibold text-amber-800">Ritmo:</span>{" "}
-                    avance quando terminar a oração atual.
-                  </div>
-
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      onClick={goPrev}
-                      className="px-4 py-2 rounded-full bg-gray-100 text-gray-900 text-sm border border-gray-200 hover:bg-gray-50"
-                      type="button"
-                    >
-                      Voltar
-                    </button>
-
-                    <button
-                      onClick={goNext}
-                      className={`px-4 py-2 rounded-full ${theme.accentBg} ${theme.accentText} font-semibold text-sm`}
-                      type="button"
-                    >
-                      Rezei / Próxima
-                    </button>
-
-                    <button
-                      onClick={reset}
-                      className="px-4 py-2 rounded-full bg-gray-100 text-gray-900 text-sm border border-gray-200 hover:bg-gray-50"
-                      type="button"
-                    >
-                      Reiniciar
-                    </button>
-
-                    <label className="flex items-center gap-2 px-3 py-2 rounded-full bg-[#fffaf1] border text-gray-900 border-amber-200 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={includeClosing}
-                        onChange={(e) => setIncludeClosing(e.target.checked)}
-                      />
-                      Encerramento
-                    </label>
-                  </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <button
+                    onClick={() => setOpenPicker(true)}
+                    className="rounded-xl border border-amber-200 bg-white px-3 py-2 text-xs font-semibold text-gray-900 hover:bg-amber-50"
+                    type="button"
+                  >
+                    Mistérios
+                  </button>
+                  <button
+                    onClick={() => setOpenManual(true)}
+                    className="rounded-xl border border-amber-200 bg-white px-3 py-2 text-xs font-semibold text-gray-900 hover:bg-amber-50"
+                    type="button"
+                  >
+                    Orações
+                  </button>
                 </div>
               </div>
             </div>
-          </header>
 
-          {/* PROGRESSO */}
-          <div className="mt-6 p-4 bg-[#fffaf1] rounded-xl border border-amber-200">
-            <p className="text-sm text-gray-900">
-              <span className="font-semibold text-amber-800">Progresso:</span>{" "}
-              <RosaryProgress steps={steps} current={current} />
-            </p>
-          </div>
-
-          {/* ORAÇÃO ATUAL */}
-          <div
-            ref={prayerRef}
-            className="mt-4 p-6 bg-[#fffaf1] rounded-xl border border-amber-200 shadow-sm max-w-3xl mx-auto font-reading"
-            style={{ lineHeight: "1.9" }}
-          >
-            <p className="text-xs font-semibold text-amber-800">Oração atual</p>
-            <h2 className="text-xl font-extrabold text-gray-900 mt-1">
-              {currentStep.label}
-            </h2>
-            <p className="mt-3 whitespace-pre-line text-gray-950">
-              {currentPrayer.text}
-            </p>
-          </div>
-
-          {/* TIMELINE */}
-          <div className="mt-4">
-            <p className="text-xs text-gray-700 mb-2">
-              Toque nas contas para navegar. A conta atual fica destacada.
-            </p>
-
-            <RosaryTimeline
+            {/* Contas ocupando “tela” (sem causar vazio): sticky usa altura estável */}
+            <div className="p-3 sm:p-5">
+              <RosaryTimeline
                 steps={steps}
                 current={current}
                 onSelect={(i) => {
-                    setHasInteracted(true);
-                    setCurrent(i);
+                  setHasInteracted(true);
+                  setCurrent(i);
+                  // IMPORTANTÍSSIMO: sem scroll vertical
                 }}
                 setKey={setKey}
                 highlight={!hasInteracted}
-                />
+                variant="sticky"
+              />
+
+              {/* Menu fixo (mobile first): tabs + progresso + reiniciar */}
+              <div className="mt-3">
+                <div className="rounded-2xl border border-amber-200 bg-white p-2 shadow-sm">
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setMobileTab("prayer")}
+                      className={
+                        "flex-1 rounded-xl px-3 py-2 text-sm font-extrabold " +
+                        (mobileTab === "prayer"
+                          ? "bg-amber-600 text-white"
+                          : "bg-[#fffaf1] text-gray-900 border border-amber-200")
+                      }
+                    >
+                      Oração
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMobileTab("reflection")}
+                      className={
+                        "flex-1 rounded-xl px-3 py-2 text-sm font-extrabold " +
+                        (mobileTab === "reflection"
+                          ? "bg-amber-600 text-white"
+                          : "bg-[#fffaf1] text-gray-900 border border-amber-200")
+                      }
+                    >
+                      Meditação
+                    </button>
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-between gap-3 text-[11px] text-gray-700">
+                    <span className="truncate">{progressLabel}</span>
+                    <button
+                      type="button"
+                      onClick={reset}
+                      className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-[11px] font-semibold text-gray-900 hover:bg-gray-50"
+                    >
+                      Reiniciar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Pequena sombra/recorte para destacar sticky */}
+          <div className="mx-auto max-w-6xl">
+            <div className="h-3 bg-gradient-to-b from-amber-400/0 to-amber-400" />
           </div>
+        </div>
+      </div>
 
-          {/* REFLEXÃO */}
-          <div
-            ref={reflectionRef}
-            className="mt-4 p-6 bg-[#fffaf1] rounded-xl border border-amber-200 shadow-sm max-w-3xl mx-auto font-reading"
-            style={{ lineHeight: "1.9" }}
-          >
-            <p className="text-xs font-semibold text-amber-800">Reflexão</p>
+      {/* Conteúdo: empurrado para baixo da área sticky (sem espaço vazio) */}
+      <div
+        className="mx-auto w-full max-w-6xl px-3 sm:px-6 pb-28"
+        style={{ paddingTop: Math.max(8, stickyH ? stickyH * 0.02 : 8) }}
+      >
+        {/* Acessibilidade */}
+        <p className="sr-only" aria-live="polite">
+          Etapa atual: {currentStep.label}. {progressLabel}.
+        </p>
 
-            {openingMeditation ? (
-              <>
-                <h3 className="text-lg font-bold text-gray-900 mt-2">
-                  {openingMeditation.title}
-                </h3>
-
-                <p className="mt-3 text-gray-900">{openingMeditation.short}</p>
-
-                <div className="mt-4 p-4 bg-white rounded-xl border border-amber-200">
-                  <p className="font-semibold text-amber-800">Aprofundar</p>
-                  <p className="mt-2 text-gray-900 whitespace-pre-line">
-                    {openingMeditation.long}
-                  </p>
-                </div>
-
-                <div className="mt-4">
-                  <p className="font-semibold text-gray-900">Referências bíblicas:</p>
-                  <ul className="list-disc pl-5 text-gray-900">
-                    {openingMeditation.scriptures.map((s, idx) => (
-                      <li key={idx}>
-                        <span className="font-semibold">{s.ref}</span>
-                        {s.text ? ` — ${s.text}` : ""}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </>
-            ) : mystery ? (
-              <>
-                <h3 className="text-lg font-bold text-gray-900 mt-2">
-                  {mystery.index}º Mistério • {mystery.title}
-                </h3>
-
-                <p className="mt-3 text-gray-900">{mystery.shortReflection}</p>
-
-                <div className="mt-4 p-4 bg-white rounded-xl border border-amber-200">
-                  <p className="font-semibold text-amber-800">Aprofundar</p>
-                  <p className="mt-2 text-gray-900">{mystery.longReflection}</p>
-                </div>
-
-                <p className="mt-4 text-gray-900">
-                  <span className="font-semibold">Intenção:</span> {mystery.intention}
-                </p>
-
-                <div className="mt-4">
-                  <p className="font-semibold text-gray-900">Referências bíblicas:</p>
-                  <ul className="list-disc pl-5 text-gray-900">
-                    {mystery.scriptures.map((s, idx) => (
-                      <li key={idx}>
-                        <span className="font-semibold">{s.ref}</span>
-                        {s.text ? ` — ${s.text}` : ""}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </>
-            ) : (
-              <p className="mt-2 text-gray-900">
-                Na abertura do terço, recolha o coração e reze com atenção. Ao iniciar a primeira
-                dezena (Pai-Nosso), a meditação do mistério correspondente aparecerá aqui e permanecerá
-                durante toda a dezena, incluindo o Glória + Oração de Fátima.
-              </p>
-            )}
-          </div>
-
-          {/* CTA FINAL */}
-          {isLast && (
-            <div
-              className="mt-8 p-6 bg-[#fffaf1] rounded-xl border border-amber-300 text-gray-900 font-reading max-w-3xl mx-auto"
-              style={{ lineHeight: "1.9" }}
+        {/* MOBILE: painel fluido (1 por vez) */}
+        <div className="lg:hidden mt-4">
+          {mobileTab === "prayer" ? (
+            <motion.section
+              key="prayer"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className="rounded-2xl border border-amber-200 bg-white shadow-sm overflow-hidden"
             >
-              <h4 className="font-bold text-amber-800 mb-2">Aprofunde com o Tio Ben</h4>
-              <p className="mt-2">
-                <span className="font-semibold">Sugestão de pesquisa:</span> {finalSuggestion}
-              </p>
-              <div className="mt-4">
+              <div className="p-4 bg-[#fffaf1] border-b border-amber-100">
+                <p className="text-xs font-semibold text-amber-800">Oração do momento</p>
+                <h2 className="mt-1 text-lg font-extrabold text-gray-900">{currentStep.label}</h2>
+              </div>
+              <div className="p-4 font-reading" style={{ lineHeight: 1.9 }}>
+                <div className="rounded-2xl border border-amber-200 bg-[#fffaf1] p-4">
+                  <p className="whitespace-pre-line text-gray-950">{currentPrayer.text}</p>
+                </div>
+              </div>
+            </motion.section>
+          ) : (
+            <motion.section
+              key="reflection"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className="rounded-2xl border border-amber-200 bg-white shadow-sm overflow-hidden"
+            >
+              <div className="p-4 bg-[#fffaf1] border-b border-amber-100">
+                <p className="text-xs font-semibold text-amber-800">Meditação</p>
+                <h3 className="mt-1 text-lg font-extrabold text-gray-900">
+                  {openingMeditation
+                    ? openingMeditation.title
+                    : mystery
+                    ? `${mystery.index}º Mistério — ${mystery.title}`
+                    : "Prepare o coração"}
+                </h3>
+              </div>
+              <div className="p-4 font-reading" style={{ lineHeight: 1.9 }}>
+                <div className="rounded-2xl border border-amber-200 bg-[#fffaf1] p-4">
+                  {openingMeditation ? (
+                    <>
+                      <p className="text-gray-900">{openingMeditation.short}</p>
+                      <details className="mt-3">
+                        <summary className="cursor-pointer font-semibold text-amber-900">Aprofundar</summary>
+                        <p className="mt-2 whitespace-pre-line text-gray-900">{openingMeditation.long}</p>
+                      </details>
+                    </>
+                  ) : !mystery ? (
+                    <p className="text-gray-900">Avance para entrar nas dezenas e meditar os mistérios.</p>
+                  ) : (
+                    <>
+                      <p className="text-gray-900">{mystery.shortReflection}</p>
+                      <details className="mt-3">
+                        <summary className="cursor-pointer font-semibold text-amber-900">Aprofundar</summary>
+                        <p className="mt-2 text-gray-900">{mystery.longReflection}</p>
+                      </details>
+                    </>
+                  )}
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-amber-200 bg-white p-4">
+                  <p className="text-sm font-semibold text-gray-900">Caminho de aprofundamento</p>
+                  <p className="mt-2 text-sm text-gray-800" style={{ lineHeight: 1.75 }}>
+                    Sugestão do Tio Ben para buscar no blog:{" "}
+                    <span className="font-semibold">{finalSuggestion}</span>.
+                  </p>
+                  <Link
+                    href="/blog"
+                    className="inline-flex mt-3 rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700"
+                  >
+                    Ver no blog
+                  </Link>
+                </div>
+              </div>
+            </motion.section>
+          )}
+        </div>
+
+        {/* DESKTOP: 2 cards lado a lado */}
+        <div className="hidden lg:grid lg:grid-cols-2 lg:gap-4 mt-6">
+          <section className="rounded-2xl border border-amber-200 bg-white shadow-sm overflow-hidden">
+            <div className="p-5 bg-[#fffaf1] border-b border-amber-100">
+              <p className="text-xs font-semibold text-amber-800">Oração do momento</p>
+              <h2 className="mt-1 text-xl font-extrabold text-gray-900">{currentStep.label}</h2>
+            </div>
+            <div className="p-5 font-reading" style={{ lineHeight: 1.9 }}>
+              <p className="whitespace-pre-line text-gray-950">{currentPrayer.text}</p>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-amber-200 bg-white shadow-sm overflow-hidden">
+            <div className="p-5 bg-[#fffaf1] border-b border-amber-100">
+              <p className="text-xs font-semibold text-amber-800">Meditação</p>
+              <h3 className="mt-1 text-xl font-extrabold text-gray-900">
+                {openingMeditation
+                  ? openingMeditation.title
+                  : mystery
+                  ? `${mystery.index}º Mistério — ${mystery.title}`
+                  : "Prepare o coração"}
+              </h3>
+            </div>
+            <div className="p-5 font-reading" style={{ lineHeight: 1.9 }}>
+              {openingMeditation ? (
+                <>
+                  <p className="text-gray-900">{openingMeditation.short}</p>
+                  <details className="mt-4 rounded-2xl border border-amber-200 bg-[#fffaf1] p-4">
+                    <summary className="cursor-pointer font-semibold text-amber-900">Aprofundar</summary>
+                    <p className="mt-3 whitespace-pre-line text-gray-900">{openingMeditation.long}</p>
+                  </details>
+                </>
+              ) : !mystery ? (
+                <p className="text-gray-900">Avance para entrar nas dezenas e meditar os mistérios.</p>
+              ) : (
+                <>
+                  <p className="text-gray-900">{mystery.shortReflection}</p>
+                  <details className="mt-4 rounded-2xl border border-amber-200 bg-[#fffaf1] p-4">
+                    <summary className="cursor-pointer font-semibold text-amber-900">Aprofundar</summary>
+                    <p className="mt-3 text-gray-900">{mystery.longReflection}</p>
+                    <p className="mt-3 text-gray-900">
+                      <span className="font-semibold">Intenção:</span> {mystery.intention}
+                    </p>
+                  </details>
+                </>
+              )}
+
+              <div className="mt-4 rounded-2xl border border-amber-200 bg-white p-4">
+                <p className="text-sm font-semibold text-gray-900">Aprofunde com o Tio Ben</p>
+                <p className="mt-2 text-sm text-gray-800" style={{ lineHeight: 1.75 }}>
+                  Sugestão para buscar no blog: <span className="font-semibold">{finalSuggestion}</span>.
+                </p>
                 <Link
-                  href="/"
-                  className={`inline-flex items-center justify-center px-4 py-2 rounded-md ${theme.accentBg} ${theme.accentText} font-semibold`}
+                  href="/blog"
+                  className="inline-flex mt-3 rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700"
                 >
-                  Ir para a Home do Tio Ben IA
+                  Ver no blog
                 </Link>
               </div>
             </div>
-          )}
-        </motion.div>
+          </section>
+        </div>
 
-        <AdSensePro slot="2672028232" height={140} />
+        {/* ✅ ANÚNCIO: SEMPRE ABAIXO DO BLOCO (remove o “vazio” do meio) */}
+        <div className="mt-4">
+          <AdSensePro slot="2156366376" height={140} />
+        </div>
+
+        <div className="mt-4">
+          <AdSensePro slot="2672028232" height={140} />
+        </div>
       </div>
 
-      {/* Modais */}
+      {/* Bottom: navegação principal (continua ótima para UX) */}
+      <RosaryBottomSheet
+        prayerKey={currentStep.prayer}
+        progressLabel={progressLabel}
+        mystery={mystery}
+        onPrev={goPrev}
+        onNext={goNext}
+        isFirst={isFirst}
+        isLast={isLast}
+        nextLabel={nextLabel}
+        // Mantive “Mais” como atalho útil: abre Mistérios (rápido)
+        onOpenMore={() => setOpenPicker(true)}
+        showFinalCTA={isLast}
+        finalSuggestion={finalSuggestion}
+      />
+
       <MysteryPickerModal
         open={openPicker}
         onClose={() => setOpenPicker(false)}
         valueSet={setKey}
         onChangeSet={(k) => {
-          setSetKey(k);
-          setCurrent(0);
-          setHasInteracted(false);
+          onChangeSetKey(k);
+          navigateToSet(k);
         }}
         mode={mode}
         onChangeMode={(m) => {

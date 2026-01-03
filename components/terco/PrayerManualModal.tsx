@@ -15,33 +15,25 @@ const ORDER: PrayerKey[] = [
 ];
 
 export default function PrayerManualModal({ open, onClose }: Props) {
-  // Fecha com ESC
   useEffect(() => {
     if (!open) return;
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
-
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  // Trava scroll do body enquanto aberto
   useEffect(() => {
     if (!open) return;
 
     const prevOverflow = document.body.style.overflow;
     const prevPaddingRight = document.body.style.paddingRight;
 
-    // Evita "pulo" de layout ao sumir a scrollbar
-    const scrollbarWidth =
-      window.innerWidth - document.documentElement.clientWidth;
-
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
     document.body.style.overflow = "hidden";
-    if (scrollbarWidth > 0) {
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-    }
+    if (scrollbarWidth > 0) document.body.style.paddingRight = `${scrollbarWidth}px`;
 
     return () => {
       document.body.style.overflow = prevOverflow;
@@ -55,110 +47,75 @@ export default function PrayerManualModal({ open, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/50"
+      className="fixed inset-0 z-50"
       role="dialog"
       aria-modal="true"
       aria-label="Manual das orações"
       onMouseDown={(e) => {
-        // clique no backdrop fecha
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      {/* Modal centralizado NO VIEWPORT (independente do scroll da página) */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
+
       <div
         className="
-          fixed
-          top-1/2 left-1/2
-          -translate-x-1/2 -translate-y-1/2
-          w-[calc(100%-2rem)]
-          max-w-3xl
-          bg-white
-          rounded-2xl
-          shadow-2xl
-          border border-amber-200
-          overflow-hidden
-          max-h-[85vh]
-          flex flex-col
+          fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+          w-[calc(100%-2rem)] max-w-3xl
+          bg-white rounded-3xl shadow-2xl border border-amber-200
+          overflow-hidden max-h-[85vh] flex flex-col
         "
-        onMouseDown={(e) => e.stopPropagation()} // evita fechar ao clicar dentro
+        onMouseDown={(e) => e.stopPropagation()}
       >
-        {/* Cabeçalho */}
-        <div className="p-4 border-b border-amber-100 bg-white">
+        <div className="p-4 sm:p-6 border-b border-amber-100 bg-white">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="text-lg md:text-xl font-extrabold text-gray-900">
+              <h3 className="text-lg sm:text-xl font-extrabold text-gray-900">
                 Manual das orações
               </h3>
-              <p className="text-sm text-gray-700 mt-1">
+              <p className="mt-1 text-sm text-gray-700">
                 Orações tradicionais para acompanhar o Santo Terço.
               </p>
             </div>
 
             <button
-              onClick={onClose}
-              className="
-                shrink-0
-                h-10 w-10
-                rounded-full
-                bg-gray-100 border border-gray-200
-                text-gray-900
-                hover:bg-gray-50
-                flex items-center justify-center
-              "
-              aria-label="Fechar"
               type="button"
+              onClick={onClose}
+              className="h-10 w-10 rounded-full border border-gray-200 bg-white text-gray-900 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              aria-label="Fechar"
             >
               ×
             </button>
           </div>
         </div>
 
-        {/* Conteúdo (scroll SOMENTE aqui) */}
-        <div
-          className="
-            p-4
-            overflow-y-auto
-            overscroll-contain
-            space-y-4
-            bg-white
-          "
-        >
+        <div className="p-4 sm:p-6 overflow-y-auto overscroll-contain space-y-4 bg-white">
           {items.map((k) => {
             const p = PRAYERS[k];
             return (
               <section
                 key={k}
-                className="p-4 bg-[#fffaf1] rounded-2xl border border-amber-200"
-                style={{ lineHeight: "1.9" }}
+                className="rounded-2xl border border-amber-200 bg-[#fffaf1] p-4 sm:p-5 font-reading"
+                style={{ lineHeight: 1.9 }}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <h4 className="font-extrabold text-amber-800">{p.title}</h4>
-                </div>
-
-                <p className="whitespace-pre-line text-gray-900 mt-3">
-                  {p.text}
-                </p>
+                <h4 className="text-base font-extrabold text-amber-800">{p.title}</h4>
+                <p className="mt-3 whitespace-pre-line text-gray-900">{p.text}</p>
               </section>
             );
           })}
 
           {items.length === 0 && (
-            <div className="p-4 bg-[#fffaf1] rounded-2xl border border-amber-200">
+            <div className="rounded-2xl border border-amber-200 bg-[#fffaf1] p-4">
               <p className="text-gray-900">
-                Nenhuma oração encontrada no dataset. Verifique as chaves em
-                PRAYERS (ex.:{" "}
-                <span className="font-semibold">openingBundle</span> e{" "}
-                <span className="font-semibold">gloryFatima</span>).
+                Nenhuma oração encontrada no dataset.
               </p>
             </div>
           )}
         </div>
 
-        {/* Rodapé */}
-        <div className="p-4 border-t border-amber-100 bg-white flex justify-end">
+        <div className="p-4 sm:p-6 border-t border-amber-100 bg-white flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-amber-600 text-white font-semibold hover:bg-amber-700"
+            className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500"
             type="button"
           >
             Voltar ao terço

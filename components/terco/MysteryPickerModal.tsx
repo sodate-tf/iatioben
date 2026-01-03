@@ -39,81 +39,126 @@ export default function MysteryPickerModal(props: Props) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
-      <div className="w-full max-w-4xl bg-white rounded-t-2xl shadow-xl border border-amber-200">
-        <div className="p-4 border-b border-amber-100">
-          <h3 className="text-lg font-bold text-gray-900">Escolher Mistérios</h3>
-          <p className="text-sm text-gray-700 mt-1">
-            Selecione o conjunto e o modo de oração.
-          </p>
+    <div
+      className="fixed inset-0 z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Escolher Mistérios"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" />
+
+      <div className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-5xl rounded-t-3xl border border-amber-200 bg-white shadow-2xl">
+        <div className="p-4 sm:p-6 border-b border-amber-100">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="text-lg sm:text-xl font-extrabold text-gray-900">
+                Escolher mistérios
+              </h3>
+              <p className="mt-1 text-sm text-gray-700">
+                Selecione o conjunto e o modo de oração.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-10 w-10 rounded-full border border-gray-200 bg-white text-gray-900 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              aria-label="Fechar"
+            >
+              ×
+            </button>
+          </div>
         </div>
 
-        <div className="p-4 space-y-4">
-          <div>
-            <p className="font-semibold text-gray-900 mb-2">Conjunto</p>
-            <div className="flex flex-wrap gap-2">
-              {SETS.map((s) => (
-                <button
-                  key={s.key}
-                  onClick={() => onChangeSet(s.key)}
-                  className={`px-4 py-2 rounded-full ${
-                    valueSet === s.key ? "bg-amber-600 text-white" : "bg-gray-200 text-gray-900"
-                  }`}
-                >
-                  {s.label}
-                </button>
-              ))}
+        <div className="p-4 sm:p-6 space-y-5">
+          <section className="rounded-2xl border border-amber-200 bg-[#fffaf1] p-4">
+            <p className="text-sm font-semibold text-gray-900">Conjunto</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {SETS.map((s) => {
+                const active = valueSet === s.key;
+                return (
+                  <button
+                    key={s.key}
+                    type="button"
+                    onClick={() => onChangeSet(s.key)}
+                    className={`rounded-full px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+                      active
+                        ? "bg-amber-600 text-white"
+                        : "bg-white text-gray-900 border border-gray-200 hover:bg-gray-50"
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                );
+              })}
             </div>
-          </div>
+          </section>
 
-          <div>
-            <p className="font-semibold text-gray-900 mb-2">Modo</p>
-            <div className="flex flex-wrap gap-2">
+          <section className="rounded-2xl border border-amber-200 bg-[#fffaf1] p-4">
+            <p className="text-sm font-semibold text-gray-900">Modo</p>
+            <div className="mt-3 flex flex-wrap gap-2">
               <button
+                type="button"
                 onClick={() => onChangeMode("full")}
-                className={`px-4 py-2 rounded-full ${
-                  mode === "full" ? "bg-amber-600 text-white" : "bg-gray-200 text-gray-900"
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+                  mode === "full"
+                    ? "bg-amber-600 text-white"
+                    : "bg-white text-gray-900 border border-gray-200 hover:bg-gray-50"
                 }`}
               >
                 Terço completo (5 dezenas)
               </button>
+
               <button
+                type="button"
                 onClick={() => onChangeMode("single")}
-                className={`px-4 py-2 rounded-full ${
-                  mode === "single" ? "bg-amber-600 text-white" : "bg-gray-200 text-gray-900"
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+                  mode === "single"
+                    ? "bg-amber-600 text-white"
+                    : "bg-white text-gray-900 border border-gray-200 hover:bg-gray-50"
                 }`}
               >
                 Apenas 1 mistério (1 dezena)
               </button>
             </div>
-          </div>
 
-          {mode === "single" && (
-            <div>
-              <p className="font-semibold text-gray-900 mb-2">Qual mistério?</p>
-              <div className="flex flex-wrap gap-2">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => onChangeSingleMysteryIndex(n as any)}
-                    className={`px-4 py-2 rounded-full ${
-                      singleMysteryIndex === n ? "bg-amber-600 text-white" : "bg-gray-200 text-gray-900"
-                    }`}
-                  >
-                    {n}º
-                  </button>
-                ))}
+            {mode === "single" && (
+              <div className="mt-4">
+                <p className="text-sm font-semibold text-gray-900">Qual mistério?</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {[1, 2, 3, 4, 5].map((n) => {
+                    const active = singleMysteryIndex === n;
+                    return (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => onChangeSingleMysteryIndex(n as any)}
+                        className={`rounded-full px-4 py-2 text-sm font-semibold transition focus:outline-none focus:ring-2 focus:ring-amber-500 ${
+                          active
+                            ? "bg-amber-600 text-white"
+                            : "bg-white text-gray-900 border border-gray-200 hover:bg-gray-50"
+                        }`}
+                      >
+                        {n}º
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </section>
         </div>
 
-        <div className="p-4 border-t border-amber-100 flex justify-end gap-2">
+        <div className="p-4 sm:p-6 border-t border-amber-100 flex justify-end">
           <button
+            type="button"
             onClick={onClose}
-            className="px-4 py-2 rounded-md bg-gray-200 text-gray-900"
+            className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500"
           >
-            Fechar
+            Concluir
           </button>
         </div>
       </div>

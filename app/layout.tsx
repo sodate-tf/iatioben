@@ -1,14 +1,13 @@
 // app/layout.tsx
 import "./globals.css";
 import Script from "next/script";
-import { Inter, Source_Serif_4 } from "next/font/google";
+import { Inter } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import PageTransition from "@/components/pageTransiction";
 import Cabecalho from "@/components/cabecalho";
 import Footer from "@/components/Footer";
 import type { Metadata, Viewport } from "next";
-import { Lora } from "next/font/google";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.iatioben.com.br"),
@@ -39,31 +38,16 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-const lora = Lora({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-lora",
-});
-
-
-
-
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
 });
 
-const sourceSerif = Source_Serif_4({
-  subsets: ["latin"],
-  variable: "--font-source-serif",
-  display: "swap",
-});
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={`${inter.variable} ${sourceSerif.variable}`}>
-      <body className={lora.variable}>
+    <html lang="pt-BR" className={inter.variable}>
+      <body>
         <Cabecalho />
 
         <main className="pb-20">
@@ -89,7 +73,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
 
-        <Script strategy="afterInteractive" src="https://www.googletagmanager.com/gtag/js?id=G-17GKJ4F1Q8" />
+        <Script
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-17GKJ4F1Q8"
+        />
         <Script
           id="gtag-init"
           strategy="afterInteractive"

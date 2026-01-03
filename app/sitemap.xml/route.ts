@@ -1,3 +1,4 @@
+// app/sitemap/route.ts (ou onde estiver seu GET do sitemap)
 import { NextResponse } from "next/server";
 import { getPublishedPostsForSitemapAction } from "@/app/adminTioBen/actions/postAction";
 
@@ -64,13 +65,18 @@ export async function GET(): Promise<NextResponse> {
     });
   }
 
-  // ✅ 3) TERÇO (rotas existentes)
+  // ✅ 3) TERÇO (rotas existentes + HUB)
   const rosaryPages: Array<{
     path: string;
     priority: string;
     changefreq: SitemapUrl["changefreq"];
   }> = [
     { path: "/santo-terco", priority: "0.95", changefreq: "daily" },
+
+    // HUB do Terço
+    { path: "/santo-terco/como-rezar-o-terco", priority: "0.92", changefreq: "weekly" },
+
+    // Páginas dos mistérios
     { path: "/santo-terco/misterios-gozosos", priority: "0.9", changefreq: "weekly" },
     { path: "/santo-terco/misterios-dolorosos", priority: "0.9", changefreq: "weekly" },
     { path: "/santo-terco/misterios-gloriosos", priority: "0.9", changefreq: "weekly" },

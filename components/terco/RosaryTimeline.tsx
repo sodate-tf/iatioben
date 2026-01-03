@@ -5,104 +5,45 @@ import type { MysterySetKey } from "./RosaryDataset";
 import type { RosaryStep } from "./RosaryEngine";
 import { motion } from "framer-motion";
 
-function themeBySet(setKey: MysterySetKey) {
-  switch (setKey) {
-    case "gozosos":
-      return {
-        wood1: "#a38f63",
-        wood2: "#7f6a3f",
-        rope: "rgba(107, 94, 59, 0.75)",
-        glow: "rgba(34,197,94,0.35)",
-      };
-    case "dolorosos":
-      return {
-        wood1: "#7a3e3e",
-        wood2: "#562424",
-        rope: "rgba(74, 31, 31, 0.75)",
-        glow: "rgba(190,24,93,0.35)",
-      };
-    case "gloriosos":
-      return {
-        wood1: "#c9a24d",
-        wood2: "#9f7c2f",
-        rope: "rgba(122, 93, 30, 0.75)",
-        glow: "rgba(234,179,8,0.45)",
-      };
-    case "luminosos":
-    default:
-      return {
-        wood1: "#6b7c8f",
-        wood2: "#4b5c6f",
-        rope: "rgba(59, 74, 89, 0.75)",
-        glow: "rgba(14,165,233,0.35)",
-      };
-  }
-}
-
-function beadWood(isActive: boolean, size: number, setKey: MysterySetKey) {
-  const { wood1, wood2, glow } = themeBySet(setKey);
-
-  return {
-    width: size,
-    height: size,
-    borderRadius: "9999px",
-    backgroundImage: `
-      radial-gradient(circle at 30% 25%, rgba(255,255,255,0.22), transparent 60%),
-      repeating-linear-gradient(120deg, rgba(0,0,0,0.14) 0px, rgba(255,255,255,0.05) 10px),
-      linear-gradient(160deg, ${wood1}, ${wood2})
-    `,
-    boxShadow: isActive
-      ? `0 0 0 3px ${glow}, 0 10px 18px rgba(0,0,0,0.22)`
-      : `0 6px 14px rgba(0,0,0,0.20)`,
-    transform: isActive ? "translateY(-1px)" : "none",
-    transition: "all .18s ease",
-  } as React.CSSProperties;
-}
-
-function knotStyle(isActive: boolean, setKey: MysterySetKey) {
-  const { rope, glow } = themeBySet(setKey);
-
-  return {
-    width: 60,
-    height: 16,
-    borderRadius: 999,
-    backgroundImage:
-      "repeating-linear-gradient(90deg, rgba(255,255,255,0.18) 0px, rgba(0,0,0,0.12) 14px)",
-    backgroundColor: rope,
-    boxShadow: isActive
-      ? `0 0 0 3px ${glow}, 0 6px 12px rgba(0,0,0,0.18)`
-      : `0 4px 10px rgba(0,0,0,0.16)`,
-    transition: "all .18s ease",
-  } as React.CSSProperties;
-}
-
-function CrossInside() {
-  return (
-    <span
-      className="absolute inset-0 flex items-center justify-center pointer-events-none"
-      aria-hidden
-    >
-      <span className="relative block w-5 h-5">
-        <span
-          className="absolute left-1/2 top-[1px] -translate-x-1/2 w-[4px] h-[18px] rounded-full"
-          style={{ background: "rgba(255,255,255,0.92)" }}
-        />
-        <span
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[18px] h-[4px] rounded-full"
-          style={{ background: "rgba(255,255,255,0.92)" }}
-        />
-      </span>
-    </span>
-  );
-}
-
 type Props = {
   steps: RosaryStep[];
   current: number;
   onSelect: (index: number) => void;
   setKey: MysterySetKey;
-  highlight?: boolean; // ✅ habilita pulso experimental
+  highlight?: boolean;
+  variant?: "sticky" | "hero" | "compact";
 };
+
+function palette(setKey: MysterySetKey) {
+  switch (setKey) {
+    case "gozosos":
+      return { active: "bg-emerald-600 border-emerald-600", ring: "rgba(16,185,129,0.18)" };
+    case "dolorosos":
+      return { active: "bg-rose-700 border-rose-700", ring: "rgba(190,24,93,0.18)" };
+    case "gloriosos":
+      return { active: "bg-amber-600 border-amber-600", ring: "rgba(234,179,8,0.20)" };
+    case "luminosos":
+    default:
+      return { active: "bg-sky-700 border-sky-700", ring: "rgba(14,165,233,0.18)" };
+  }
+}
+
+function CrossIcon() {
+  // SVG mais estável que spans absolutos
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-8 w-8"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        d="M11 3h2v7h7v2h-7v9h-2v-9H4v-2h7V3z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
 
 export default function RosaryTimeline({
   steps,
@@ -110,187 +51,133 @@ export default function RosaryTimeline({
   onSelect,
   setKey,
   highlight = false,
+  variant = "compact",
 }: Props) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
-  const { rope, glow } = useMemo(() => themeBySet(setKey), [setKey]);
+  const { active, ring } = useMemo(() => palette(setKey), [setKey]);
+  const beads = useMemo(() => steps.filter((s) => s.kind === "bead"), [steps]);
 
-  // Centraliza conta atual
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
-
-    const btn = el.querySelector<HTMLButtonElement>(
-      `button[data-step="${current}"]`
-    );
+    const btn = el.querySelector<HTMLButtonElement>(`button[data-step="${current}"]`);
     if (!btn) return;
 
     const r1 = el.getBoundingClientRect();
     const r2 = btn.getBoundingClientRect();
-
     el.scrollBy({
       left: r2.left - r1.left - r1.width / 2 + r2.width / 2,
       behavior: "smooth",
     });
   }, [current]);
 
-  function nudge(dir: -1 | 1) {
-    const el = scrollerRef.current;
-    if (!el) return;
-    el.scrollBy({ left: dir * 360, behavior: "smooth" });
-  }
+  const isSticky = variant === "sticky";
+  const isHero = variant === "hero";
+
+  // ✅ Reduz altura mínima para remover o “vazio” riscado
+  const containerMinH = isHero
+    ? "min-h-[42vh] sm:min-h-[320px]"
+    : isSticky
+    ? "min-h-[118px] sm:min-h-[128px]"
+    : "min-h-[110px] sm:min-h-[120px]";
+
+  const paddingY = isHero ? "py-7 sm:py-9" : isSticky ? "py-4" : "py-4";
 
   return (
-    <div className="relative w-full">
-      {/* Setas desktop */}
-      <div className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 z-10">
-        <button
-          type="button"
-          onClick={() => nudge(-1)}
-          className="h-10 w-10 rounded-full bg-white/90 border border-amber-200 shadow-sm text-gray-900 hover:bg-white"
-          aria-label="Rolar para a esquerda"
-        >
-          ←
-        </button>
-      </div>
+    <div className={`relative w-full rounded-2xl border border-amber-200 bg-white overflow-hidden ${containerMinH}`}>
+      {/* cordão */}
+      <div className="pointer-events-none absolute left-4 right-4 top-1/2 -translate-y-1/2 h-[6px] rounded-full bg-amber-200/70" />
+      <div className="pointer-events-none absolute left-4 right-4 top-1/2 -translate-y-1/2 h-[2px] rounded-full bg-white/60" />
 
-      <div className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 z-10">
-        <button
-          type="button"
-          onClick={() => nudge(1)}
-          className="h-10 w-10 rounded-full bg-white/90 border border-amber-200 shadow-sm text-gray-900 hover:bg-white"
-          aria-label="Rolar para a direita"
-        >
-          →
-        </button>
-      </div>
+      <div
+        ref={scrollerRef}
+        className={`relative z-10 w-full overflow-x-auto scroll-smooth ${paddingY}`}
+        style={{ scrollSnapType: "x mandatory", scrollbarWidth: "thin" }}
+        aria-label="Contas do terço"
+      >
+        <div className="flex items-center gap-3 min-w-max px-4 sm:px-6">
+          {beads.map((s) => {
+            const isActive = s.index === current;
+            const isDone = s.index < current;
 
-      {/* Wrapper */}
-      <div className="bg-[#fffaf1] border border-amber-200 rounded-xl shadow-sm px-2 md:px-12">
-        <div className="relative h-[86px] md:h-[96px]">
-          {/* Corda */}
-          <div
-            className="pointer-events-none absolute left-3 right-3 top-1/2 -translate-y-1/2 h-[4px] rounded-full"
-            style={{
-              backgroundColor: rope,
-              backgroundImage:
-                "repeating-linear-gradient(90deg, rgba(255,255,255,0.16) 0px, rgba(0,0,0,0.10) 14px)",
-              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.10)",
-            }}
-          />
+            const size =
+              s.beadStyle === "cross"
+                ? isHero
+                  ? "h-20 w-20"
+                  : isSticky
+                  ? "h-16 w-16"
+                  : "h-12 w-12"
+                : s.prayer === "ourFather"
+                ? isHero
+                  ? "h-16 w-16"
+                  : isSticky
+                  ? "h-14 w-14"
+                  : "h-10 w-10"
+                : isHero
+                ? "h-14 w-14"
+                : isSticky
+                ? "h-12 w-12"
+                : "h-9 w-9";
 
-          <div
-            ref={scrollerRef}
-            className="h-full overflow-x-auto scroll-smooth px-1 md:px-2"
-            style={{ scrollSnapType: "x mandatory", scrollbarWidth: "thin" }}
-          >
-            {/* Slots com largura fixa */}
-            <div className="h-full flex items-center min-w-max">
-              {steps.map((s) => {
-                // Spacer
-                if (s.kind !== "bead") {
-                  return (
-                    <div
-                      key={`sp-${s.index}`}
-                      className="relative shrink-0"
-                      style={{ width: 44, height: "100%" }}
-                    />
-                  );
-                }
+            const base =
+              "relative shrink-0 rounded-full border transition focus:outline-none focus:ring-2 focus:ring-amber-500";
 
-                const active = s.index === current;
-                const isCrossBead = s.beadStyle === "cross";
-                const isKnot = s.beadStyle === "knot";
-                const isOurFather = s.prayer === "ourFather";
+            const stateClass = isActive
+              ? active
+              : isDone
+              ? "bg-amber-200 border-amber-200"
+              : "bg-white border-amber-200 hover:bg-amber-50";
 
-                const beadSize = isCrossBead ? 54 : isOurFather ? 52 : 46;
-                const beadWidth = isKnot ? 60 : beadSize;
+            const pulseOn = Boolean(highlight && isActive);
 
-                // Espaçamento por slot (ajuste fino aqui)
-                const slotPadding = isCrossBead
-                  ? 34
-                  : isOurFather
-                  ? 30
-                  : isKnot
-                  ? 26
-                  : 22;
-
-                const slotWidth = beadWidth + slotPadding;
-
-                // ✅ Pulso experimental apenas na conta ativa e quando highlight=true
-                const pulseOn = Boolean(highlight && active);
-
-                return (
-                  <div
-                    key={`slot-${s.index}`}
-                    className="relative shrink-0"
-                    style={{ height: "100%", width: slotWidth }}
+            return (
+              <button
+                key={`b-${s.index}`}
+                type="button"
+                data-step={s.index}
+                onClick={() => onSelect(s.index)}
+                className={`${base} ${size} ${stateClass}`}
+                style={{
+                  scrollSnapAlign: "center",
+                  boxShadow: isActive ? `0 0 0 10px ${ring}` : undefined,
+                }}
+                aria-label={s.label}
+                aria-current={isActive ? "step" : undefined}
+              >
+                {/* ✅ Cruz corrigida */}
+                {s.beadStyle === "cross" ? (
+                  <span className="absolute inset-0 flex items-center justify-center text-white">
+                    <CrossIcon />
+                  </span>
+                ) : (
+                  <span
+                    className={
+                      "absolute inset-0 flex items-center justify-center text-[11px] sm:text-xs font-extrabold " +
+                      (isActive ? "text-white" : "text-amber-900")
+                    }
+                    aria-hidden
                   >
-                    <button
-                      data-step={s.index}
-                      onClick={() => onSelect(s.index)}
-                      title={s.label}
-                      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 focus:outline-none"
-                      style={{ scrollSnapAlign: "center" }}
-                      type="button"
-                    >
-                      {isKnot ? (
-                        <motion.div
-                          animate={
-                            pulseOn
-                              ? { scale: [1, 1.08, 1] }
-                              : { scale: 1 }
-                          }
-                          transition={
-                            pulseOn
-                              ? {
-                                  duration: 2.4,
-                                  repeat: Infinity,
-                                  ease: "easeInOut",
-                                }
-                              : { duration: 0 }
-                          }
-                          style={knotStyle(active, setKey)}
-                        />
-                      ) : (
-                        <motion.div
-                          animate={
-                            pulseOn
-                              ? {
-                                  scale: [1, 1.08, 1],
-                                  boxShadow: [
-                                    beadWood(active, beadSize, setKey).boxShadow as string,
-                                    `0 0 0 6px ${glow}, 0 10px 18px rgba(0,0,0,0.22)`,
-                                    beadWood(active, beadSize, setKey).boxShadow as string,
-                                  ],
-                                }
-                              : { scale: 1 }
-                          }
-                          transition={
-                            pulseOn
-                              ? {
-                                  duration: 2.4,
-                                  repeat: Infinity,
-                                  ease: "easeInOut",
-                                }
-                              : { duration: 0 }
-                          }
-                          style={beadWood(active, beadSize, setKey)}
-                        />
-                      )}
+                    {s.prayer === "ourFather" ? "Pai" : s.prayer === "hailMary" ? "Ave" : "•"}
+                  </span>
+                )}
 
-                      {isCrossBead && <CrossInside />}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+                {pulseOn && (
+                  <motion.span
+                    aria-hidden
+                    className="absolute inset-0 rounded-full"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 0.14, 0] }}
+                    transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                    style={{ boxShadow: `0 0 0 18px ${ring}` }}
+                  />
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      <p className="hidden md:block mt-2 text-xs text-gray-700">
-        Dica: use as setas para rolar ou o scroll horizontal do mouse/trackpad.
-      </p>
+      {/* ✅ Removido o fade/gradiente do rodapé que estava criando o “vazio” */}
     </div>
   );
 }

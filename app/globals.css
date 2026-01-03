@@ -4,16 +4,15 @@
 @custom-variant dark (&:is(.dark *));
 
 /* =========================================================
-   THEME TOKENS (shadcn + tailwind v4)
+   THEME TOKENS (shadcn + tailwind v4) — INTER ONLY
    ========================================================= */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  /* Fonts */
+  /* Fonts — Inter only */
   --font-sans: var(--font-inter);
-  --font-mono: var(--font-geist-mono);
-  --font-reading: var(--font-source-serif);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* UI tokens */
   --color-sidebar-ring: var(--sidebar-ring);
@@ -63,7 +62,6 @@
 
 /* =========================================================
    COLOR SYSTEM
-   (mantive seu esquema oklch e removi duplicações)
    ========================================================= */
 :root {
   --radius: 0.625rem;
@@ -110,11 +108,9 @@
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.705 0.015 286.067);
 
-  /* Fallbacks caso você ainda não tenha aplicado next/font */
+  /* Inter fallback (caso next/font falhe): ainda será sans, não serif */
   --font-inter: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial,
     "Apple Color Emoji", "Segoe UI Emoji";
-  --font-source-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-geist-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 .dark {
@@ -162,7 +158,7 @@
 }
 
 /* =========================================================
-   BASE LAYER
+   BASE LAYER — FORCE INTER
    ========================================================= */
 @layer base {
   * {
@@ -183,17 +179,9 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: var(--font-sans);
+    font-family: var(--font-sans) !important; /* garantia dura */
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-}
-
-/* =========================================================
-   OPTIONAL: helper utility class for long-form reading
-   Use: class="font-reading" in your article body
-   ========================================================= */
-.font-reading {
-  font-family: var(--font-reading);
 }
