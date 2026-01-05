@@ -67,11 +67,7 @@ export async function generateMetadata({
 /* =========================
    PAGE
    ========================= */
-export default async function LiturgiaAnoPage({
-  params,
-}: {
-  params: ParamsInput;
-}) {
+export default async function LiturgiaAnoPage({ params }: { params: ParamsInput }) {
   const raw = await resolveParams(params);
   const year = parseYear(raw);
   if (!year) notFound();
@@ -107,7 +103,6 @@ export default async function LiturgiaAnoPage({
             Calendário da Liturgia Diária – Ano {year}
           </h1>
 
-          {/* Copy editorial (SEO pilar) */}
           <p className="mt-2 text-sm text-gray-700 max-w-3xl">
             Este é o calendário anual da <strong>Liturgia Diária</strong> em <strong>{year}</strong>.
             Escolha um mês para acessar a liturgia completa de cada dia, com{" "}
@@ -116,7 +111,6 @@ export default async function LiturgiaAnoPage({
             para a Missa e aprofundar a meditação da Palavra.
           </p>
 
-          {/* Navegação (SEO + UX) */}
           <div className="mt-4 flex flex-wrap gap-2">
             <Link
               href={`/liturgia-diaria/ano/${prevYear}`}

@@ -20,6 +20,19 @@ type Props = {
   adsSlotDesktop300x250?: string;
   blogLinks?: BlogLink[];
   className?: string;
+
+  /**
+   * Use isso para evitar duplicações quando você renderiza o aside 2x (desktop+mobile).
+   * - desktop: mostra anúncio e “layout completo”
+   * - mobile: remove anúncio e compacta
+   */
+  variant?: "desktop" | "mobile";
+
+  /**
+   * Opcional: quando você estiver em uma data histórica (ex.: 02-06-2026),
+   * passe o slug da página atual para que o aside explique que “Hoje” é a data atual.
+   */
+  pageSlug?: string; // dd-mm-aaaa
 };
 
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -34,7 +47,17 @@ function CardTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-function QuickLink({ href, k, v }: { href: string; k: string; v: string }) {
+function QuickLink({
+  href,
+  k,
+  v,
+  hint,
+}: {
+  href: string;
+  k: string;
+  v: string;
+  hint?: string;
+}) {
   return (
     <Link
       href={href}
@@ -42,6 +65,7 @@ function QuickLink({ href, k, v }: { href: string; k: string; v: string }) {
     >
       <p className="text-xs text-slate-500 font-semibold">{k}</p>
       <p className="text-sm font-bold text-slate-900">{v}</p>
+      {hint ? <p className="mt-1 text-[11px] text-slate-600">{hint}</p> : null}
     </Link>
   );
 }
@@ -56,6 +80,8 @@ export default function LiturgiaAside({
   adsSlotDesktop300x250,
   blogLinks,
   className,
+  variant = "desktop",
+  pageSlug,
 }: Props) {
   const monthHref = `/liturgia-diaria/ano/${year}/${pad2(month)}`;
   const yearHref = `/liturgia-diaria/ano/${year}`;
@@ -89,17 +115,18 @@ export default function LiturgiaAside({
     },
   ];
 
-  // Se o caller passar blogLinks, usamos eles; senão, usamos os padrões acima.
   const effectiveBlogLinks = (blogLinks?.length ? blogLinks : defaultBlogLinks).slice(
     0,
     5
   );
 
+  const isHistoricalContext = Boolean(pageSlug) && pageSlug !== todaySlug;
+
   return (
     <aside className={cx("min-w-0", className)}>
       <div className="sticky top-4 space-y-4">
-        {/* Anúncio (desktop) */}
-        {adsSlotDesktop300x250 ? (
+        {/* Anúncio (somente desktop) */}
+        {variant === "desktop" && adsSlotDesktop300x250 ? (
           <AdsenseSidebarDesktop300x250 slot={adsSlotDesktop300x250} />
         ) : null}
 
@@ -108,15 +135,31 @@ export default function LiturgiaAside({
           <CardTitle>Acesso rápido</CardTitle>
 
           <div className="mt-3 space-y-2">
-            <QuickLink href={`/liturgia-diaria/${todaySlug}`} k="Hoje" v={todayLabel} />
-            <QuickLink href={`/liturgia-diaria/${prevSlug}`} k="Ontem" v={prevSlug} />
-            <QuickLink href={`/liturgia-diaria/${nextSlug}`} k="Amanhã" v={nextSlug} />
-            <QuickLink href={monthHref} k="Mês" v={monthLabelPT(year, month)} />
-            <QuickLink href={yearHref} k="Ano" v={String(year)} />
+            <QuickLink
+              href={`/liturgia-diaria/${todaySlug}`}
+              k={isHistoricalContext ? "Hoje (data atual)" : "Hoje"}
+              v={todayLabel}
+              hint={isHistoricalContext ? `Você está em ${pageSlug?.replaceAll("-", "/")}` : undefined}
+            />
+
+            <QuickLink
+              href={`/liturgia-diaria/${prevSlug}`}
+              k="Dia anterior"
+              v={prevSlug.replaceAll("-", "/")}
+            />
+
+            <QuickLink
+              href={`/liturgia-diaria/${nextSlug}`}
+              k="Próximo dia"
+              v={nextSlug.replaceAll("-", "/")}
+            />
+
+            <QuickLink href={monthHref} k="Calendário do mês" v={monthLabelPT(year, month)} />
+            <QuickLink href={yearHref} k="Calendário do ano" v={String(year)} />
           </div>
         </div>
 
-        {/* Explorar (agora apontando para o blog / páginas pilar) */}
+        {/* Explorar (para SEO interno) */}
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <CardTitle>Explorar</CardTitle>
 
@@ -179,8 +222,8 @@ export default function LiturgiaAside({
           </div>
         </div>
 
-        {/* Do blog (opcional, mas agora sempre útil para SEO interno) */}
-        {effectiveBlogLinks.length ? (
+        {/* Do blog (desktop: mostra; mobile: opcional — fica mais leve) */}
+        {variant === "desktop" && effectiveBlogLinks.length ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <CardTitle>Do blog</CardTitle>
 
@@ -192,20 +235,17 @@ export default function LiturgiaAside({
                   className="block rounded-xl border border-slate-200 p-3 hover:bg-slate-50 transition"
                 >
                   <p className="text-sm font-bold text-slate-900">{p.title}</p>
-                  {p.desc ? (
-                    <p className="mt-1 text-xs text-slate-600">{p.desc}</p>
-                  ) : null}
+                  {p.desc ? <p className="mt-1 text-xs text-slate-600">{p.desc}</p> : null}
                 </Link>
               ))}
 
-              {/* Link para a listagem do blog (se existir) */}
               <Link
                 href="/blog"
                 className="block rounded-xl border border-slate-200 p-3 hover:bg-slate-50 transition"
               >
                 <p className="text-sm font-bold text-slate-900">Ver todos os artigos</p>
                 <p className="mt-1 text-xs text-slate-600">
-                  Guia completo e conteúdos sobre Liturgia e oração.
+                  Conteúdos sobre Liturgia e oração.
                 </p>
               </Link>
             </div>

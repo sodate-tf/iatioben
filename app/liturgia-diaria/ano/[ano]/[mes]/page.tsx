@@ -7,7 +7,7 @@ import { daysInMonth, monthLabelPT, pad2 } from "@/lib/liturgia/date";
 import LiturgiaAside from "@/components/liturgia/LiturgiaAside";
 
 export const dynamic = "force-static";
-export const revalidate = 86400; // recomendado (mantém "Hoje" atualizado)
+export const revalidate = 86400; // mantém "Hoje" atualizado
 
 const SITE_URL = "https://www.iatioben.com.br";
 
@@ -80,15 +80,11 @@ export async function generateMetadata({
    HELPERS
    ========================= */
 function getPrevMonth(year: number, month: number) {
-  return month === 1
-    ? { year: year - 1, month: 12 }
-    : { year, month: month - 1 };
+  return month === 1 ? { year: year - 1, month: 12 } : { year, month: month - 1 };
 }
 
 function getNextMonth(year: number, month: number) {
-  return month === 12
-    ? { year: year + 1, month: 1 }
-    : { year, month: month + 1 };
+  return month === 12 ? { year: year + 1, month: 1 } : { year, month: month + 1 };
 }
 
 function weekdayIndexMondayFirst(date: Date) {
@@ -118,10 +114,7 @@ function getTodayInSaoPaulo(): Date {
   const m = Number(parts.find((p) => p.type === "month")?.value);
   const d = Number(parts.find((p) => p.type === "day")?.value);
 
-  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) {
-    return new Date();
-  }
-
+  if (!Number.isFinite(y) || !Number.isFinite(m) || !Number.isFinite(d)) return new Date();
   return new Date(y, m - 1, d);
 }
 
@@ -136,11 +129,7 @@ function isSameYMD(a: Date, b: Date) {
 /* =========================
    PAGE
    ========================= */
-export default async function LiturgiaMesPage({
-  params,
-}: {
-  params: ParamsInput;
-}) {
+export default async function LiturgiaMesPage({ params }: { params: ParamsInput }) {
   const raw = await resolveParams(params);
   const ym = parseYearMonth(raw);
   if (!ym) notFound();
@@ -166,7 +155,9 @@ export default async function LiturgiaMesPage({
   ];
 
   const remainder = cells.length % 7;
-  if (remainder !== 0) cells.push(...Array.from({ length: 7 - remainder }, () => null));
+  if (remainder !== 0) {
+    cells.push(...Array.from({ length: 7 - remainder }, () => null));
+  }
 
   const prevMonth = getPrevMonth(year, month);
   const nextMonth = getNextMonth(year, month);
@@ -176,9 +167,7 @@ export default async function LiturgiaMesPage({
   const todaySlug = slugFromDate(today);
   const todayLabel = labelFromSlug(todaySlug);
 
-  const isMonthOfToday =
-    today.getFullYear() === year && today.getMonth() + 1 === month;
-
+  const isMonthOfToday = today.getFullYear() === year && today.getMonth() + 1 === month;
   const baseDate = isMonthOfToday ? today : new Date(year, month - 1, 1);
 
   const prevDate = new Date(baseDate);
@@ -223,7 +212,6 @@ export default async function LiturgiaMesPage({
               Calendário da Liturgia Diária de {monthName}
             </h1>
 
-            {/* Copy editorial forte (SEO) */}
             <p className="mt-2 text-sm text-gray-700 max-w-3xl">
               Consulte a <strong>Liturgia Diária</strong> de qualquer data em{" "}
               <strong>{monthName}</strong>. Em cada dia você encontra as{" "}
@@ -262,10 +250,7 @@ export default async function LiturgiaMesPage({
           >
             <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
               {dow.map((x) => (
-                <div
-                  key={x}
-                  className="px-3 py-2 text-xs font-semibold text-gray-700"
-                >
+                <div key={x} className="px-3 py-2 text-xs font-semibold text-gray-700">
                   {x}
                 </div>
               ))}
@@ -298,9 +283,7 @@ export default async function LiturgiaMesPage({
                     aria-label={`Abrir liturgia do dia ${pad2(cell.day)}/${pad2(month)}/${year}`}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <span className="text-sm font-extrabold text-gray-900">
-                        {cell.day}
-                      </span>
+                      <span className="text-sm font-extrabold text-gray-900">{cell.day}</span>
                       {isToday ? (
                         <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-900">
                           Hoje
@@ -373,7 +356,7 @@ export default async function LiturgiaMesPage({
         </aside>
       </div>
 
-      {/* ASIDE (mobile) */}
+      {/* ASIDE (mobile): sem adsSlotDesktop300x250 para não duplicar anúncios */}
       <div className="mt-8 lg:hidden">
         <LiturgiaAside
           year={year}
@@ -382,7 +365,6 @@ export default async function LiturgiaMesPage({
           todayLabel={todayLabel}
           prevSlug={prevSlug}
           nextSlug={nextSlug}
-          adsSlotDesktop300x250={ADS_SLOT_ASIDE_300x250}
         />
       </div>
     </main>

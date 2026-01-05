@@ -7,10 +7,7 @@ import { fetchLiturgiaByDate, LiturgiaNormalized } from "@/lib/liturgia/api";
 import { monthLabelPT, pad2 } from "@/lib/liturgia/date";
 import AutoScrollTo from "@/components/liturgia/AutoScrollTo";
 import LiturgiaAside from "@/components/liturgia/LiturgiaAside";
-import {
-  AdsenseInArticle,
-  AdsenseSidebarMobile300x250,
-} from "@/components/ads/AdsenseBlocks";
+import { AdsenseInArticle, AdsenseSidebarMobile300x250 } from "@/components/ads/AdsenseBlocks";
 
 const SITE_URL = "https://www.iatioben.com.br";
 const HUB_PATH = "/liturgia-diaria";
@@ -29,7 +26,7 @@ export const revalidate = 86400;
 export const metadata: Metadata = {
   title: "Liturgia Diária – Evangelho, Leituras e Salmo do dia",
   description:
-    "Liturgia diária com evangelho, leituras e salmo do dia. Consulte o calendário do ano e do mês para acessar qualquer data ",
+    "Liturgia diária com evangelho, leituras e salmo do dia. Consulte o calendário do ano e do mês para acessar qualquer data.",
   alternates: { canonical: CANONICAL_URL },
   openGraph: {
     type: "website",
@@ -70,14 +67,9 @@ function getTodayInSaoPauloParts() {
   const month = Number(parts.find((p) => p.type === "month")?.value);
   const day = Number(parts.find((p) => p.type === "day")?.value);
 
-  // fallback robusto (evita NaN em ambientes estranhos)
   if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
     const now = new Date();
-    return {
-      year: now.getFullYear(),
-      month: now.getMonth() + 1,
-      day: now.getDate(),
-    };
+    return { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
   }
 
   return { year, month, day };
@@ -87,12 +79,10 @@ function getTodayInSaoPauloParts() {
    PAGE
    ========================= */
 export default async function LiturgiaHubPage() {
-  // “Hoje” no fuso BR
   const { year, month, day } = getTodayInSaoPauloParts();
 
   const today: LiturgiaNormalized = await fetchLiturgiaByDate(day, month, year);
 
-  // Prev/Next baseados em Date (JS lida com virada de mês/ano)
   const base = new Date(year, month - 1, day);
   const prev = new Date(base);
   prev.setDate(base.getDate() - 1);
@@ -102,7 +92,6 @@ export default async function LiturgiaHubPage() {
   const prevSlug = buildSlug(prev.getDate(), prev.getMonth() + 1, prev.getFullYear());
   const nextSlug = buildSlug(next.getDate(), next.getMonth() + 1, next.getFullYear());
 
-  // Calendário por mês (ano corrente)
   const months = Array.from({ length: 12 }, (_, i) => i + 1).map((m) => ({
     label: monthLabelPT(year, m),
     href: `/liturgia-diaria/ano/${year}/${pad2(m)}`,
@@ -182,7 +171,6 @@ export default async function LiturgiaHubPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
 
-      {/* Rola automaticamente para “Hoje” (header fixo) */}
       <AutoScrollTo targetId="hoje" desktopHeaderPx={80} extraOffsetPx={12} behavior="smooth" />
 
       <main className="mx-auto w-full max-w-7xl px-3 sm:px-4 lg:px-6 py-6 bg-white text-slate-900 leading-relaxed min-h-screen">
@@ -196,7 +184,6 @@ export default async function LiturgiaHubPage() {
               Liturgia Diária – Evangelho, Leituras e Salmo do dia
             </h1>
 
-            {/* Copy editorial pilar (SEO) */}
             <p className="mt-3 text-base text-slate-600 max-w-3xl">
               Aqui você encontra a <strong>Liturgia Diária</strong> do Brasil para cada dia do ano, com{" "}
               <strong>leituras da Missa</strong>, <strong>salmo responsorial</strong> e{" "}
@@ -270,9 +257,7 @@ export default async function LiturgiaHubPage() {
                     <p className="text-[11px] font-semibold text-slate-500 uppercase">
                       Segunda leitura
                     </p>
-                    <p className="mt-1 text-sm font-bold">
-                      {today.segundaRef ? today.segundaRef : "—"}
-                    </p>
+                    <p className="mt-1 text-sm font-bold">{today.segundaRef || "—"}</p>
                   </div>
 
                   <div className="rounded-xl border border-slate-200 p-4">
@@ -300,7 +285,6 @@ export default async function LiturgiaHubPage() {
                 </div>
               </section>
 
-              {/* Pilar: O que é */}
               <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <h2 className="text-xl font-bold">O que é a Liturgia Diária?</h2>
                 <p className="mt-2 text-sm text-slate-600">
@@ -310,7 +294,6 @@ export default async function LiturgiaHubPage() {
                 </p>
               </section>
 
-              {/* Calendário por mês (cluster) */}
               <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                 <h2 className="text-xl font-bold">Calendário por mês</h2>
                 <p className="mt-2 text-sm text-slate-600">
@@ -330,7 +313,6 @@ export default async function LiturgiaHubPage() {
                   ))}
                 </div>
 
-                {/* Link direto para o ano (reforço) */}
                 <div className="mt-4">
                   <Link
                     href={`/liturgia-diaria/ano/${year}`}
@@ -341,7 +323,6 @@ export default async function LiturgiaHubPage() {
                 </div>
               </section>
 
-              {/* FAQ (conteúdo + JSON-LD já acima) */}
               <section
                 className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
                 id="faq"
@@ -366,39 +347,73 @@ export default async function LiturgiaHubPage() {
                 </div>
               </section>
 
-              {/* Ads mobile */}
+              {/* Ads mobile: fica aqui, e o aside NÃO renderiza anúncio no mobile */}
               <div className="mt-6 lg:hidden">
                 <AdsenseSidebarMobile300x250 slot={ADS_SLOT_SIDEBAR_MOBILE} />
               </div>
             </section>
 
-            {/* ASIDE (desktop, sticky interno do componente) */}
-            <LiturgiaAside
-              year={year}
-              month={month}
-              todaySlug={today.dateSlug}
-              todayLabel={today.dateLabel}
-              prevSlug={prevSlug}
-              nextSlug={nextSlug}
-              adsSlotDesktop300x250={ADS_SLOT_SIDEBAR_DESKTOP}
-              blogLinks={[
-                {
-                  href: "/liturgia/ano-liturgico",
-                  title: "Ano litúrgico: tempos, cores e calendário",
-                  desc: "Entenda o que muda ao longo do ano e como acompanhar.",
-                },
-                {
-                  href: "/liturgia/leituras-da-missa",
-                  title: "Guia das leituras da Missa",
-                  desc: "Primeira leitura, salmo, evangelho e como acompanhar.",
-                },
-                {
-                  href: "/liturgia/como-usar-a-liturgia",
-                  title: "Como usar a liturgia no dia a dia",
-                  desc: "Um método simples para rezar e se preparar para a Missa.",
-                },
-              ]}
-            />
+            {/* ASIDE: renderiza no desktop com ad 300x250; no mobile sem ad para não duplicar */}
+            <aside className="min-w-0">
+              {/* Desktop */}
+              <div className="hidden lg:block">
+                <LiturgiaAside
+                  year={year}
+                  month={month}
+                  todaySlug={today.dateSlug}
+                  todayLabel={today.dateLabel}
+                  prevSlug={prevSlug}
+                  nextSlug={nextSlug}
+                  adsSlotDesktop300x250={ADS_SLOT_SIDEBAR_DESKTOP}
+                  blogLinks={[
+                    {
+                      href: "/liturgia/ano-liturgico",
+                      title: "Ano litúrgico: tempos, cores e calendário",
+                      desc: "Entenda o que muda ao longo do ano e como acompanhar.",
+                    },
+                    {
+                      href: "/liturgia/leituras-da-missa",
+                      title: "Guia das leituras da Missa",
+                      desc: "Primeira leitura, salmo, evangelho e como acompanhar.",
+                    },
+                    {
+                      href: "/liturgia/como-usar-a-liturgia",
+                      title: "Como usar a liturgia no dia a dia",
+                      desc: "Um método simples para rezar e se preparar para a Missa.",
+                    },
+                  ]}
+                />
+              </div>
+
+              {/* Mobile */}
+              <div className="mt-6 lg:hidden">
+                <LiturgiaAside
+                  year={year}
+                  month={month}
+                  todaySlug={today.dateSlug}
+                  todayLabel={today.dateLabel}
+                  prevSlug={prevSlug}
+                  nextSlug={nextSlug}
+                  blogLinks={[
+                    {
+                      href: "/liturgia/ano-liturgico",
+                      title: "Ano litúrgico: tempos, cores e calendário",
+                      desc: "Entenda o que muda ao longo do ano e como acompanhar.",
+                    },
+                    {
+                      href: "/liturgia/leituras-da-missa",
+                      title: "Guia das leituras da Missa",
+                      desc: "Primeira leitura, salmo, evangelho e como acompanhar.",
+                    },
+                    {
+                      href: "/liturgia/como-usar-a-liturgia",
+                      title: "Como usar a liturgia no dia a dia",
+                      desc: "Um método simples para rezar e se preparar para a Missa.",
+                    },
+                  ]}
+                />
+              </div>
+            </aside>
           </div>
         </article>
       </main>

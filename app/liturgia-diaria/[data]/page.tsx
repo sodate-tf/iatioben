@@ -2,9 +2,8 @@
 
 import type { Metadata } from "next";
 import Script from "next/script";
-import Link from "next/link";
 import { fetchLiturgiaByDate } from "@/lib/liturgia/api";
-import { parseSlugDate, slugFromDate, monthLabelPT, pad2 } from "@/lib/liturgia/date";
+import { parseSlugDate, slugFromDate, pad2 } from "@/lib/liturgia/date";
 import LiturgiaHubPerfect from "@/components/liturgia/LiturgiaHubPerfect";
 import LiturgiaAside from "@/components/liturgia/LiturgiaAside";
 import { AdsenseSidebarMobile300x250 } from "@/components/ads/AdsenseBlocks";
@@ -170,17 +169,10 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
     ],
   };
 
-  
-  
-
-  // ideal: você já tem o "today" no server (new Date()).
+  // Mantém como está (server time)
   const today = new Date();
-
-  const todaySlug =
-    `${pad2(today.getDate())}-${pad2(today.getMonth() + 1)}-${today.getFullYear()}`;
-
-  const todayLabel =
-    `${pad2(today.getDate())}/${pad2(today.getMonth() + 1)}/${today.getFullYear()}`;
+  const todaySlug = `${pad2(today.getDate())}-${pad2(today.getMonth() + 1)}-${today.getFullYear()}`;
+  const todayLabel = `${pad2(today.getDate())}/${pad2(today.getMonth() + 1)}/${today.getFullYear()}`;
 
   return (
     <>
@@ -215,63 +207,72 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
               className="max-w-none px-0 py-0"
             />
 
-
+            {/* Anúncio mobile (somente aqui, para não duplicar com o aside) */}
             <div className="mt-6 lg:hidden">
               <AdsenseSidebarMobile300x250 slot={ADS_SLOT_SIDEBAR_MOBILE} />
             </div>
 
-            <div className="mt-6 lg:hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <p className="text-xs font-semibold tracking-wide text-amber-700 uppercase">Acesso rápido</p>
-              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <Link
-                  href={`/liturgia-diaria/${todaySlug}`}
-                  className="rounded-xl border border-slate-200 p-3 hover:bg-slate-50"
-                >
-                  <p className="text-xs text-slate-500 font-semibold">Hoje</p>
-                  <p className="text-sm font-bold">
-                    {String(today.getDate()).padStart(2, "0")}/{String(today.getMonth() + 1).padStart(2, "0")}/{today.getFullYear()}
-                  </p>
-                </Link>
-                <Link
-                  href={`/liturgia-diaria/ano/${year}`}
-                  className="rounded-xl border border-slate-200 p-3 hover:bg-slate-50"
-                >
-                  <p className="text-xs text-slate-500 font-semibold">Calendário</p>
-                  <p className="text-sm font-bold">Ano {year}</p>
-                </Link>
-              </div>
-            </div>
+            {/* Removido: bloco “Acesso rápido” mobile duplicado (o aside já cobre isso) */}
           </main>
 
-          
-          <LiturgiaAside
-            year={year}
-            month={month}
-            todaySlug={todaySlug}
-            todayLabel={`${String(today.getDate()).padStart(2, "0")}/${String(today.getMonth() + 1).padStart(2, "0")}/${today.getFullYear()}`}
-            prevSlug={prevSlug}
-            nextSlug={nextSlug}
-            adsSlotDesktop300x250={ADS_SLOT_SIDEBAR_DESKTOP}
-            blogLinks={[
-              {
-                href: "/liturgia/ano-liturgico",
-                title: "Ano litúrgico: tempos, cores e calendário",
-                desc: "Entenda o que muda ao longo do ano e como acompanhar.",
-              },
-              {
-                href: "/liturgia/leituras-da-missa",
-                title: "Guia das leituras da Missa",
-                desc: "Primeira leitura, salmo, evangelho e como acompanhar.",
-              },
-              {
-                href: "/liturgia/como-usar-a-liturgia",
-                title: "Como usar a liturgia no dia a dia",
-                desc: "Um método simples para rezar e se preparar para a Missa.",
-              },
-            ]}
-          />
+          {/* ASIDE: só no desktop para evitar duplicar anúncio e blocos no mobile */}
+          <div className="hidden lg:block">
+            <LiturgiaAside
+              year={year}
+              month={month}
+              todaySlug={todaySlug}
+              todayLabel={todayLabel}
+              prevSlug={prevSlug}
+              nextSlug={nextSlug}
+              adsSlotDesktop300x250={ADS_SLOT_SIDEBAR_DESKTOP}
+              blogLinks={[
+                {
+                  href: "/liturgia/ano-liturgico",
+                  title: "Ano litúrgico: tempos, cores e calendário",
+                  desc: "Entenda o que muda ao longo do ano e como acompanhar.",
+                },
+                {
+                  href: "/liturgia/leituras-da-missa",
+                  title: "Guia das leituras da Missa",
+                  desc: "Primeira leitura, salmo, evangelho e como acompanhar.",
+                },
+                {
+                  href: "/liturgia/como-usar-a-liturgia",
+                  title: "Como usar a liturgia no dia a dia",
+                  desc: "Um método simples para rezar e se preparar para a Missa.",
+                },
+              ]}
+            />
+          </div>
 
-
+          {/* ASIDE (mobile): sem anúncio (você já tem o bloco Adsense mobile acima) */}
+          <div className="mt-6 lg:hidden">
+            <LiturgiaAside
+              year={year}
+              month={month}
+              todaySlug={todaySlug}
+              todayLabel={todayLabel}
+              prevSlug={prevSlug}
+              nextSlug={nextSlug}
+              blogLinks={[
+                {
+                  href: "/liturgia/ano-liturgico",
+                  title: "Ano litúrgico: tempos, cores e calendário",
+                  desc: "Entenda o que muda ao longo do ano e como acompanhar.",
+                },
+                {
+                  href: "/liturgia/leituras-da-missa",
+                  title: "Guia das leituras da Missa",
+                  desc: "Primeira leitura, salmo, evangelho e como acompanhar.",
+                },
+                {
+                  href: "/liturgia/como-usar-a-liturgia",
+                  title: "Como usar a liturgia no dia a dia",
+                  desc: "Um método simples para rezar e se preparar para a Missa.",
+                },
+              ]}
+            />
+          </div>
         </div>
 
         <link rel="canonical" href={canonical} />
