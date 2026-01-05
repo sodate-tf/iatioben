@@ -1,297 +1,281 @@
-import LiturgiaClient, { LiturgyData } from "@/components/liturgiaClient";
-import LiturgiaFAQSchema from "@/components/LiturgiaFAQSchema";
+// app/liturgia-diaria/[data]/page.tsx
+
+import type { Metadata } from "next";
 import Script from "next/script";
+import Link from "next/link";
+import { fetchLiturgiaByDate } from "@/lib/liturgia/api";
+import { parseSlugDate, slugFromDate, monthLabelPT, pad2 } from "@/lib/liturgia/date";
+import LiturgiaHubPerfect from "@/components/liturgia/LiturgiaHubPerfect";
+import LiturgiaAside from "@/components/liturgia/LiturgiaAside";
+import { AdsenseSidebarMobile300x250 } from "@/components/ads/AdsenseBlocks";
 
-interface PageParams {
-  data?: string; // "dd-mm-yyyy" (rota /liturgia-diaria/[data])
+export const dynamic = "force-static";
+export const revalidate = 86400;
+
+const SITE_URL = "https://www.iatioben.com.br";
+const ADS_SLOT_SIDEBAR_DESKTOP = "8534838745";
+const ADS_SLOT_SIDEBAR_MOBILE = "1573844576";
+
+type PageParams = { data: string };
+type PageProps = { params: Promise<PageParams> | PageParams };
+
+function safeSlug(slug: string) {
+  return (slug || "").trim();
 }
 
-interface PageProps {
-  // Em alguns setups do Next, params pode vir como Promise.
-  params: Promise<PageParams> | PageParams;
+function buildTitle(dd: number, mm: number, yyyy: number) {
+  const d = String(dd).padStart(2, "0");
+  const m = String(mm).padStart(2, "0");
+  return `Liturgia Diária ${d}/${m}/${yyyy} – Evangelho, Leituras e Salmo`;
 }
 
-/* ================= HELPERS ================= */
-
-function isoWithBRTimezone(date: Date) {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const yyyy = date.getFullYear();
-  const mm = pad(date.getMonth() + 1);
-  const dd = pad(date.getDate());
-  const hh = pad(date.getHours());
-  const min = pad(date.getMinutes());
-  const ss = pad(date.getSeconds());
-  return `${yyyy}-${mm}-${dd}T${hh}:${min}:${ss}-03:00`;
+function buildDescription(dd: number, mm: number, yyyy: number) {
+  const d = String(dd).padStart(2, "0");
+  const m = String(mm).padStart(2, "0");
+  return `Liturgia do dia ${d}/${m}/${yyyy} com Evangelho, leituras e salmo. Acompanhe o calendário e navegue por datas, mês e ano.`;
 }
 
-function safeDateParts(dateParam?: string) {
-  if (!dateParam || !dateParam.includes("-")) return null;
-  const [dd, mm, yyyy] = dateParam.split("-");
-  if (!dd || !mm || !yyyy) return null;
-  if (dd.length !== 2 || mm.length !== 2 || yyyy.length !== 4) return null;
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const resolved = await Promise.resolve(params);
+  const slug = safeSlug(resolved.data);
 
-  const d = Number(dd);
-  const m = Number(mm);
-  const y = Number(yyyy);
-  if (!d || !m || !y) return null;
-  if (m < 1 || m > 12) return null;
-  if (d < 1 || d > 31) return null;
-
-  return { dd, mm, yyyy };
-}
-
-function toText(v: unknown) {
-  return typeof v === "string" ? v : "";
-}
-
-function toArray<T = any>(v: unknown): T[] {
-  return Array.isArray(v) ? (v as T[]) : [];
-}
-
-/**
- * Normaliza o JSON da API para garantir que TODAS as chaves esperadas existam,
- * evitando crash no client caso algum campo venha ausente.
- */
-function normalizeApiToLiturgyData(raw: any, dd: string, mm: string, yyyy: number): LiturgyData {
-  const fallback: LiturgyData = {
-    data: `${dd}/${mm}/${yyyy}`,
-    liturgia: "Liturgia Diária",
-    cor: "Verde",
-    oracoes: { coleta: "", oferendas: "", comunhao: "", extras: [] },
-    leituras: {
-      primeiraLeitura: [],
-      salmo: [],
-      segundaLeitura: [],
-      evangelho: [],
-      extras: [],
-    },
-    antifonas: { entrada: "", comunhao: "" },
-  };
-
-  if (!raw || typeof raw !== "object") return fallback;
-
-  return {
-    data: toText(raw?.data) || fallback.data,
-    liturgia: toText(raw?.liturgia) || fallback.liturgia,
-    cor: toText(raw?.cor) || fallback.cor,
-    oracoes: {
-      coleta: toText(raw?.oracoes?.coleta),
-      oferendas: toText(raw?.oracoes?.oferendas),
-      comunhao: toText(raw?.oracoes?.comunhao),
-      extras: toArray<string>(raw?.oracoes?.extras),
-    },
-    leituras: {
-      primeiraLeitura: toArray(raw?.leituras?.primeiraLeitura),
-      salmo: toArray(raw?.leituras?.salmo),
-      segundaLeitura: toArray(raw?.leituras?.segundaLeitura),
-      evangelho: toArray(raw?.leituras?.evangelho),
-      extras: toArray(raw?.leituras?.extras),
-    },
-    antifonas: {
-      entrada: toText(raw?.antifonas?.entrada),
-      comunhao: toText(raw?.antifonas?.comunhao),
-    },
-  };
-}
-
-/* ================= SEO (OTIMIZADO E CURTO) ================= */
-
-export async function generateMetadata({ params }: PageProps) {
-  const resolved = await params;
-  const dateParam = resolved?.data;
-
-  const parts = safeDateParts(dateParam);
-
-  // Página "Hoje" (sem data na URL) — canonical SEM DATA (evita duplicidade)
-  if (!parts) {
-    const title = "Liturgia Diária de Hoje – Evangelho do Dia | Tio Ben";
-    const description =
-      "Acompanhe a Liturgia Diária de hoje com o Evangelho do Dia, leituras, salmo, orações e reflexão para fortalecer sua fé.";
-
+  const dt = slug ? parseSlugDate(slug) : null;
+  if (!dt) {
     return {
-      title,
-      description,
-      alternates: { canonical: "https://www.iatioben.com.br/liturgia-diaria" },
-      openGraph: {
-        title,
-        description,
-        url: "https://www.iatioben.com.br/liturgia-diaria",
-        siteName: "IA Tio Ben",
-        locale: "pt_BR",
-        type: "article",
-        images: [
-          {
-            url: "https://www.iatioben.com.br/og_image_liturgia.png",
-            width: 1200,
-            height: 630,
-          },
-        ],
-      },
-      twitter: {
-        card: "summary_large_image",
-        title,
-        description,
-        images: ["https://www.iatioben.com.br/og_image_liturgia.png"],
-      },
+      title: "Liturgia Diária – IA Tio Ben",
+      description: "Acompanhe a liturgia diária com Evangelho, leituras e salmo.",
+      robots: { index: false, follow: false },
+      alternates: { canonical: `${SITE_URL}/liturgia-diaria` },
     };
   }
 
-  const { dd, mm, yyyy } = parts;
-  const d = new Date(`${yyyy}-${mm}-${dd}T12:00:00-03:00`); // meio-dia para evitar edge cases
+  const dd = dt.getDate();
+  const mm = dt.getMonth() + 1;
+  const yyyy = dt.getFullYear();
 
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = d.toLocaleString("pt-BR", { month: "long" });
-  const weekday = d.toLocaleString("pt-BR", { weekday: "long" });
-
-  const formattedDate = `${weekday}, ${day} de ${month} de ${yyyy}`;
-
-  // título curto (evita truncamento)
-  const title = `Liturgia Diária ${day} de ${month} – Evangelho do Dia | Tio Ben`;
-  const description = `Acompanhe a Liturgia Diária de ${formattedDate} com Evangelho do Dia, leituras, salmo, orações e reflexão.`;
-  const canonical = `https://www.iatioben.com.br/liturgia-diaria/${dd}-${mm}-${yyyy}`;
+  const title = buildTitle(dd, mm, yyyy);
+  const description = buildDescription(dd, mm, yyyy);
+  const canonical = `${SITE_URL}/liturgia-diaria/${slug}`;
 
   return {
     title,
     description,
     alternates: { canonical },
+    robots: { index: true, follow: true },
     openGraph: {
       title,
       description,
       url: canonical,
       siteName: "IA Tio Ben",
-      locale: "pt_BR",
       type: "article",
-      images: [
-        {
-          url: "https://www.iatioben.com.br/og_image_liturgia.png",
-          width: 1200,
-          height: 630,
-        },
-      ],
+      locale: "pt_BR",
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: ["https://www.iatioben.com.br/og_image_liturgia.png"],
     },
   };
 }
 
-/* ================= PAGE SSR ================= */
+export default async function LiturgiaDayPage({ params }: PageProps) {
+  const resolved = await Promise.resolve(params);
+  const slug = safeSlug(resolved.data);
 
-export default async function Page({ params }: PageProps) {
-  const resolved = await params;
-  let dateParam = resolved?.data;
-
-  let dd: string, mm: string, yyyy: number;
-
-  const parts = safeDateParts(dateParam);
-
-  // Sem data na rota: mostra HOJE, mas mantém canonical sem data (feito no metadata)
-  if (!parts) {
-    const hoje = new Date();
-    dd = String(hoje.getDate()).padStart(2, "0");
-    mm = String(hoje.getMonth() + 1).padStart(2, "0");
-    yyyy = hoje.getFullYear();
-    dateParam = `${dd}-${mm}-${yyyy}`;
-  } else {
-    dd = parts.dd;
-    mm = parts.mm;
-    yyyy = Number(parts.yyyy);
+  const dt = slug ? parseSlugDate(slug) : null;
+  if (!dt) {
+    return (
+      <article className="mx-auto max-w-3xl px-4 py-10 bg-white text-slate-900 min-h-screen">
+        <h1 className="text-2xl font-bold">Data inválida</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          Use o formato <span className="font-semibold">dd-mm-aaaa</span>. Exemplo:{" "}
+          <span className="font-semibold">/liturgia-diaria/05-01-2026</span>
+        </p>
+        <div className="mt-4">
+          <a
+            href="/liturgia-diaria"
+            className="inline-flex rounded-xl bg-amber-500 text-white px-4 py-2 text-sm font-semibold hover:bg-amber-600"
+          >
+            Voltar para Liturgia Diária
+          </a>
+        </div>
+      </article>
+    );
   }
 
-  // Data base (meio-dia) para textos/JSON-LD
-  const d = new Date(`${yyyy}-${mm}-${dd}T12:00:00-03:00`);
-  const weekday = d.toLocaleString("pt-BR", { weekday: "long" });
-  const monthFull = d.toLocaleString("pt-BR", { month: "long" });
-  const formattedDate = `${weekday}, ${dd} de ${monthFull} de ${yyyy}`;
+  const day = dt.getDate();
+  const month = dt.getMonth() + 1;
+  const year = dt.getFullYear();
 
-  let data: LiturgyData;
+  const data = await fetchLiturgiaByDate(day, month, year);
 
-  try {
-    const res = await fetch(`https://liturgia.up.railway.app/v2/?dia=${dd}&mes=${mm}&ano=${yyyy}`, {
-      next: { revalidate: 3600 },
-    });
+  const prev = new Date(year, month - 1, day - 1);
+  const next = new Date(year, month - 1, day + 1);
 
-    if (!res.ok) {
-      data = normalizeApiToLiturgyData(null, dd, mm, yyyy);
-    } else {
-      const raw = await res.json();
-      data = normalizeApiToLiturgyData(raw, dd, mm, yyyy);
-    }
-  } catch {
-    data = normalizeApiToLiturgyData(null, dd, mm, yyyy);
-  }
+  const prevSlug = slugFromDate(prev);
+  const nextSlug = slugFromDate(next);
 
-  // Canonical por data (quando rota tem data) ou "hoje" (quando rota sem data)
-  const canonicalUrl = parts
-    ? `https://www.iatioben.com.br/liturgia-diaria/${dd}-${mm}-${yyyy}`
-    : `https://www.iatioben.com.br/liturgia-diaria`;
+  const canonical = `${SITE_URL}/liturgia-diaria/${slug}`;
 
-  const jsonLdArticle = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    mainEntityOfPage: { "@type": "WebPage", "@id": canonicalUrl },
-    headline: `Liturgia Diária ${dd}/${mm}/${yyyy}`,
-    description: `Acompanhe a Liturgia Diária de ${formattedDate}. Evangelho, leituras, salmo e orações para meditar a Palavra de Deus.`,
-    image: "https://www.iatioben.com.br/og_image_liturgia.png",
-    url: canonicalUrl,
-    inLanguage: "pt-BR",
-    datePublished: isoWithBRTimezone(d),
-    dateModified: isoWithBRTimezone(d),
-    author: { "@type": "Person", name: "Tio Ben", url: "https://www.iatioben.com.br" },
-    publisher: {
-      "@type": "Organization",
-      name: "IA Tio Ben",
-      url: "https://www.iatioben.com.br",
-      logo: { "@type": "ImageObject", url: "https://www.iatioben.com.br/logo.png" },
-    },
-  };
-
-  // Breadcrumb JSON-LD (SEO)
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
+      { "@type": "ListItem", position: 1, name: "IA Tio Ben", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "Liturgia Diária", item: `${SITE_URL}/liturgia-diaria` },
+      { "@type": "ListItem", position: 3, name: data.dateLabel, item: canonical },
+    ],
+  };
+
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: buildTitle(day, month, year),
+    description: buildDescription(day, month, year),
+    mainEntityOfPage: canonical,
+    datePublished: `${data.dateISO}T06:00:00-03:00`,
+    dateModified: `${data.dateISO}T06:00:00-03:00`,
+    author: { "@type": "Organization", name: "IA Tio Ben" },
+    publisher: { "@type": "Organization", name: "IA Tio Ben" },
+  };
+
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
       {
-        "@type": "ListItem",
-        position: 1,
-        name: "Início",
-        item: "https://www.iatioben.com.br",
+        "@type": "Question",
+        name: `Onde encontrar a liturgia diária completa de ${data.dateLabel}?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `Nesta página você encontra a liturgia diária de ${data.dateLabel} com Primeira Leitura, Salmo, Evangelho e, quando houver, Segunda Leitura.`,
+        },
       },
       {
-        "@type": "ListItem",
-        position: 2,
-        name: "Liturgia Diária",
-        item: "https://www.iatioben.com.br/liturgia-diaria",
+        "@type": "Question",
+        name: "Quais partes normalmente aparecem na liturgia diária?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Em geral: Primeira Leitura, Salmo Responsorial, Evangelho e, quando houver, Segunda Leitura e antífonas.",
+        },
       },
       {
-        "@type": "ListItem",
-        position: 3,
-        name: parts ? `Liturgia ${dd}/${mm}/${yyyy}` : "Hoje",
-        item: canonicalUrl,
+        "@type": "Question",
+        name: "Como acessar a liturgia de outra data?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: "Use a página /liturgia-diaria e o calendário por mês/ano para abrir qualquer data em /liturgia-diaria/dd-mm-aaaa.",
+        },
       },
     ],
   };
 
+  
+  
+
+  // ideal: você já tem o "today" no server (new Date()).
+  const today = new Date();
+
+  const todaySlug =
+    `${pad2(today.getDate())}-${pad2(today.getMonth() + 1)}-${today.getFullYear()}`;
+
+  const todayLabel =
+    `${pad2(today.getDate())}/${pad2(today.getMonth() + 1)}/${today.getFullYear()}`;
+
   return (
     <>
       <Script
-        id="jsonld-liturgia-article"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdArticle) }}
-      />
-
-      <Script
-        id="jsonld-liturgia-breadcrumb"
+        id="jsonld-breadcrumb-liturgia-dia"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
+      <Script
+        id="jsonld-article-liturgia-dia"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <Script
+        id="jsonld-faq-liturgia-dia"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
 
-      <LiturgiaClient data={data} />
+      <article className="mx-auto w-full max-w-7xl px-3 sm:px-4 lg:px-6 py-6 bg-white text-slate-900 leading-relaxed min-h-screen">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6">
+          <main className="min-w-0">
+            <LiturgiaHubPerfect
+              siteUrl={SITE_URL}
+              hubCanonicalPath={`/liturgia-diaria/${slug}`}
+              dateSlug={slug}
+              data={data}
+              prevSlug={prevSlug}
+              nextSlug={nextSlug}
+              todaySlug={todaySlug}
+              todayLabel={todayLabel}
+              className="max-w-none px-0 py-0"
+            />
 
-      <LiturgiaFAQSchema dateFormatted={formattedDate} liturgiaTitulo={data.liturgia} />
+
+            <div className="mt-6 lg:hidden">
+              <AdsenseSidebarMobile300x250 slot={ADS_SLOT_SIDEBAR_MOBILE} />
+            </div>
+
+            <div className="mt-6 lg:hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-xs font-semibold tracking-wide text-amber-700 uppercase">Acesso rápido</p>
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Link
+                  href={`/liturgia-diaria/${todaySlug}`}
+                  className="rounded-xl border border-slate-200 p-3 hover:bg-slate-50"
+                >
+                  <p className="text-xs text-slate-500 font-semibold">Hoje</p>
+                  <p className="text-sm font-bold">
+                    {String(today.getDate()).padStart(2, "0")}/{String(today.getMonth() + 1).padStart(2, "0")}/{today.getFullYear()}
+                  </p>
+                </Link>
+                <Link
+                  href={`/liturgia-diaria/ano/${year}`}
+                  className="rounded-xl border border-slate-200 p-3 hover:bg-slate-50"
+                >
+                  <p className="text-xs text-slate-500 font-semibold">Calendário</p>
+                  <p className="text-sm font-bold">Ano {year}</p>
+                </Link>
+              </div>
+            </div>
+          </main>
+
+          
+          <LiturgiaAside
+            year={year}
+            month={month}
+            todaySlug={todaySlug}
+            todayLabel={`${String(today.getDate()).padStart(2, "0")}/${String(today.getMonth() + 1).padStart(2, "0")}/${today.getFullYear()}`}
+            prevSlug={prevSlug}
+            nextSlug={nextSlug}
+            adsSlotDesktop300x250={ADS_SLOT_SIDEBAR_DESKTOP}
+            blogLinks={[
+              {
+                href: "/liturgia/ano-liturgico",
+                title: "Ano litúrgico: tempos, cores e calendário",
+                desc: "Entenda o que muda ao longo do ano e como acompanhar.",
+              },
+              {
+                href: "/liturgia/leituras-da-missa",
+                title: "Guia das leituras da Missa",
+                desc: "Primeira leitura, salmo, evangelho e como acompanhar.",
+              },
+              {
+                href: "/liturgia/como-usar-a-liturgia",
+                title: "Como usar a liturgia no dia a dia",
+                desc: "Um método simples para rezar e se preparar para a Missa.",
+              },
+            ]}
+          />
+
+
+        </div>
+
+        <link rel="canonical" href={canonical} />
+      </article>
     </>
   );
 }

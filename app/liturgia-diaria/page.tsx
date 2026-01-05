@@ -1,132 +1,407 @@
-// app/liturgia/page.tsx
-import type { Metadata } from "next";
-import Script from "next/script";
-import LiturgiaHubClient from "@/components/LiturgiaHubClient";
+// app/liturgia-diaria/page.tsx
 
-export const dynamic = "force-static";
+import Link from "next/link";
+import Script from "next/script";
+import type { Metadata } from "next";
+import { fetchLiturgiaByDate, LiturgiaNormalized } from "@/lib/liturgia/api";
+import { monthLabelPT, pad2 } from "@/lib/liturgia/date";
+import AutoScrollTo from "@/components/liturgia/AutoScrollTo";
+import LiturgiaAside from "@/components/liturgia/LiturgiaAside";
+import {
+  AdsenseInArticle,
+  AdsenseSidebarMobile300x250,
+} from "@/components/ads/AdsenseBlocks";
 
 const SITE_URL = "https://www.iatioben.com.br";
-const PAGE_PATH = "/liturgia";
-const CANONICAL_URL = `${SITE_URL}${PAGE_PATH}`;
-const OG_IMAGE = `${SITE_URL}/og_image_liturgia.png`;
+const HUB_PATH = "/liturgia-diaria";
+const CANONICAL_URL = `${SITE_URL}${HUB_PATH}`;
 
+const ADS_SLOT_BODY_TOP = "7474884427";
+const ADS_SLOT_SIDEBAR_DESKTOP = "8534838745";
+const ADS_SLOT_SIDEBAR_MOBILE = "1573844576";
+
+export const dynamic = "force-static";
+export const revalidate = 86400;
+
+/* =========================
+   METADATA (HEAD)
+   ========================= */
 export const metadata: Metadata = {
-  title: "Liturgia Católica: Leituras Diárias, Calendário e Como Funciona",
+  title: "Liturgia Diária – Evangelho, Leituras e Salmo do dia",
   description:
-    "Entenda a Liturgia Católica: o que é, como funcionam as leituras da Missa, ciclos A/B/C, tempos litúrgicos, calendário e acesso rápido à Liturgia Diária (Evangelho do dia).",
+    "Liturgia diária com evangelho, leituras e salmo do dia. Consulte o calendário do ano e do mês para acessar qualquer data ",
   alternates: { canonical: CANONICAL_URL },
   openGraph: {
-    title: "Liturgia Católica: Leituras Diárias, Calendário e Como Funciona",
-    description:
-      "Guia completo da Liturgia Católica: estrutura da Missa, leituras, ciclos e tempos litúrgicos, com acesso à Liturgia Diária e conteúdos para aprofundar.",
+    type: "website",
     url: CANONICAL_URL,
+    title: "Liturgia Diária – Evangelho, Leituras e Salmo do dia",
+    description:
+      "Acompanhe a liturgia do dia e consulte qualquer data pelo calendário do mês e do ano.",
     siteName: "IA Tio Ben",
     locale: "pt_BR",
-    type: "article",
-    images: [{ url: OG_IMAGE, width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Liturgia Católica: Leituras Diárias, Calendário e Como Funciona",
+    title: "Liturgia Diária – Evangelho, Leituras e Salmo do dia",
     description:
-      "Guia completo da Liturgia Católica: estrutura da Missa, leituras, ciclos e tempos litúrgicos, com acesso à Liturgia Diária e conteúdos para aprofundar.",
-    images: [OG_IMAGE],
+      "Acompanhe a liturgia do dia e consulte qualquer data pelo calendário do mês e do ano.",
   },
 };
 
-function isoNowBR() {
-  // Para schema (não crítico, mas consistente)
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const yyyy = d.getFullYear();
-  const mm = pad(d.getMonth() + 1);
-  const dd = pad(d.getDate());
-  const hh = pad(d.getHours());
-  const mi = pad(d.getMinutes());
-  const ss = pad(d.getSeconds());
-  return `${yyyy}-${mm}-${dd}T${hh}:${mi}:${ss}-03:00`;
+/* =========================
+   HELPERS
+   ========================= */
+
+function buildSlug(dd: number, mm: number, yyyy: number) {
+  const d = String(dd).padStart(2, "0");
+  const m = String(mm).padStart(2, "0");
+  return `${d}-${m}-${yyyy}`;
 }
 
-export default function Page() {
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    mainEntityOfPage: { "@type": "WebPage", "@id": CANONICAL_URL },
-    headline: "Liturgia Católica: Leituras Diárias, Calendário e Como Funciona",
-    description:
-      "Guia completo da Liturgia Católica: o que é, como funcionam as leituras, ciclos e tempos litúrgicos, com acesso rápido à Liturgia Diária.",
-    image: OG_IMAGE,
-    url: CANONICAL_URL,
-    inLanguage: "pt-BR",
-    datePublished: isoNowBR(),
-    dateModified: isoNowBR(),
-    author: { "@type": "Person", name: "Tio Ben", url: SITE_URL },
-    publisher: {
-      "@type": "Organization",
-      name: "IA Tio Ben",
-      url: SITE_URL,
-      logo: { "@type": "ImageObject", url: `${SITE_URL}/logo.png` },
-    },
-  };
+function getTodayInSaoPauloParts() {
+  const parts = new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
 
-  // FAQ Schema (hub pilar costuma se beneficiar bastante)
+  const year = Number(parts.find((p) => p.type === "year")?.value);
+  const month = Number(parts.find((p) => p.type === "month")?.value);
+  const day = Number(parts.find((p) => p.type === "day")?.value);
+
+  // fallback robusto (evita NaN em ambientes estranhos)
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+    const now = new Date();
+    return {
+      year: now.getFullYear(),
+      month: now.getMonth() + 1,
+      day: now.getDate(),
+    };
+  }
+
+  return { year, month, day };
+}
+
+/* =========================
+   PAGE
+   ========================= */
+export default async function LiturgiaHubPage() {
+  // “Hoje” no fuso BR
+  const { year, month, day } = getTodayInSaoPauloParts();
+
+  const today: LiturgiaNormalized = await fetchLiturgiaByDate(day, month, year);
+
+  // Prev/Next baseados em Date (JS lida com virada de mês/ano)
+  const base = new Date(year, month - 1, day);
+  const prev = new Date(base);
+  prev.setDate(base.getDate() - 1);
+  const next = new Date(base);
+  next.setDate(base.getDate() + 1);
+
+  const prevSlug = buildSlug(prev.getDate(), prev.getMonth() + 1, prev.getFullYear());
+  const nextSlug = buildSlug(next.getDate(), next.getMonth() + 1, next.getFullYear());
+
+  // Calendário por mês (ano corrente)
+  const months = Array.from({ length: 12 }, (_, i) => i + 1).map((m) => ({
+    label: monthLabelPT(year, m),
+    href: `/liturgia-diaria/ano/${year}/${pad2(m)}`,
+  }));
+
+  /* =========================
+     JSON-LD (SEO)
+     ========================= */
+
   const faqJsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     mainEntity: [
       {
         "@type": "Question",
-        name: "O que é a Liturgia da Missa?",
+        name: "Onde posso ler a Liturgia Diária de hoje?",
         acceptedAnswer: {
           "@type": "Answer",
           text:
-            "A Liturgia é a oração pública da Igreja e, na Missa, é o modo como celebramos o Mistério de Cristo. Ela inclui Liturgia da Palavra (leituras e Evangelho) e Liturgia Eucarística.",
+            "Na seção “Hoje” você encontra as referências do dia e pode abrir a página completa com as leituras, o salmo e o evangelho.",
         },
       },
       {
         "@type": "Question",
-        name: "Por que as leituras mudam todos os dias?",
+        name: "O que inclui a Liturgia Diária?",
         acceptedAnswer: {
           "@type": "Answer",
           text:
-            "As leituras seguem um lecionário organizado pela Igreja, distribuído ao longo do ano litúrgico, para que a comunidade seja alimentada pela Palavra de Deus em ciclos e tempos litúrgicos.",
+            "Normalmente inclui Primeira Leitura, Salmo Responsorial, Evangelho do dia e, quando houver, Segunda Leitura, além de elementos próprios da celebração.",
         },
       },
       {
         "@type": "Question",
-        name: "O que são os ciclos A, B e C?",
+        name: "Como acessar a liturgia de outra data?",
         acceptedAnswer: {
           "@type": "Answer",
           text:
-            "São ciclos dominicais do lecionário: A (Mateus), B (Marcos) e C (Lucas). Eles se alternam a cada ano, garantindo variedade e profundidade na proclamação do Evangelho.",
+            "Use o calendário do ano e do mês. Cada dia possui uma URL no formato /liturgia-diaria/dd-mm-aaaa.",
         },
       },
-      {
-        "@type": "Question",
-        name: "Qual a diferença entre solenidade, festa e memória?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text:
-            "São graus de celebração no calendário litúrgico. Solenidades são as mais importantes, festas vêm em seguida e memórias destacam santos e acontecimentos, podendo ser obrigatórias ou facultativas.",
-        },
-      },
+    ],
+  };
+
+  const hubJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Liturgia Diária",
+    description: "Evangelho, leituras e salmo do dia, com calendário mensal e anual.",
+    url: CANONICAL_URL,
+    isPartOf: { "@type": "WebSite", name: "IA Tio Ben", url: SITE_URL },
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "IA Tio Ben", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "Liturgia Diária", item: CANONICAL_URL },
     ],
   };
 
   return (
     <>
       <Script
-        id="jsonld-liturgia-hub-article"
+        id="jsonld-liturgia-hub"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(hubJsonLd) }}
       />
       <Script
-        id="jsonld-liturgia-hub-faq"
+        id="jsonld-liturgia-breadcrumb"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <Script
+        id="jsonld-liturgia-faq"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
 
-      <LiturgiaHubClient />
+      {/* Rola automaticamente para “Hoje” (header fixo) */}
+      <AutoScrollTo targetId="hoje" desktopHeaderPx={80} extraOffsetPx={12} behavior="smooth" />
+
+      <main className="mx-auto w-full max-w-7xl px-3 sm:px-4 lg:px-6 py-6 bg-white text-slate-900 leading-relaxed min-h-screen">
+        <article className="min-w-0">
+          <header className="mb-6">
+            <p className="text-xs font-semibold tracking-wide text-amber-700 uppercase">
+              IA Tio Ben • Liturgia
+            </p>
+
+            <h1 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight">
+              Liturgia Diária – Evangelho, Leituras e Salmo do dia
+            </h1>
+
+            {/* Copy editorial pilar (SEO) */}
+            <p className="mt-3 text-base text-slate-600 max-w-3xl">
+              Aqui você encontra a <strong>Liturgia Diária</strong> do Brasil para cada dia do ano, com{" "}
+              <strong>leituras da Missa</strong>, <strong>salmo responsorial</strong> e{" "}
+              <strong>evangelho do dia</strong>. Use o calendário anual e mensal para consultar qualquer data
+              e preparar sua oração e participação na Missa.
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link
+                href={`/liturgia-diaria/${today.dateSlug}`}
+                className="rounded-xl bg-amber-500 text-white px-4 py-2 text-sm font-semibold hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300"
+              >
+                Liturgia de hoje • {today.dateLabel}
+              </Link>
+
+              <Link
+                href={`/liturgia-diaria/${prevSlug}`}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+              >
+                Ontem
+              </Link>
+
+              <Link
+                href={`/liturgia-diaria/${nextSlug}`}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+              >
+                Amanhã
+              </Link>
+
+              <Link
+                href={`/liturgia-diaria/ano/${year}`}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+              >
+                Calendário do ano
+              </Link>
+            </div>
+          </header>
+
+          <section className="mb-6">
+            <AdsenseInArticle slot={ADS_SLOT_BODY_TOP} />
+          </section>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6">
+            <section className="min-w-0">
+              {/* HOJE */}
+              <section
+                id="hoje"
+                className="rounded-2xl border border-amber-100 bg-white p-5 shadow-sm scroll-mt-24"
+              >
+                <h2 className="text-xl font-bold">Hoje • {today.dateLabel}</h2>
+
+                <p className="mt-1 text-sm text-slate-600">
+                  {today.celebration || ""}
+                  {today.color ? ` • Cor litúrgica: ${today.color}` : ""}
+                </p>
+
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-slate-200 p-4">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase">
+                      Primeira leitura
+                    </p>
+                    <p className="mt-1 text-sm font-bold">{today.primeiraRef || "—"}</p>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200 p-4">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase">Salmo</p>
+                    <p className="mt-1 text-sm font-bold">{today.salmoRef || "—"}</p>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200 p-4">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase">
+                      Segunda leitura
+                    </p>
+                    <p className="mt-1 text-sm font-bold">
+                      {today.segundaRef ? today.segundaRef : "—"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200 p-4">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase">
+                      Evangelho
+                    </p>
+                    <p className="mt-1 text-sm font-bold">{today.evangelhoRef || "—"}</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Link
+                    href={`/liturgia-diaria/${today.dateSlug}`}
+                    className="inline-flex rounded-xl bg-amber-500 text-white px-4 py-2 text-sm font-semibold hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                  >
+                    Abrir liturgia completa
+                  </Link>
+
+                  <Link
+                    href="#faq"
+                    className="inline-flex rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+                  >
+                    Perguntas frequentes
+                  </Link>
+                </div>
+              </section>
+
+              {/* Pilar: O que é */}
+              <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h2 className="text-xl font-bold">O que é a Liturgia Diária?</h2>
+                <p className="mt-2 text-sm text-slate-600">
+                  A Liturgia Diária reúne as leituras bíblicas e os elementos próprios propostos pela Igreja
+                  para cada dia do ano. Ela ajuda a acompanhar o caminho da Palavra ao longo do tempo litúrgico,
+                  em sintonia com a Missa e a espiritualidade de cada celebração.
+                </p>
+              </section>
+
+              {/* Calendário por mês (cluster) */}
+              <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h2 className="text-xl font-bold">Calendário por mês</h2>
+                <p className="mt-2 text-sm text-slate-600">
+                  Selecione um mês para abrir o calendário completo e acessar qualquer dia.
+                </p>
+
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {months.map((x) => (
+                    <Link
+                      key={x.href}
+                      href={x.href}
+                      className="rounded-xl border border-slate-200 p-4 hover:bg-slate-50"
+                    >
+                      <p className="text-sm font-bold">{x.label}</p>
+                      <p className="mt-1 text-xs text-slate-600">Abrir calendário do mês</p>
+                    </Link>
+                  ))}
+                </div>
+
+                {/* Link direto para o ano (reforço) */}
+                <div className="mt-4">
+                  <Link
+                    href={`/liturgia-diaria/ano/${year}`}
+                    className="inline-flex rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+                  >
+                    Ver calendário do ano {year}
+                  </Link>
+                </div>
+              </section>
+
+              {/* FAQ (conteúdo + JSON-LD já acima) */}
+              <section
+                className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                id="faq"
+              >
+                <h2 className="text-xl font-bold">Perguntas frequentes</h2>
+
+                <div className="mt-4 space-y-4">
+                  <div className="rounded-xl border border-slate-200 p-4">
+                    <h3 className="font-bold">A Liturgia Diária é oficial?</h3>
+                    <p className="mt-2 text-sm text-slate-600">
+                      Ela segue o calendário litúrgico e o lecionário de cada dia. Aqui apresentamos as referências
+                      e a organização do conteúdo para facilitar o acompanhamento e a preparação para a Missa.
+                    </p>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200 p-4">
+                    <h3 className="font-bold">Como acessar a liturgia de outra data?</h3>
+                    <p className="mt-2 text-sm text-slate-600">
+                      Use o calendário do ano e do mês. Cada dia abre em <strong>/liturgia-diaria/dd-mm-aaaa</strong>.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              {/* Ads mobile */}
+              <div className="mt-6 lg:hidden">
+                <AdsenseSidebarMobile300x250 slot={ADS_SLOT_SIDEBAR_MOBILE} />
+              </div>
+            </section>
+
+            {/* ASIDE (desktop, sticky interno do componente) */}
+            <LiturgiaAside
+              year={year}
+              month={month}
+              todaySlug={today.dateSlug}
+              todayLabel={today.dateLabel}
+              prevSlug={prevSlug}
+              nextSlug={nextSlug}
+              adsSlotDesktop300x250={ADS_SLOT_SIDEBAR_DESKTOP}
+              blogLinks={[
+                {
+                  href: "/liturgia/ano-liturgico",
+                  title: "Ano litúrgico: tempos, cores e calendário",
+                  desc: "Entenda o que muda ao longo do ano e como acompanhar.",
+                },
+                {
+                  href: "/liturgia/leituras-da-missa",
+                  title: "Guia das leituras da Missa",
+                  desc: "Primeira leitura, salmo, evangelho e como acompanhar.",
+                },
+                {
+                  href: "/liturgia/como-usar-a-liturgia",
+                  title: "Como usar a liturgia no dia a dia",
+                  desc: "Um método simples para rezar e se preparar para a Missa.",
+                },
+              ]}
+            />
+          </div>
+        </article>
+      </main>
     </>
   );
 }
