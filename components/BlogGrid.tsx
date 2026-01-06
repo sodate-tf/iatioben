@@ -1,12 +1,20 @@
-'use client';
+// components/BlogGrid.tsx
+//
+// Melhorias aplicadas:
+// - Busca com debounce (não navega a cada tecla)
+// - Paginação com Link (melhor crawl/SEO) + mantém botões se quiser
+// - Corrige URLs: mantém q quando existe
+// - Mantém seu ItemList JSON-LD, com alguns campos extras
 
-import React from "react";
+"use client";
+
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Script from "next/script";
-import { Post } from "@/app/adminTioBen/types";
+import type { Post } from "@/app/adminTioBen/types";
 import AdSensePro from "./adsensePro";
 
 const FALLBACK_IMAGE = "/images/santo-do-dia-ia-tio-ben.png";
@@ -18,6 +26,14 @@ interface BlogGridProps {
   search: string;
 }
 
+function buildBlogUrl(page: number, q: string) {
+  const qp = new URLSearchParams();
+  if (q) qp.set("q", q);
+  if (page > 1) qp.set("page", String(page));
+  const qs = qp.toString();
+  return qs ? `/blog?${qs}` : `/blog`;
+}
+
 export default function BlogGrid({
   posts,
   totalPages,
@@ -26,47 +42,64 @@ export default function BlogGrid({
 }: BlogGridProps) {
   const router = useRouter();
 
-  /* ✅ BUSCA TIPO GOOGLE */
-  function handleSearch(value: string) {
-    router.push(`/blog?q=${encodeURIComponent(value)}&page=1`);
-  }
+  // input controlado + debounce
+  const [query, setQuery] = useState(search);
 
-  function changePage(page: number) {
-    router.push(`/blog?q=${encodeURIComponent(search)}&page=${page}`);
-  }
+  useEffect(() => {
+    setQuery(search);
+  }, [search]);
 
-  /* ✅ SCHEMA.ORG ITEMLIST */
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    itemListElement: posts.map((post, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      url: `https://www.iatioben.com.br/blog/${post.slug}`,
-      name: post.title,
-    })),
-  };
+  useEffect(() => {
+    const t = setTimeout(() => {
+      // sempre volta pra page 1 quando muda o termo
+      const url = buildBlogUrl(1, query.trim());
+      router.push(url);
+    }, 450);
+
+    return () => clearTimeout(t);
+  }, [query, router]);
+
+  const jsonLd = useMemo(
+    () => ({
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      itemListOrder: "https://schema.org/ItemListOrderDescending",
+      numberOfItems: posts.length,
+      itemListElement: posts.map((post, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        url: `https://www.iatioben.com.br/blog/${post.slug}`,
+        name: post.title,
+      })),
+    }),
+    [posts]
+  );
+
+  const prevUrl = buildBlogUrl(Math.max(1, currentPage - 1), search);
+  const nextUrl = buildBlogUrl(Math.min(totalPages, currentPage + 1), search);
 
   return (
-    <section className="max-w-5xl mx-auto px-4 py-10">
-      {/* ✅ SCHEMA SEO */}
+    <section className="max-w-5xl mx-auto">
       <Script
         id="blog-itemlist"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* ✅ CAMPO DE BUSCA */}
+      {/* Busca */}
       <div className="mb-8">
         <input
-          defaultValue={search}
-          onChange={(e) => handleSearch(e.target.value)}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
           placeholder="🔍 Buscar por santo, evangelho ou tema..."
           className="w-full p-4 rounded-xl border shadow-sm focus:ring-2 bg-amber-50 focus:ring-amber-600 text-gray-800"
         />
+        <p className="mt-2 text-xs text-slate-600">
+          Dica: use termos como “São José”, “Evangelho”, “Liturgia”, “Terço”.
+        </p>
       </div>
 
-      {/* ✅ GRID RESPONSIVO */}
+      {/* Grid */}
       <motion.div
         className="grid grid-cols-1 md:grid-cols-2 gap-6"
         initial={{ opacity: 0 }}
@@ -93,9 +126,9 @@ export default function BlogGrid({
                 </div>
 
                 <div className="p-4">
-                  <h3 className="text-xl font-bold text-amber-900 mb-2 line-clamp-2">
+                  <h2 className="text-xl font-bold text-amber-900 mb-2 line-clamp-2">
                     {post.title}
-                  </h3>
+                  </h2>
 
                   <p className="text-gray-600 text-sm line-clamp-3">
                     {post.metaDescription}
@@ -106,30 +139,37 @@ export default function BlogGrid({
           );
         })}
       </motion.div>
-      <AdSensePro slot="2887650656" height={140} />
-  
-      {/* ✅ PAGINAÇÃO */}
-      <div className="flex justify-center gap-3 mt-10 flex-wrap">
-        <button
-          disabled={currentPage <= 1}
-          onClick={() => changePage(currentPage - 1)}
-          className="px-4 py-2 bg-white border rounded-lg disabled:opacity-40"
+
+      <div className="mt-8">
+        <AdSensePro slot="2887650656" height={140} />
+      </div>
+
+      {/* Paginação (Link = melhor para SEO/crawl) */}
+      <nav className="flex justify-center gap-3 mt-10 flex-wrap" aria-label="Paginação do blog">
+        <Link
+          href={prevUrl}
+          aria-disabled={currentPage <= 1}
+          className={`px-4 py-2 bg-white border rounded-lg ${
+            currentPage <= 1 ? "pointer-events-none opacity-40" : ""
+          }`}
         >
           ◀ Voltar
-        </button>
+        </Link>
 
         <span className="px-4 py-2 bg-amber-200 rounded-lg font-semibold">
           Página {currentPage} de {totalPages}
         </span>
 
-        <button
-          disabled={currentPage >= totalPages}
-          onClick={() => changePage(currentPage + 1)}
-          className="px-4 py-2 bg-white border rounded-lg disabled:opacity-40"
+        <Link
+          href={nextUrl}
+          aria-disabled={currentPage >= totalPages}
+          className={`px-4 py-2 bg-white border rounded-lg ${
+            currentPage >= totalPages ? "pointer-events-none opacity-40" : ""
+          }`}
         >
           Avançar ▶
-        </button>
-      </div>
+        </Link>
+      </nav>
     </section>
   );
 }

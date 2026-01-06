@@ -177,6 +177,42 @@ export async function addPostAction(post: Omit<Post, "id">): Promise<Post | null
 
 /**
  * -------------------
+ * Nova Função: 5 últimos posts (para Aside)
+ * - Apenas ativos
+ * - Ordena por publish_date desc (com fallback created_at)
+ * - Retorna title + metaDescription + slug
+ * -------------------
+ */
+type LatestPostCard = {
+  slug: string;
+  title: string;
+  metaDescription: string | null;
+};
+
+export async function getLatestPostsForAsideAction(limit = 5): Promise<LatestPostCard[]> {
+  try {
+    const safeLimit = Number.isFinite(limit) ? Math.min(Math.max(limit, 1), 10) : 5;
+
+    const { rows } = await sql<LatestPostCard>`
+      SELECT
+        slug,
+        title,
+        meta_description AS "metaDescription"
+      FROM posts
+      WHERE is_active = true
+      ORDER BY COALESCE(publish_date, created_at) DESC
+      LIMIT ${safeLimit};
+    `;
+
+    return rows;
+  } catch (error) {
+    console.error("ERRO NEON/LATEST: Falha ao buscar últimos posts:", error);
+    return [];
+  }
+}
+
+/**
+ * -------------------
  * Rota: UPDATE (Atualizar um post existente)
  * -------------------
  */
