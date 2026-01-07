@@ -1,13 +1,9 @@
-// app/og/route.tsx
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 export const contentType = "image/png";
 
-export const size = {
-  width: 1200,
-  height: 630,
-};
+export const size = { width: 1200, height: 630 };
 
 function clamp(text: string, max: number) {
   const s = String(text || "").replace(/\s+/g, " ").trim();
@@ -15,34 +11,28 @@ function clamp(text: string, max: number) {
 }
 
 function arrayBufferToBase64(buffer: ArrayBuffer) {
-  let binary = "";
   const bytes = new Uint8Array(buffer);
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
   return btoa(binary);
 }
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
 
-  const title = clamp(
-    searchParams.get("title") ?? "IA Tio Ben",
-    70 // menos para evitar quebra feia
-  );
-
+  const title = clamp(searchParams.get("title") ?? "IA Tio Ben", 70);
   const description = clamp(
     searchParams.get("description") ??
       "Liturgia diária, evangelho e leituras para viver a fé todos os dias.",
     140
   );
 
-  const imageRes = await fetch(`${origin}/og/base.png`);
-  const bg = imageRes.ok
-    ? `data:image/png;base64,${arrayBufferToBase64(
-        await imageRes.arrayBuffer()
-      )}`
-    : null;
+  // carrega a base do /public/og/base.png
+  const baseRes = await fetch(`${origin}/og/base.png`, { cache: "force-cache" });
+  const bg =
+    baseRes.ok
+      ? `data:image/png;base64,${arrayBufferToBase64(await baseRes.arrayBuffer())}`
+      : null;
 
   return new ImageResponse(
     (
@@ -52,11 +42,9 @@ export async function GET(request: Request) {
           height: "100%",
           position: "relative",
           backgroundColor: "#FFF6E8",
-          fontFamily:
-            "Poppins, Inter, system-ui, -apple-system, Segoe UI, Roboto",
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial",
         }}
       >
-        {/* background */}
         {bg && (
           <img
             src={bg}
@@ -71,7 +59,6 @@ export async function GET(request: Request) {
           />
         )}
 
-        {/* bloco de texto */}
         <div
           style={{
             position: "absolute",
@@ -82,7 +69,7 @@ export async function GET(request: Request) {
             flexDirection: "column",
           }}
         >
-          {/* TÍTULO */}
+          {/* Título (mais chamativo e com limite para não “invadir” a descrição) */}
           <div
             style={{
               fontSize: 58,
@@ -91,19 +78,19 @@ export async function GET(request: Request) {
               color: "#465572",
               letterSpacing: -0.8,
               marginBottom: 22,
-              maxHeight: 130, // impede invasão
+              maxHeight: 130, // impede sobreposição
               overflow: "hidden",
             }}
           >
             {title}
           </div>
 
-          {/* DESCRIÇÃO */}
+          {/* Descrição */}
           <div
             style={{
               fontSize: 26,
+              fontWeight: 500,
               lineHeight: 1.45,
-              fontWeight: 400,
               color: "#465572",
               maxHeight: 110,
               overflow: "hidden",
