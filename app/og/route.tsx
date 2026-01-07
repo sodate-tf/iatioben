@@ -73,51 +73,47 @@ export async function GET(request: Request) {
         )}
 
         {/* texto */}
-        <div
-          style={{
-            position: "absolute",
-            top: 140,
-            left: 80,
-            maxWidth: 660,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          {/* TÍTULO: mais destaque + 2 linhas sem cortar errado */}
-          <div
-            style={{
-              fontFamily: "Playfair",
-              fontSize: 72,
-              fontWeight: 700,
-              lineHeight: 1.02,
-              color: "#465572",
-              letterSpacing: -0.6,
-              marginBottom: 20,
+<div
+  style={{
+    position: "absolute",
+    top: 140,
+    left: 80,
+    maxWidth: 640,
+    display: "flex",
+    flexDirection: "column",
+    gap: 28, // espaçamento real entre título e descrição
+  }}
+>
+  {/* TÍTULO */}
+  <div
+    style={{
+      fontFamily: "Playfair",
+      fontSize: 70,
+      fontWeight: 700,
+      lineHeight: 1.08, // mais confortável
+      color: "#465572",
+      letterSpacing: -0.6,
+      wordBreak: "break-word",
+    }}
+  >
+    {title}
+  </div>
 
-              // 2 linhas no máx, sem “cortar” cedo
-              maxHeight: 160, // 72 * 1.02 * 2 = ~147; sobra para anti-aliasing
-              overflow: "hidden",
-            }}
-          >
-            {title}
-          </div>
+  {/* DESCRIÇÃO */}
+  <div
+    style={{
+      fontFamily: "Poppins",
+      fontSize: 30,
+      fontWeight: 500,
+      lineHeight: 1.45, // deixa o texto respirar
+      color: "#465572",
+      wordBreak: "break-word",
+    }}
+  >
+    {description}
+  </div>
+</div>
 
-          {/* DESCRIÇÃO: estilizada + 3 linhas no máx */}
-          <div
-            style={{
-              fontFamily: "Poppins",
-              fontSize: 30,
-              fontWeight: 500,
-              lineHeight: 1.35,
-              color: "#465572",
-
-              maxHeight: 125, // ~3 linhas: 30 * 1.35 * 3 = 121.5
-              overflow: "hidden",
-            }}
-          >
-            {description}
-          </div>
-        </div>
       </div>
     ),
     {
