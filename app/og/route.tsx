@@ -2,20 +2,47 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-
-export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+export const size = {
+  width: 1200,
+  height: 630,
+};
+
+function clamp(text: string, max: number) {
+  const s = String(text || "").replace(/\s+/g, " ").trim();
+  return s.length > max ? s.slice(0, max - 1) + "…" : s;
+}
+
+function arrayBufferToBase64(buffer: ArrayBuffer) {
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
+  const { searchParams, origin } = new URL(request.url);
 
-  const title = searchParams.get("title") ?? "IA Tio Ben";
-  const description =
+  const title = clamp(
+    searchParams.get("title") ?? "IA Tio Ben",
+    70 // menos para evitar quebra feia
+  );
+
+  const description = clamp(
     searchParams.get("description") ??
-    "Liturgia diária, evangelho e leituras para viver a fé todos os dias.";
+      "Liturgia diária, evangelho e leituras para viver a fé todos os dias.",
+    140
+  );
 
-  // URL ABSOLUTA do mockup (public/og/base.png)
-  const baseUrl = new URL("/og/base.png", request.url);
+  const imageRes = await fetch(`${origin}/og/base.png`);
+  const bg = imageRes.ok
+    ? `data:image/png;base64,${arrayBufferToBase64(
+        await imageRes.arrayBuffer()
+      )}`
+    : null;
 
   return new ImageResponse(
     (
@@ -24,58 +51,62 @@ export async function GET(request: Request) {
           width: "100%",
           height: "100%",
           position: "relative",
-          display: "flex",
           backgroundColor: "#FFF6E8",
-          fontFamily: "Inter, system-ui, sans-serif",
+          fontFamily:
+            "Poppins, Inter, system-ui, -apple-system, Segoe UI, Roboto",
         }}
       >
-        {/* mockup */}
-        <img
-          src={baseUrl.toString()}
-          alt=""
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
-        />
+        {/* background */}
+        {bg && (
+          <img
+            src={bg}
+            alt=""
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
+          />
+        )}
 
-        {/* texto */}
+        {/* bloco de texto */}
         <div
           style={{
             position: "absolute",
-            top: 150,
+            top: 140,
             left: 80,
             maxWidth: 620,
             display: "flex",
             flexDirection: "column",
-            gap: 18,
           }}
         >
+          {/* TÍTULO */}
           <div
             style={{
-              margin: 0,
-              fontSize: 56,
-              lineHeight: 1.15,
-              fontWeight: 800,
+              fontSize: 58,
+              fontWeight: 900,
+              lineHeight: 1.05,
               color: "#465572",
-              letterSpacing: -0.5,
-              wordBreak: "break-word",
+              letterSpacing: -0.8,
+              marginBottom: 22,
+              maxHeight: 130, // impede invasão
+              overflow: "hidden",
             }}
           >
             {title}
           </div>
 
+          {/* DESCRIÇÃO */}
           <div
             style={{
-              margin: 0,
               fontSize: 26,
-              lineHeight: 1.4,
+              lineHeight: 1.45,
               fontWeight: 400,
               color: "#465572",
-              wordBreak: "break-word",
+              maxHeight: 110,
+              overflow: "hidden",
             }}
           >
             {description}
