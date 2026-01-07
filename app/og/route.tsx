@@ -1,9 +1,13 @@
+// app/og/route.tsx
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 export const contentType = "image/png";
 
-export const size = { width: 1200, height: 630 };
+export const size = {
+  width: 1200,
+  height: 630,
+};
 
 function clamp(text: string, max: number) {
   const s = String(text || "").replace(/\s+/g, " ").trim();
@@ -11,28 +15,37 @@ function clamp(text: string, max: number) {
 }
 
 function arrayBufferToBase64(buffer: ArrayBuffer) {
-  const bytes = new Uint8Array(buffer);
   let binary = "";
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
   return btoa(binary);
 }
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
 
-  const title = clamp(searchParams.get("title") ?? "IA Tio Ben", 70);
+  const title = clamp(
+    searchParams.get("title") ?? "IA Tio Ben",
+    90
+  );
+
   const description = clamp(
     searchParams.get("description") ??
       "Liturgia diária, evangelho e leituras para viver a fé todos os dias.",
-    140
+    160
   );
 
-  // carrega a base do /public/og/base.png
-  const baseRes = await fetch(`${origin}/og/base.png`, { cache: "force-cache" });
-  const bg =
-    baseRes.ok
-      ? `data:image/png;base64,${arrayBufferToBase64(await baseRes.arrayBuffer())}`
-      : null;
+  // 🔹 busca a imagem em /public/og/base.png
+  const imageResponse = await fetch(`${origin}/og/base.png`);
+
+  let backgroundImage: string | null = null;
+
+  if (imageResponse.ok) {
+    const buffer = await imageResponse.arrayBuffer();
+    backgroundImage = `data:image/png;base64,${arrayBufferToBase64(buffer)}`;
+  }
 
   return new ImageResponse(
     (
@@ -41,13 +54,16 @@ export async function GET(request: Request) {
           width: "100%",
           height: "100%",
           position: "relative",
+          display: "flex",
           backgroundColor: "#FFF6E8",
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial",
+          fontFamily:
+            "system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto",
         }}
       >
-        {bg && (
+        {/* background */}
+        {backgroundImage && (
           <img
-            src={bg}
+            src={backgroundImage}
             alt=""
             style={{
               position: "absolute",
@@ -59,41 +75,35 @@ export async function GET(request: Request) {
           />
         )}
 
+        {/* texto */}
         <div
           style={{
             position: "absolute",
-            top: 140,
+            top: 150,
             left: 80,
             maxWidth: 620,
             display: "flex",
             flexDirection: "column",
+            gap: 20,
           }}
         >
-          {/* Título (mais chamativo e com limite para não “invadir” a descrição) */}
           <div
             style={{
-              fontSize: 58,
-              fontWeight: 900,
-              lineHeight: 1.05,
+              fontSize: 56,
+              fontWeight: 800,
+              lineHeight: 1.15,
               color: "#465572",
-              letterSpacing: -0.8,
-              marginBottom: 22,
-              maxHeight: 130, // impede sobreposição
-              overflow: "hidden",
+              letterSpacing: -0.5,
             }}
           >
             {title}
           </div>
 
-          {/* Descrição */}
           <div
             style={{
               fontSize: 26,
-              fontWeight: 500,
-              lineHeight: 1.45,
+              lineHeight: 1.4,
               color: "#465572",
-              maxHeight: 110,
-              overflow: "hidden",
             }}
           >
             {description}
