@@ -23,33 +23,34 @@ function normalize(str: string) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
+
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; q?: string }>;
+  searchParams: { page?: string; q?: string } | Promise<{ page?: string; q?: string }>;
 }): Promise<Metadata> {
-  const params = await searchParams;
+  const params = await Promise.resolve(searchParams);
   const page = Math.max(1, Number(params.page || 1));
   const q = (params.q || "").trim();
 
-  const baseTitle = "Blog IA Tio Ben | Santos, Liturgia e Espiritualidade Católica";
+  const baseTitle = "Blog Tio Ben";
   const baseDesc =
-    "Reflexões católicas, liturgia diária, santos do dia, Evangelho e espiritualidade para fortalecer sua fé.";
+    "Acesse o Blog Tio Ben e aprenda mais sobre a fé católica: santos, liturgia e reflexões para viver o Evangelho no dia a dia.";
 
   const canonicalBase = `${SITE_URL}/blog`;
 
-  const ogImageBase = `${SITE_URL}/og?title=${encodeURIComponent(
-    "Blog IA Tio Ben"
+  // OG padrão com badge automático BLOG (verde)
+  const ogImageBase = `${SITE_URL}/og?type=blog&title=${encodeURIComponent(
+    baseTitle
   )}&description=${encodeURIComponent(
-    "Santos, liturgia e espiritualidade católica"
+    "Santos, liturgia e espiritualidade católica — clique e aprenda mais."
   )}`;
 
   // Busca interna: NÃO indexar
   if (q) {
-    const title = `Buscar: ${q} | Blog IA Tio Ben`;
+    const title = `Buscar: ${q} | ${baseTitle}`;
     const description = baseDesc;
 
-    // canonical deve ser /blog (sem query), e não indexar
     return {
       title,
       description,
@@ -59,7 +60,7 @@ export async function generateMetadata({
       openGraph: {
         type: "website",
         url: canonicalBase,
-        siteName: "Blog IA Tio Ben",
+        siteName: baseTitle,
         locale: "pt_BR",
         title,
         description,
@@ -68,7 +69,7 @@ export async function generateMetadata({
             url: ogImageBase,
             width: 1200,
             height: 630,
-            alt: "Blog IA Tio Ben",
+            alt: baseTitle,
           },
         ],
       },
@@ -88,10 +89,10 @@ export async function generateMetadata({
     const description = baseDesc;
     const canonical = `${canonicalBase}?page=${page}`;
 
-    const ogImage = `${SITE_URL}/og?title=${encodeURIComponent(
-      `Blog IA Tio Ben — Página ${page}`
+    const ogImage = `${SITE_URL}/og?type=blog&title=${encodeURIComponent(
+      title
     )}&description=${encodeURIComponent(
-      "Santos, liturgia e espiritualidade católica"
+      "Explore novos posts e fortaleça sua fé com santos, liturgia e reflexões católicas."
     )}`;
 
     return {
@@ -103,7 +104,7 @@ export async function generateMetadata({
       openGraph: {
         type: "website",
         url: canonical,
-        siteName: "Blog IA Tio Ben",
+        siteName: baseTitle,
         locale: "pt_BR",
         title,
         description,
@@ -136,7 +137,7 @@ export async function generateMetadata({
     openGraph: {
       type: "website",
       url: canonicalBase,
-      siteName: "Blog IA Tio Ben",
+      siteName: baseTitle,
       locale: "pt_BR",
       title: baseTitle,
       description: baseDesc,
@@ -145,7 +146,7 @@ export async function generateMetadata({
           url: ogImageBase,
           width: 1200,
           height: 630,
-          alt: "Blog IA Tio Ben",
+          alt: baseTitle,
         },
       ],
     },
@@ -158,6 +159,7 @@ export async function generateMetadata({
     },
   };
 }
+
 
 
 export default async function BlogPage({
