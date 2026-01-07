@@ -56,10 +56,17 @@ export async function generateMetadata({
   const canonicalPath = `/liturgia-diaria/ano/${year}/${pad2(month)}`;
   const canonicalUrl = `${SITE_URL}${canonicalPath}`;
 
+  const ogImage = `${SITE_URL}/og?title=${encodeURIComponent(
+    `Liturgia Diária – ${monthName}`
+  )}&description=${encodeURIComponent(
+    "Calendário mensal com Evangelho, leituras e salmo de cada dia"
+  )}`;
+
   return {
     title,
     description,
     alternates: { canonical: canonicalUrl },
+
     openGraph: {
       type: "website",
       url: canonicalUrl,
@@ -67,14 +74,25 @@ export async function generateMetadata({
       description,
       siteName: "IA Tio Ben",
       locale: "pt_BR",
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: `Liturgia Diária – ${monthName} – IA Tio Ben`,
+        },
+      ],
     },
+
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [ogImage],
     },
   };
 }
+
 
 /* =========================
    HELPERS

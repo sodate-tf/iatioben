@@ -21,10 +21,14 @@ export const metadata: Metadata = {
     apple: "/tio-ben-180x180.png",
   },
   openGraph: {
-    type: "website",
-    siteName: "IA Tio Ben",
-    locale: "pt_BR",
-  },
+  images: [
+    {
+      url: `/og?title=${encodeURIComponent("IA Tio Ben | Inteligência Artificial Católica")}&description=${encodeURIComponent("Liturgia diária, evangelho e reflexões cristãs com o Tio Ben.")}`,
+      width: 1200,
+      height: 630,
+    },
+  ],
+},
   twitter: {
     card: "summary_large_image",
   },

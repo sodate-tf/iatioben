@@ -36,23 +36,93 @@ export async function generateMetadata({
   const baseDesc =
     "Reflexões católicas, liturgia diária, santos do dia, Evangelho e espiritualidade para fortalecer sua fé.";
 
+  const canonicalBase = `${SITE_URL}/blog`;
+
+  const ogImageBase = `${SITE_URL}/og?title=${encodeURIComponent(
+    "Blog IA Tio Ben"
+  )}&description=${encodeURIComponent(
+    "Santos, liturgia e espiritualidade católica"
+  )}`;
+
   // Busca interna: NÃO indexar
   if (q) {
+    const title = `Buscar: ${q} | Blog IA Tio Ben`;
+    const description = baseDesc;
+
+    // canonical deve ser /blog (sem query), e não indexar
     return {
-      title: `Buscar: ${q} | Blog IA Tio Ben`,
-      description: baseDesc,
-      alternates: { canonical: `${SITE_URL}/blog` },
+      title,
+      description,
+      alternates: { canonical: canonicalBase },
       robots: { index: false, follow: true },
+
+      openGraph: {
+        type: "website",
+        url: canonicalBase,
+        siteName: "Blog IA Tio Ben",
+        locale: "pt_BR",
+        title,
+        description,
+        images: [
+          {
+            url: ogImageBase,
+            width: 1200,
+            height: 630,
+            alt: "Blog IA Tio Ben",
+          },
+        ],
+      },
+
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: [ogImageBase],
+      },
     };
   }
 
   // Paginação: indexar com canonical específico
   if (page > 1) {
+    const title = `${baseTitle} — Página ${page}`;
+    const description = baseDesc;
+    const canonical = `${canonicalBase}?page=${page}`;
+
+    const ogImage = `${SITE_URL}/og?title=${encodeURIComponent(
+      `Blog IA Tio Ben — Página ${page}`
+    )}&description=${encodeURIComponent(
+      "Santos, liturgia e espiritualidade católica"
+    )}`;
+
     return {
-      title: `${baseTitle} — Página ${page}`,
-      description: baseDesc,
-      alternates: { canonical: `${SITE_URL}/blog?page=${page}` },
+      title,
+      description,
+      alternates: { canonical },
       robots: { index: true, follow: true },
+
+      openGraph: {
+        type: "website",
+        url: canonical,
+        siteName: "Blog IA Tio Ben",
+        locale: "pt_BR",
+        title,
+        description,
+        images: [
+          {
+            url: ogImage,
+            width: 1200,
+            height: 630,
+            alt: title,
+          },
+        ],
+      },
+
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: [ogImage],
+      },
     };
   }
 
@@ -60,10 +130,35 @@ export async function generateMetadata({
   return {
     title: baseTitle,
     description: baseDesc,
-    alternates: { canonical: `${SITE_URL}/blog` },
+    alternates: { canonical: canonicalBase },
     robots: { index: true, follow: true },
+
+    openGraph: {
+      type: "website",
+      url: canonicalBase,
+      siteName: "Blog IA Tio Ben",
+      locale: "pt_BR",
+      title: baseTitle,
+      description: baseDesc,
+      images: [
+        {
+          url: ogImageBase,
+          width: 1200,
+          height: 630,
+          alt: "Blog IA Tio Ben",
+        },
+      ],
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      title: baseTitle,
+      description: baseDesc,
+      images: [ogImageBase],
+    },
   };
 }
+
 
 export default async function BlogPage({
   searchParams,

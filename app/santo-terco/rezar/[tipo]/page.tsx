@@ -14,7 +14,7 @@ type PageProps = {
 export function generateStaticParams() {
   return TIPOS.map((tipo) => ({ tipo }));
 }
-
+const SITE_URL = "https://www.iatioben.com.br";
 export async function generateMetadata({ params }: PageProps) {
   const resolved = await params;
   const tipo = resolved.tipo as TipoSlug;
@@ -24,28 +24,48 @@ export async function generateMetadata({ params }: PageProps) {
   const label = labelFromSlug(tipo);
   const canonical = `https://www.iatioben.com.br/santo-terco/${tipo}`;
 
-  const title = `${label}: Santo Terço Passo a Passo | Tio Ben IA`;
+  const title = `${label}: Santo Terço Passo a Passo | IA Tio Ben`;
   const description =
-    `Reze os ${label.toLowerCase()} passo a passo no celular: contas interativas, ` +
-    `reflexões bíblicas, manual de orações e link para a Liturgia de hoje.`;
+    `Reze os ${label.toLowerCase()} passo a passo no celular: ` +
+    `mistérios do dia, reflexões bíblicas, orações completas e acesso à Liturgia de hoje.`;
+
+  const ogImage = `${SITE_URL}/og?title=${encodeURIComponent(
+    label
+  )}&description=${encodeURIComponent(
+    "Santo Terço passo a passo com reflexões bíblicas"
+  )}`;
 
   return {
     title,
     description,
     alternates: { canonical },
+
     openGraph: {
+      type: "website",
+      url: canonical,
+      siteName: "IA Tio Ben",
+      locale: "pt_BR",
       title,
       description,
-      url: canonical,
-      type: "website",
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: `${label} – Santo Terço | IA Tio Ben`,
+        },
+      ],
     },
+
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [ogImage],
     },
   };
 }
+
 
 export default async function MisteriosTipoPage({ params }: PageProps) {
   const resolved = await params;

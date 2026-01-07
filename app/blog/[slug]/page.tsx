@@ -43,21 +43,30 @@ export async function generateMetadata({
   const title = postData.title;
   const description = postData.metaDescription ?? postData.title;
 
+  // Preferência:
+  // 1) coverImageUrl (se for 1200x630 e absoluta)
+  // 2) OG dinâmica /og (melhor consistência)
+  // 3) fallback estático
   const ogImage =
-    postData.coverImageUrl || `${SITE_URL}/images/default-cover.png`;
+    postData.coverImageUrl?.startsWith("http")
+      ? postData.coverImageUrl
+      : `${SITE_URL}/og?title=${encodeURIComponent(title)}&description=${encodeURIComponent(
+          description
+        )}`;
 
   return {
     title,
     description,
     alternates: { canonical },
     robots: { index: true, follow: true },
+
     openGraph: {
       title,
       description,
       type: "article",
       url: canonical,
-      locale: "pt_BR",
       siteName: "Blog IA Tio Ben",
+      locale: "pt_BR",
       images: [
         {
           url: ogImage,
@@ -67,6 +76,7 @@ export async function generateMetadata({
         },
       ],
     },
+
     twitter: {
       card: "summary_large_image",
       title,
@@ -75,6 +85,7 @@ export async function generateMetadata({
     },
   };
 }
+
 
 export default async function BlogPostPage({
   params,

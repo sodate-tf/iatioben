@@ -39,12 +39,46 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const slug = safeSlug(resolved.data);
 
   const dt = slug ? parseSlugDate(slug) : null;
+
+  // fallback: rota inválida (não indexar)
   if (!dt) {
+    const canonical = `${SITE_URL}/liturgia-diaria`;
+
+    const ogImage = `${SITE_URL}/og?title=${encodeURIComponent(
+      "Liturgia Diária"
+    )}&description=${encodeURIComponent(
+      "Evangelho, leituras e salmo do dia com calendário mensal e anual"
+    )}`;
+
     return {
       title: "Liturgia Diária – IA Tio Ben",
       description: "Acompanhe a liturgia diária com Evangelho, leituras e salmo.",
       robots: { index: false, follow: false },
-      alternates: { canonical: `${SITE_URL}/liturgia-diaria` },
+      alternates: { canonical },
+
+      openGraph: {
+        type: "website",
+        url: canonical,
+        siteName: "IA Tio Ben",
+        locale: "pt_BR",
+        title: "Liturgia Diária – IA Tio Ben",
+        description: "Acompanhe a liturgia diária com Evangelho, leituras e salmo.",
+        images: [
+          {
+            url: ogImage,
+            width: 1200,
+            height: 630,
+            alt: "Liturgia Diária – IA Tio Ben",
+          },
+        ],
+      },
+
+      twitter: {
+        card: "summary_large_image",
+        title: "Liturgia Diária – IA Tio Ben",
+        description: "Acompanhe a liturgia diária com Evangelho, leituras e salmo.",
+        images: [ogImage],
+      },
     };
   }
 
@@ -56,11 +90,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const description = buildDescription(dd, mm, yyyy);
   const canonical = `${SITE_URL}/liturgia-diaria/${slug}`;
 
+  // OG dinâmica via /og (título + description)
+  const ogImage = `${SITE_URL}/og?title=${encodeURIComponent(
+    title
+  )}&description=${encodeURIComponent(description)}`;
+
   return {
     title,
     description,
     alternates: { canonical },
     robots: { index: true, follow: true },
+
     openGraph: {
       title,
       description,
@@ -68,14 +108,25 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       siteName: "IA Tio Ben",
       type: "article",
       locale: "pt_BR",
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
     },
+
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [ogImage],
     },
   };
 }
+
 
 export default async function LiturgiaDayPage({ params }: PageProps) {
   const resolved = await Promise.resolve(params);

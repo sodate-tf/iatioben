@@ -29,14 +29,27 @@ export const metadata: Metadata = {
     "Liturgia diária com evangelho, leituras e salmo do dia. Consulte o calendário do ano e do mês para acessar qualquer data.",
   alternates: { canonical: CANONICAL_URL },
   openGraph: {
-    type: "website",
-    url: CANONICAL_URL,
-    title: "Liturgia Diária – Evangelho, Leituras e Salmo do dia",
-    description:
-      "Acompanhe a liturgia do dia e consulte qualquer data pelo calendário do mês e do ano.",
-    siteName: "IA Tio Ben",
-    locale: "pt_BR",
-  },
+  type: "website",
+  url: CANONICAL_URL,
+  title: "Liturgia Diária – Evangelho, Leituras e Salmo do dia",
+  description:
+    "Acompanhe a liturgia do dia com Evangelho, leituras e salmo, ou consulte qualquer data pelo calendário mensal e anual.",
+  siteName: "IA Tio Ben",
+  locale: "pt_BR",
+  images: [
+    {
+      url: `${SITE_URL}/og?title=${encodeURIComponent(
+        "Liturgia Diária"
+      )}&description=${encodeURIComponent(
+        "Evangelho, leituras e salmo do dia com calendário mensal e anual"
+      )}`,
+      width: 1200,
+      height: 630,
+      alt: "Liturgia Diária – IA Tio Ben",
+    },
+  ],
+},
+
   twitter: {
     card: "summary_large_image",
     title: "Liturgia Diária – Evangelho, Leituras e Salmo do dia",
