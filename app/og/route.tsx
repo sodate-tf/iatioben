@@ -48,69 +48,80 @@ export async function GET(request: Request) {
   }
 
   return new ImageResponse(
-    (
-      <div
-        style={{
-          width: "100%",
-          height: "100%",
-          position: "relative",
-          display: "flex",
-          backgroundColor: "#FFF6E8",
-          fontFamily:
-            "system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto",
-        }}
-      >
-        {/* background */}
-        {backgroundImage && (
-          <img
-            src={backgroundImage}
-            alt=""
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
-          />
-        )}
-
-        {/* texto */}
-        <div
+  (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        position: "relative",
+        display: "flex",
+        backgroundColor: "#FFF6E8",
+        fontFamily:
+          "system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto",
+      }}
+    >
+      {/* background */}
+      {backgroundImage && (
+        <img
+          src={backgroundImage}
+          alt=""
           style={{
             position: "absolute",
-            top: 150,
-            left: 80,
-            maxWidth: 620,
-            display: "flex",
-            flexDirection: "column",
-            gap: 20,
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+        />
+      )}
+
+      {/* texto */}
+      <div
+        style={{
+          position: "absolute",
+          top: 140,
+          left: 80,
+          maxWidth: 640,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {/* TÍTULO (mais chamativo e travado em 2 linhas) */}
+        <div
+          style={{
+            fontSize: 62,
+            fontWeight: 900,
+            lineHeight: 1.05,
+            color: "#465572",
+            letterSpacing: -0.8,
+            marginBottom: 22,
+
+            // impede sobreposição com a descrição
+            maxHeight: 140, // ~2 linhas nesse tamanho
+            overflow: "hidden",
           }}
         >
-          <div
-            style={{
-              fontSize: 56,
-              fontWeight: 800,
-              lineHeight: 1.15,
-              color: "#465572",
-              letterSpacing: -0.5,
-            }}
-          >
-            {title}
-          </div>
+          {title}
+        </div>
 
-          <div
-            style={{
-              fontSize: 26,
-              lineHeight: 1.4,
-              color: "#465572",
-            }}
-          >
-            {description}
-          </div>
+        {/* DESCRIÇÃO (travada para não “invadir” visualmente) */}
+        <div
+          style={{
+            fontSize: 28,
+            lineHeight: 1.35,
+            fontWeight: 500,
+            color: "#465572",
+
+            maxHeight: 115, // ~3 linhas
+            overflow: "hidden",
+          }}
+        >
+          {description}
         </div>
       </div>
-    ),
-    size
-  );
+    </div>
+  ),
+  size
+);
+
 }
