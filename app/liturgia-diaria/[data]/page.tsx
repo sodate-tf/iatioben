@@ -34,6 +34,65 @@ function buildDescription(dd: number, mm: number, yyyy: number) {
   return `Liturgia do dia ${d}/${m}/${yyyy} com Evangelho, leituras e salmo. Acompanhe o calendário e navegue por datas, mês e ano.`;
 }
 
+
+
+function formatBRDate(dt: Date) {
+  const dd = String(dt.getDate()).padStart(2, "0");
+  const mm = String(dt.getMonth() + 1).padStart(2, "0");
+  const yyyy = dt.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+/**
+ * Monte aqui as referências das leituras.
+ * Ajuste os campos conforme sua fonte de dados.
+ */
+function buildRefsDescription(args: {
+  primeiraRef?: string | null;
+  salmoRef?: string | null;
+  segundaRef?: string | null;
+  evangelhoRef?: string | null;
+}) {
+  const parts: string[] = [];
+
+  if (args.primeiraRef) parts.push(`1ª leitura: ${args.primeiraRef}`);
+  if (args.salmoRef) parts.push(`Salmo: ${args.salmoRef}`);
+  if (args.segundaRef) parts.push(`2ª leitura: ${args.segundaRef}`);
+  if (args.evangelhoRef) parts.push(`Evangelho: ${args.evangelhoRef}`);
+
+  // CTA após o evangelho
+  parts.push("Acesse e reze com a Liturgia Diária no IA Tio Ben.");
+
+  return parts.join(" • ");
+}
+
+
+function buildRefsDescriptionFromData(data: any) {
+  // Ajuste defensivo: suporta campos diferentes caso seu normalize mude
+  const primeira =
+    data?.primeiraRef || data?.primeiraLeituraRef || data?.primeiraLeitura || null;
+
+  const salmo =
+    data?.salmoRef || data?.salmoResponsorialRef || data?.salmo || null;
+
+  const segunda =
+    data?.segundaRef || data?.segundaLeituraRef || data?.segundaLeitura || null;
+
+  const evangelho =
+    data?.evangelhoRef || data?.evangelho || null;
+
+  const parts: string[] = [];
+  if (primeira) parts.push(`1ª leitura: ${primeira}`);
+  if (salmo) parts.push(`Salmo: ${salmo}`);
+  if (segunda) parts.push(`2ª leitura: ${segunda}`);
+  if (evangelho) parts.push(`Evangelho: ${evangelho}`);
+
+  // CTA após o evangelho (como você pediu)
+  parts.push("Acesse e reze com a Liturgia Diária no IA Tio Ben.");
+
+  return parts.join(" • ");
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolved = await Promise.resolve(params);
   const slug = safeSlug(resolved.data);
@@ -44,15 +103,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!dt) {
     const canonical = `${SITE_URL}/liturgia-diaria`;
 
-    const ogImage = `${SITE_URL}/og?title=${encodeURIComponent(
+    const title = "Liturgia Diária — IA Tio Ben";
+    const description =
+      "Evangelho, leituras e salmo do dia. Acesse e reze com a Liturgia Diária no IA Tio Ben.";
+
+    const ogImage = `${SITE_URL}/og?type=liturgia&title=${encodeURIComponent(
       "Liturgia Diária"
-    )}&description=${encodeURIComponent(
-      "Evangelho, leituras e salmo do dia com calendário mensal e anual"
-    )}`;
+    )}&description=${encodeURIComponent(description)}`;
 
     return {
-      title: "Liturgia Diária – IA Tio Ben",
-      description: "Acompanhe a liturgia diária com Evangelho, leituras e salmo.",
+      title,
+      description,
       robots: { index: false, follow: false },
       alternates: { canonical },
 
@@ -61,37 +122,45 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         url: canonical,
         siteName: "IA Tio Ben",
         locale: "pt_BR",
-        title: "Liturgia Diária – IA Tio Ben",
-        description: "Acompanhe a liturgia diária com Evangelho, leituras e salmo.",
-        images: [
-          {
-            url: ogImage,
-            width: 1200,
-            height: 630,
-            alt: "Liturgia Diária – IA Tio Ben",
-          },
-        ],
+        title,
+        description,
+        images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
       },
 
       twitter: {
         card: "summary_large_image",
-        title: "Liturgia Diária – IA Tio Ben",
-        description: "Acompanhe a liturgia diária com Evangelho, leituras e salmo.",
+        title,
+        description,
         images: [ogImage],
       },
     };
   }
 
-  const dd = dt.getDate();
-  const mm = dt.getMonth() + 1;
-  const yyyy = dt.getFullYear();
+  const day = dt.getDate();
+  const month = dt.getMonth() + 1;
+  const year = dt.getFullYear();
 
-  const title = buildTitle(dd, mm, yyyy);
-  const description = buildDescription(dd, mm, yyyy);
+  const dateLabel = formatBRDate(dt);
+
+  // ✅ Você pediu: "Liturgia diária e a data"
+  const title = `Liturgia Diária — ${dateLabel}`;
+
+  // ✅ Buscar refs das leituras para montar description
+  // (usa a mesma função que você já usa na página)
+  let description =
+    "Liturgia diária com Evangelho, leituras e salmo. Acesse e reze com a Liturgia Diária no IA Tio Ben.";
+
+  try {
+    const data = await fetchLiturgiaByDate(day, month, year);
+    description = buildRefsDescriptionFromData(data);
+  } catch {
+    // se falhar a fetch, mantém fallback acima (não quebra o build)
+  }
+
   const canonical = `${SITE_URL}/liturgia-diaria/${slug}`;
 
-  // OG dinâmica via /og (título + description)
-  const ogImage = `${SITE_URL}/og?title=${encodeURIComponent(
+  // ✅ OG com badge Liturgia (dourado) via type=liturgia
+  const ogImage = `${SITE_URL}/og?type=liturgia&title=${encodeURIComponent(
     title
   )}&description=${encodeURIComponent(description)}`;
 
@@ -108,14 +177,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       siteName: "IA Tio Ben",
       type: "article",
       locale: "pt_BR",
-      images: [
-        {
-          url: ogImage,
-          width: 1200,
-          height: 630,
-          alt: title,
-        },
-      ],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
     },
 
     twitter: {
@@ -126,6 +188,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     },
   };
 }
+
+
 
 
 export default async function LiturgiaDayPage({ params }: PageProps) {
