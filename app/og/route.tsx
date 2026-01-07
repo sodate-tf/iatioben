@@ -18,20 +18,43 @@ function arrayBufferToBase64(buffer: ArrayBuffer) {
   return btoa(binary);
 }
 
+function sanitizeColor(input: string | null, fallback: string) {
+  const v = String(input || "").trim();
+  // aceita apenas HEX (#RGB / #RRGGBB / #RRGGBBAA)
+  if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(v)) return v;
+  return fallback;
+}
+
+function defaultsByType(type: string | null) {
+  const t = String(type || "").toLowerCase();
+  if (t === "liturgia") return { badgeText: "LITURGIA", badgeColor: "#C8A24A" }; // dourado
+  if (t === "terco" || t === "terço") return { badgeText: "TERÇO", badgeColor: "#E56BA8" }; // rosa
+  return { badgeText: "BLOG", badgeColor: "#2FBF71" }; // verde (padrão)
+}
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
 
-  // Ajuste fino: menos clamp no título evita corte “agressivo”,
-  // e o layout garante 2 linhas no máximo.
-  const title = clamp(searchParams.get("title") ?? "IA Tio Ben", 80);
-
+  const title = clamp(searchParams.get("title") ?? "IA Tio Ben", 90);
   const description = clamp(
     searchParams.get("description") ??
       "Liturgia diária, evangelho e leituras para viver a fé todos os dias.",
-    150
+    200
   );
 
-  // Background (você já validou que funciona assim)
+  // Badge: por type (automático) + override manual
+  const type = searchParams.get("type"); // blog | liturgia | terco
+  const typeDefaults = defaultsByType(type);
+
+  const badgeText =
+    (searchParams.get("badgeText") || "").trim() || typeDefaults.badgeText;
+
+  const badgeColor = sanitizeColor(
+    searchParams.get("badgeColor"),
+    typeDefaults.badgeColor
+  );
+
+  // background
   const imageResponse = await fetch(`${origin}/og/base.png`, { cache: "force-cache" });
   let backgroundImage: string | null = null;
 
@@ -40,7 +63,8 @@ export async function GET(request: Request) {
     backgroundImage = `data:image/png;base64,${arrayBufferToBase64(buffer)}`;
   }
 
-  // Fontes embutidas (ESSENCIAL para ficar igual em produção)
+  // Fontes (mantém o que você já estava usando)
+  // Se você já colocou os TTF no app/og, deixe assim:
   const [playfairBold, poppinsMedium] = await Promise.all([
     fetch(new URL("./PlayfairDisplay-Bold.ttf", import.meta.url)).then((r) => r.arrayBuffer()),
     fetch(new URL("./Poppins-Medium.ttf", import.meta.url)).then((r) => r.arrayBuffer()),
@@ -57,7 +81,6 @@ export async function GET(request: Request) {
           backgroundColor: "#FFF6E8",
         }}
       >
-        {/* background */}
         {backgroundImage && (
           <img
             src={backgroundImage}
@@ -72,48 +95,74 @@ export async function GET(request: Request) {
           />
         )}
 
-        {/* texto */}
-<div
-  style={{
-    position: "absolute",
-    top: 140,
-    left: 80,
-    maxWidth: 640,
-    display: "flex",
-    flexDirection: "column",
-    gap: 28, // espaçamento real entre título e descrição
-  }}
->
-  {/* TÍTULO */}
-  <div
-    style={{
-      fontFamily: "Playfair",
-      fontSize: 70,
-      fontWeight: 700,
-      lineHeight: 1.08, // mais confortável
-      color: "#465572",
-      letterSpacing: -0.6,
-      wordBreak: "break-word",
-    }}
-  >
-    {title}
-  </div>
+        {/* ÁREA DE TEXTO EM FLUXO (SEM OVERLAP) */}
+        <div
+          style={{
+            position: "absolute",
+            top: 135,
+            left: 80,
+            width: 650,
+            display: "flex",
+            flexDirection: "column",
+            gap: 18,
+          }}
+        >
+          {/* TÍTULO */}
+          <div
+            style={{
+              fontFamily: "Playfair",
+              fontSize: 74,
+              fontWeight: 700,
+              lineHeight: 1.03,
+              color: "#465572",
+              letterSpacing: -0.6,
+              wordBreak: "break-word",
+              margin: 0,
+            }}
+          >
+            {title}
+          </div>
 
-  {/* DESCRIÇÃO */}
-  <div
-    style={{
-      fontFamily: "Poppins",
-      fontSize: 30,
-      fontWeight: 500,
-      lineHeight: 1.45, // deixa o texto respirar
-      color: "#465572",
-      wordBreak: "break-word",
-    }}
-  >
-    {description}
-  </div>
-</div>
+          {/* DESCRIÇÃO: começa APÓS o título, sempre */}
+          <div
+            style={{
+              fontFamily: "Poppins",
+              fontSize: 30,
+              fontWeight: 500,
+              lineHeight: 1.45,
+              color: "#465572",
+              wordBreak: "break-word",
+              margin: 0,
+            }}
+          >
+            {description}
+          </div>
 
+          {/* BADGE NO FINAL */}
+          <div
+            style={{
+              display: "flex",
+              marginTop: 10,
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: badgeColor,
+                color: "#ffffff",
+                padding: "10px 16px",
+                borderRadius: 999,
+                fontFamily: "Poppins",
+                fontSize: 18,
+                fontWeight: 700,
+                letterSpacing: 0.6,
+                textTransform: "uppercase",
+                boxShadow: "0 6px 16px rgba(0,0,0,0.12)",
+              }}
+            >
+              {badgeText}
+            </div>
+          </div>
+        </div>
       </div>
     ),
     {
