@@ -5,7 +5,6 @@ import { parseSlugDate } from "@/lib/liturgia/date";
 
 export const runtime = "edge";
 export const contentType = "image/png";
-
 export const size = { width: 1200, height: 630 };
 
 function clamp(text: string, max: number) {
@@ -20,7 +19,14 @@ function arrayBufferToBase64(buffer: ArrayBuffer) {
   return btoa(binary);
 }
 
-function buildRefsDescriptionFromData(data: any) {
+function formatBRDate(dt: Date) {
+  const dd = String(dt.getDate()).padStart(2, "0");
+  const mm = String(dt.getMonth() + 1).padStart(2, "0");
+  const yyyy = dt.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+function buildRefsForImage(data: any) {
   const primeira =
     data?.primeiraRef || data?.primeiraLeituraRef || data?.primeiraLeitura || null;
 
@@ -39,47 +45,37 @@ function buildRefsDescriptionFromData(data: any) {
   if (evangelho) parts.push(`Evangelho: ${evangelho}`);
 
   parts.push("Acesse e reze com a Liturgia Diária no IA Tio Ben.");
+
   return parts.join(" • ");
 }
 
-function formatBRDate(dt: Date) {
-  const dd = String(dt.getDate()).padStart(2, "0");
-  const mm = String(dt.getMonth() + 1).padStart(2, "0");
-  const yyyy = dt.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
+export async function HEAD() {
+  return new Response(null, {
+    status: 200,
+    headers: {
+      "Content-Type": "image/png",
+      "Cache-Control": "public, max-age=31536000, immutable",
+    },
+  });
 }
 
-export async function GET(
-  request: Request,
-  { params }: { params: { data: string } }
-) {
+// ✅ assinatura compatível com o validator (sem tipagem rígida do context)
+export async function GET(request: Request, context: any) {
   const { origin } = new URL(request.url);
 
-  // Em alguns casos o param pode vir com ".png" junto — garantimos limpeza
-  const raw = String(params.data || "").trim();
+  const raw = String(context?.params?.data || "").trim();
   const slug = raw.replace(/\.png$/i, "");
 
   const dt = slug ? parseSlugDate(slug) : null;
 
-  // Background base
-  const baseRes = await fetch(`${origin}/og/base.png`, { cache: "force-cache" });
+  // background /public/og/base.png embutido
+  const baseRes = await fetch(`${origin}/og/base.png`);
   let backgroundImage: string | null = null;
   if (baseRes.ok) {
-    const buffer = await baseRes.arrayBuffer();
-    backgroundImage = `data:image/png;base64,${arrayBufferToBase64(buffer)}`;
+    const buf = await baseRes.arrayBuffer();
+    backgroundImage = `data:image/png;base64,${arrayBufferToBase64(buf)}`;
   }
 
-  // Fontes (assumindo que você já colocou estes TTF em app/og/)
-  const [playfairBold, poppinsMedium] = await Promise.all([
-    fetch(new URL("../../PlayfairDisplay-Bold.ttf", import.meta.url)).then((r) =>
-      r.arrayBuffer()
-    ),
-    fetch(new URL("../../Poppins-Medium.ttf", import.meta.url)).then((r) =>
-      r.arrayBuffer()
-    ),
-  ]);
-
-  // Se slug inválido, devolve OG padrão noindex (aqui só imagem, então fazemos fallback visual)
   let title = "Liturgia Diária";
   let description =
     "Evangelho, leituras e salmo do dia. Acesse e reze com a Liturgia Diária no IA Tio Ben.";
@@ -94,18 +90,17 @@ export async function GET(
 
     try {
       const data = await fetchLiturgiaByDate(day, month, year);
-      description = buildRefsDescriptionFromData(data);
+      description = buildRefsForImage(data);
     } catch {
       // mantém fallback
     }
   }
 
-  // Limites práticos para caber bem no template
   const t = clamp(title, 80);
-  const d = clamp(description, 180);
+  const d = clamp(description, 200);
 
   const badgeText = "LITURGIA";
-  const badgeColor = "#C8A24A"; // dourado
+  const badgeColor = "#C8A24A";
 
   return new ImageResponse(
     (
@@ -116,6 +111,7 @@ export async function GET(
           position: "relative",
           display: "flex",
           backgroundColor: "#FFF6E8",
+          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto",
         }}
       >
         {backgroundImage && (
@@ -132,13 +128,12 @@ export async function GET(
           />
         )}
 
-        {/* Área de texto em fluxo (sem sobreposição) */}
         <div
           style={{
             position: "absolute",
             top: 135,
             left: 80,
-            width: 650,
+            width: 690,
             display: "flex",
             flexDirection: "column",
             gap: 18,
@@ -146,14 +141,12 @@ export async function GET(
         >
           <div
             style={{
-              fontFamily: "Playfair",
               fontSize: 74,
-              fontWeight: 700,
-              lineHeight: 1.03,
+              fontWeight: 900,
+              lineHeight: 1.06,
               color: "#465572",
               letterSpacing: -0.6,
               wordBreak: "break-word",
-              margin: 0,
             }}
           >
             {t}
@@ -161,29 +154,25 @@ export async function GET(
 
           <div
             style={{
-              fontFamily: "Poppins",
               fontSize: 30,
-              fontWeight: 500,
+              fontWeight: 600,
               lineHeight: 1.45,
               color: "#465572",
               wordBreak: "break-word",
-              margin: 0,
             }}
           >
             {d}
           </div>
 
-          {/* Badge */}
           <div style={{ display: "flex", marginTop: 10 }}>
             <div
               style={{
                 backgroundColor: badgeColor,
-                color: "#ffffff",
+                color: "#fff",
                 padding: "10px 16px",
                 borderRadius: 999,
-                fontFamily: "Poppins",
                 fontSize: 18,
-                fontWeight: 700,
+                fontWeight: 800,
                 letterSpacing: 0.6,
                 textTransform: "uppercase",
                 boxShadow: "0 6px 16px rgba(0,0,0,0.12)",
@@ -200,10 +189,6 @@ export async function GET(
       headers: {
         "Cache-Control": "public, max-age=31536000, immutable",
       },
-      fonts: [
-        { name: "Playfair", data: playfairBold, weight: 700, style: "normal" },
-        { name: "Poppins", data: poppinsMedium, weight: 500, style: "normal" },
-      ],
     }
   );
 }
