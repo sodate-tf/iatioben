@@ -27,7 +27,9 @@ function normalize(str: string) {
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: { page?: string; q?: string } | Promise<{ page?: string; q?: string }>;
+  searchParams:
+    | { page?: string; q?: string }
+    | Promise<{ page?: string; q?: string }>;
 }): Promise<Metadata> {
   const params = await Promise.resolve(searchParams);
   const page = Math.max(1, Number(params.page || 1));
@@ -39,13 +41,23 @@ export async function generateMetadata({
 
   const canonicalBase = `${SITE_URL}/blog`;
 
-  // ✅ WhatsApp-friendly (rota limpa .png)
-  const ogImageBase = `${SITE_URL}/og/blog.png`;
+  // ✅ OG com mockup padrão (public/og/base.png embutido na rota /og)
+  // ✅ Badge BLOG (verde) via type=blog
+  // ✅ v=... para forçar refresh em WhatsApp quando necessário
+  const ogImageBase = `${SITE_URL}/og?type=blog&title=${encodeURIComponent(
+    baseTitle
+  )}&description=${encodeURIComponent(
+    "Santos, liturgia e espiritualidade católica — clique e aprenda mais."
+  )}&v=blog`;
 
   // Busca interna: NÃO indexar
   if (q) {
     const title = `Buscar: ${q} | ${baseTitle}`;
     const description = baseDesc;
+
+    // Mantém OG estático (melhor para cache)
+    // Se você quiser OG específico por busca, dá para incluir q no title/description e v=q
+    const ogImage = ogImageBase;
 
     return {
       title,
@@ -62,7 +74,7 @@ export async function generateMetadata({
         description,
         images: [
           {
-            url: ogImageBase,
+            url: ogImage,
             width: 1200,
             height: 630,
             alt: baseTitle,
@@ -74,7 +86,7 @@ export async function generateMetadata({
         card: "summary_large_image",
         title,
         description,
-        images: [ogImageBase],
+        images: [ogImage],
       },
     };
   }
@@ -85,8 +97,12 @@ export async function generateMetadata({
     const description = baseDesc;
     const canonical = `${canonicalBase}?page=${page}`;
 
-    // ✅ Mantém a mesma imagem estática (melhor para cache/crawlers)
-    const ogImage = ogImageBase;
+    // ✅ Mantém mockup padrão, mas com título de paginação (opcional)
+    const ogImage = `${SITE_URL}/og?type=blog&title=${encodeURIComponent(
+      title
+    )}&description=${encodeURIComponent(
+      "Explore novos posts e fortaleça sua fé com santos, liturgia e reflexões católicas."
+    )}&v=blog-page-${page}`;
 
     return {
       title,
@@ -152,7 +168,6 @@ export async function generateMetadata({
     },
   };
 }
-
 
 
 

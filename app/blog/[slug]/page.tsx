@@ -42,16 +42,25 @@ export async function generateMetadata({
   }
 
   const canonical = `${SITE_URL}/blog/${postData.slug}`;
-  const title = postData.title || "Blog Tio Ben";
-  const description = (postData.metaDescription || postData.title || "").trim();
+  const title = (postData.title || "Blog Tio Ben").trim();
+  const description = (postData.metaDescription || postData.title || "Leia no Blog Tio Ben.").trim();
 
-  // ✅ WhatsApp-friendly:
-  // 1) se coverImageUrl for absoluta, usa ela
-  // 2) senão, usa rota limpa .png (sem query)
-  const ogImage =
-    postData.coverImageUrl?.startsWith("http")
-      ? postData.coverImageUrl
-      : `${SITE_URL}/og/blog/${postData.slug}.png`;
+  // 1) usa coverImageUrl se for absoluta
+  // 2) senão, usa OG mockup do blog (rota dinâmica)
+const cacheBuster =
+  postData.updatedAt
+    ? postData.updatedAt.toISOString()
+    : postData.publishDate
+    ? postData.publishDate.toString()
+    : postData.slug;
+
+const ogImage =
+  postData.coverImageUrl?.startsWith("http")
+    ? postData.coverImageUrl
+    : `${SITE_URL}/og/blog/${encodeURIComponent(postData.slug)}?v=${encodeURIComponent(
+        cacheBuster
+      )}`;
+
 
   return {
     title,
@@ -66,14 +75,7 @@ export async function generateMetadata({
       url: canonical,
       siteName: "Blog Tio Ben",
       locale: "pt_BR",
-      images: [
-        {
-          url: ogImage,
-          width: 1200,
-          height: 630,
-          alt: title,
-        },
-      ],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
     },
 
     twitter: {
@@ -84,6 +86,7 @@ export async function generateMetadata({
     },
   };
 }
+
 
 
 
