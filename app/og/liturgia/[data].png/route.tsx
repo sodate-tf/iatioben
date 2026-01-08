@@ -5,27 +5,37 @@ import { parseSlugDate } from "@/lib/liturgia/date";
 
 export const runtime = "edge";
 export const contentType = "image/png";
-
-const size = { width: 1200, height: 630 };
+export const size = { width: 1200, height: 630 };
 
 function clamp(text: string, max: number) {
   const s = String(text || "").replace(/\s+/g, " ").trim();
   return s.length > max ? s.slice(0, max - 1) + "…" : s;
 }
 
-function formatBRDate(dt: Date) {
-  return `${String(dt.getDate()).padStart(2, "0")}/${String(
-    dt.getMonth() + 1
-  ).padStart(2, "0")}/${dt.getFullYear()}`;
+function arrayBufferToBase64(buffer: ArrayBuffer) {
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
 }
 
-function buildRefs(data: any) {
+function formatBRDate(dt: Date) {
+  const dd = String(dt.getDate()).padStart(2, "0");
+  const mm = String(dt.getMonth() + 1).padStart(2, "0");
+  const yyyy = dt.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+function buildRefsForImage(data: any) {
   const primeira =
     data?.primeiraRef || data?.primeiraLeituraRef || data?.primeiraLeitura || null;
+
   const salmo =
     data?.salmoRef || data?.salmoResponsorialRef || data?.salmo || null;
+
   const segunda =
     data?.segundaRef || data?.segundaLeituraRef || data?.segundaLeitura || null;
+
   const evangelho = data?.evangelhoRef || data?.evangelho || null;
 
   const parts: string[] = [];
@@ -34,16 +44,27 @@ function buildRefs(data: any) {
   if (segunda) parts.push(`2ª leitura: ${segunda}`);
   if (evangelho) parts.push(`Evangelho: ${evangelho}`);
   parts.push("Acesse e reze com a Liturgia Diária no IA Tio Ben.");
+
   return parts.join(" • ");
 }
 
 export async function GET(request: NextRequest, context: any) {
-  // ✅ Next 16 validator: context.params é Promise<{}>, então não tipamos.
+  const { origin } = new URL(request.url);
+
+  // ✅ Next 16: params vem como Promise<{}>; não tipar.
   const params = (await context?.params) as Record<string, string>;
-  const raw = String(params?.data || "").trim();
-  const slug = raw.replace(/\.png$/i, "");
+  const raw = String(params?.data || "").trim(); // aqui deve vir "07-01-2026.png"
+  const slug = raw.replace(/\.png$/i, ""); // vira "07-01-2026"
 
   const dt = slug ? parseSlugDate(slug) : null;
+
+  // ✅ background do mockup (public/og/base.png) embutido
+  const baseRes = await fetch(`${origin}/og/base.png`, { cache: "force-cache" });
+  let backgroundImage: string | null = null;
+  if (baseRes.ok) {
+    const buf = await baseRes.arrayBuffer();
+    backgroundImage = `data:image/png;base64,${arrayBufferToBase64(buf)}`;
+  }
 
   let title = "Liturgia Diária";
   let description =
@@ -57,7 +78,7 @@ export async function GET(request: NextRequest, context: any) {
         dt.getMonth() + 1,
         dt.getFullYear()
       );
-      description = buildRefs(data);
+      description = buildRefsForImage(data);
     } catch {
       // mantém fallback
     }
@@ -72,35 +93,79 @@ export async function GET(request: NextRequest, context: any) {
         style={{
           width: "100%",
           height: "100%",
-          background: "#FFF6E8",
-          padding: 80,
+          position: "relative",
           display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
+          backgroundColor: "#FFF6E8",
           fontFamily: "system-ui, -apple-system, Segoe UI, Roboto",
         }}
       >
-        <div style={{ fontSize: 74, fontWeight: 900, lineHeight: 1.06, color: "#465572" }}>
-          {t}
-        </div>
-
-        <div style={{ fontSize: 30, fontWeight: 600, marginTop: 22, lineHeight: 1.45, color: "#465572" }}>
-          {d}
-        </div>
-
-        <div style={{ marginTop: 28 }}>
-          <span
+        {backgroundImage && (
+          <img
+            src={backgroundImage}
+            alt=""
             style={{
-              background: "#C8A24A",
-              color: "#fff",
-              padding: "10px 18px",
-              borderRadius: 999,
-              fontWeight: 800,
-              letterSpacing: 0.6,
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
+          />
+        )}
+
+        <div
+          style={{
+            position: "absolute",
+            top: 135,
+            left: 80,
+            width: 690,
+            display: "flex",
+            flexDirection: "column",
+            gap: 18,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 74,
+              fontWeight: 900,
+              lineHeight: 1.06,
+              color: "#465572",
+              letterSpacing: -0.6,
+              wordBreak: "break-word",
             }}
           >
-            LITURGIA
-          </span>
+            {t}
+          </div>
+
+          <div
+            style={{
+              fontSize: 30,
+              fontWeight: 600,
+              lineHeight: 1.45,
+              color: "#465572",
+              wordBreak: "break-word",
+            }}
+          >
+            {d}
+          </div>
+
+          <div style={{ display: "flex", marginTop: 10 }}>
+            <div
+              style={{
+                backgroundColor: "#C8A24A",
+                color: "#fff",
+                padding: "10px 16px",
+                borderRadius: 999,
+                fontSize: 18,
+                fontWeight: 800,
+                letterSpacing: 0.6,
+                textTransform: "uppercase",
+                boxShadow: "0 6px 16px rgba(0,0,0,0.12)",
+              }}
+            >
+              LITURGIA
+            </div>
+          </div>
         </div>
       </div>
     ),
