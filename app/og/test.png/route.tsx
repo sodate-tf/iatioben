@@ -2,8 +2,17 @@ import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 export const contentType = "image/png";
-
 export const size = { width: 1200, height: 630 };
+
+export async function HEAD() {
+  return new Response(null, {
+    status: 200,
+    headers: {
+      "Content-Type": "image/png",
+      "Cache-Control": "public, max-age=31536000, immutable",
+    },
+  });
+}
 
 export async function GET() {
   return new ImageResponse(
