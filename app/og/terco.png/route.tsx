@@ -5,18 +5,6 @@ export const runtime = "edge";
 export const contentType = "image/png";
 export const size = { width: 1200, height: 630 };
 
-// (opcional, mas ajuda alguns crawlers)
-export async function HEAD() {
-  return new Response(null, {
-    status: 200,
-    headers: {
-      "Content-Type": "image/png",
-      // Cache ok para crawlers; se você estiver testando muito, pode reduzir
-      "Cache-Control": "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800",
-    },
-  });
-}
-
 function clamp(text: string, max: number) {
   const s = String(text || "").replace(/\s+/g, " ").trim();
   return s.length > max ? s.slice(0, max - 1) + "…" : s;
@@ -29,10 +17,20 @@ function arrayBufferToBase64(buffer: ArrayBuffer) {
   return btoa(binary);
 }
 
+export async function HEAD() {
+  return new Response(null, {
+    status: 200,
+    headers: {
+      "Content-Type": "image/png",
+      "Cache-Control": "public, max-age=31536000, immutable",
+    },
+  });
+}
+
 export async function GET(request: Request) {
   const { origin } = new URL(request.url);
 
-  // ✅ usa seu mockup padrão
+  // mockup padrão
   const baseRes = await fetch(`${origin}/og/base.png`, { cache: "force-cache" });
   let backgroundImage: string | null = null;
 
@@ -41,14 +39,15 @@ export async function GET(request: Request) {
     backgroundImage = `data:image/png;base64,${arrayBufferToBase64(buf)}`;
   }
 
+  // Texto “incentivo ao clique”
   const title = clamp("Aprenda a rezar o Santo Terço", 70);
   const description = clamp(
-    "Passo a passo, mistérios e dias certos. Um guia simples para começar hoje e rezar com sentido.",
-    160
+    "Guia rápido e completo: passo a passo, mistérios por dia da semana e dicas para rezar com constância. Clique e comece hoje.",
+    180
   );
 
   const badgeText = "SANTO TERÇO";
-  const badgeColor = "#E85AAE"; // rosa
+  const badgeColor = "#E46AA3"; // rosa
 
   return new ImageResponse(
     (
@@ -103,7 +102,7 @@ export async function GET(request: Request) {
           <div
             style={{
               fontSize: 30,
-              fontWeight: 650,
+              fontWeight: 600,
               lineHeight: 1.45,
               color: "#465572",
               wordBreak: "break-word",
@@ -120,7 +119,7 @@ export async function GET(request: Request) {
                 padding: "10px 16px",
                 borderRadius: 999,
                 fontSize: 18,
-                fontWeight: 900,
+                fontWeight: 800,
                 letterSpacing: 0.6,
                 textTransform: "uppercase",
                 boxShadow: "0 6px 16px rgba(0,0,0,0.12)",
@@ -135,8 +134,7 @@ export async function GET(request: Request) {
     {
       ...size,
       headers: {
-        "Content-Type": "image/png",
-        "Cache-Control": "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800",
+        "Cache-Control": "public, max-age=31536000, immutable",
       },
     }
   );

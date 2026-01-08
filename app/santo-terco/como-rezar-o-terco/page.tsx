@@ -88,47 +88,43 @@ const recommendedBlogLinks = [
   },
 ];
 
-export async function generateMetadata(): Promise<Metadata> {
-  const title = "Aprenda a rezar o Santo Terço passo a passo";
+const OG_IMAGE = `${SITE_URL}/og/terco.png?v=1`; // pode manter versionamento
 
-  const description =
-    "Descubra como rezar o Terço com sentido: ordem das orações, mistérios e dias certos. Um guia simples para começar hoje.";
+export const metadata: Metadata = {
+  title: "Aprenda a rezar o Santo Terço passo a passo | IA Tio Ben",
+  description:
+    "Descubra como rezar o Terço com sentido: ordem das orações, mistérios e dias certos. Um guia simples para começar hoje.",
+  alternates: { canonical: CANONICAL_URL },
 
-  const canonical = "https://www.iatioben.com.br/santo-terco/como-rezar-o-terco";
+  openGraph: {
+    title: "Aprenda a rezar o Santo Terço passo a passo",
+    description:
+      "Aprenda a rezar com sentido: passo a passo, mistérios e como manter constância. Clique e comece hoje.",
+    url: CANONICAL_URL,
+    type: "article",
+    locale: "pt_BR",
+    siteName: "IA Tio Ben",
+    images: [
+      {
+        url: OG_IMAGE,
+        secureUrl: OG_IMAGE,
+        width: 1200,
+        height: 630,
+        type: "image/png",
+        alt: "Guia do Santo Terço — IA Tio Ben",
+      },
+    ],
+  },
 
-  // ⚠️ SEM query string (WhatsApp odeia query em OG)
-  const ogImage = "https://www.iatioben.com.br/og/terco";
+  twitter: {
+    card: "summary_large_image",
+    title: "Aprenda a rezar o Santo Terço passo a passo",
+    description:
+      "Passo a passo, mistérios e dicas práticas para rezar o Terço com constância. Clique e aprenda.",
+    images: [OG_IMAGE],
+  },
+};
 
-  return {
-    title: `${title} | IA Tio Ben`,
-    description,
-    alternates: { canonical },
-
-    openGraph: {
-      title,
-      description,
-      url: canonical,
-      type: "article",
-      locale: "pt_BR",
-      siteName: "IA Tio Ben",
-      images: [
-        {
-          url: ogImage,
-          width: 1200,
-          height: 630,
-          alt: "Guia do Santo Terço – IA Tio Ben",
-        },
-      ],
-    },
-
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [ogImage],
-    },
-  };
-}
 
 /* =========================
    ADS COMPONENTS
