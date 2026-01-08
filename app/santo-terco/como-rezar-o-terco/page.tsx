@@ -89,35 +89,42 @@ const recommendedBlogLinks = [
 ];
 
 export async function generateMetadata(): Promise<Metadata> {
-  const title = "Como rezar o Terço: guia completo (com mistérios) | IA Tio Ben";
+  const title = "Aprenda a rezar o Santo Terço passo a passo";
 
   const description =
-    "Aprenda a rezar o Santo Terço com sentido e constância: passo a passo, ordem das orações, mistérios e dias da semana. Comece hoje e aprofunde sua devoção.";
+    "Descubra como rezar o Terço com sentido: ordem das orações, mistérios e dias certos. Um guia simples para começar hoje.";
 
-  // OG dinâmica (rota limpa, boa para WhatsApp)
-  const ogImage = `${SITE_URL}/og/terco?v=1`;
+  const canonical = "https://www.iatioben.com.br/santo-terco/como-rezar-o-terco";
+
+  // ⚠️ SEM query string (WhatsApp odeia query em OG)
+  const ogImage = "https://www.iatioben.com.br/og/terco";
 
   return {
-    title,
+    title: `${title} | IA Tio Ben`,
     description,
-    alternates: { canonical: CANONICAL_URL },
+    alternates: { canonical },
 
     openGraph: {
-      title: "Aprenda a rezar o Santo Terço — passo a passo e mistérios",
-      description:
-        "Um guia prático para aprender tudo sobre o Terço e sua devoção: como começar, como meditar os mistérios e rezar com sentido. Clique e aprenda agora.",
-      url: CANONICAL_URL,
+      title,
+      description,
+      url: canonical,
       type: "article",
       locale: "pt_BR",
       siteName: "IA Tio Ben",
-      images: [{ url: ogImage, width: 1200, height: 630, alt: "Santo Terço – IA Tio Ben" }],
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: "Guia do Santo Terço – IA Tio Ben",
+        },
+      ],
     },
 
     twitter: {
       card: "summary_large_image",
-      title: "Aprenda a rezar o Santo Terço — guia completo",
-      description:
-        "Passo a passo, ordem das orações, mistérios e dias da semana. Clique e aprenda a rezar o Terço com sentido.",
+      title,
+      description,
       images: [ogImage],
     },
   };
