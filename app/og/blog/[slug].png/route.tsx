@@ -1,14 +1,8 @@
 import { ImageResponse } from "next/og";
-import { getPostBySlug } from "@/app/adminTioBen/actions/postAction";
 
 export const runtime = "edge";
 export const contentType = "image/png";
 export const size = { width: 1200, height: 630 };
-
-function clamp(text: string, max: number) {
-  const s = String(text || "").replace(/\s+/g, " ").trim();
-  return s.length > max ? s.slice(0, max - 1) + "…" : s;
-}
 
 export async function HEAD() {
   return new Response(null, {
@@ -20,29 +14,11 @@ export async function HEAD() {
   });
 }
 
-export async function GET(
-  _request: Request,
-  { params }: { params: { slug: string } }
-) {
-  const raw = String(params.slug || "").trim();
-  const slug = raw.replace(/\.png$/i, "");
+export async function GET(request: Request, context: any) {
+  const slug = String(context?.params?.slug || "").trim();
 
-  let title = "Blog Tio Ben";
-  let description = "Leia este post e aprofunde sua fé com conteúdo católico.";
-
-  try {
-    const post = await getPostBySlug(slug);
-
-    if (post?.slug === slug) {
-      title = post.title || title;
-      description = (post.metaDescription || post.title || description).trim();
-    }
-  } catch {
-    // mantém fallback
-  }
-
-  title = clamp(title, 80);
-  description = clamp(description, 180);
+  const title = slug ? `Blog Tio Ben` : "Blog Tio Ben";
+  const description = slug ? `Leia no Blog Tio Ben.` : `Acesse o Blog Tio Ben.`;
 
   return new ImageResponse(
     (
@@ -58,17 +34,17 @@ export async function GET(
           fontFamily: "system-ui, -apple-system, Segoe UI, Roboto",
         }}
       >
-        <div style={{ fontSize: 74, fontWeight: 900, color: "#465572", lineHeight: 1.06 }}>
+        <div style={{ fontSize: 80, fontWeight: 900, color: "#465572", lineHeight: 1.06 }}>
           {title}
         </div>
-        <div style={{ marginTop: 18, fontSize: 32, fontWeight: 600, color: "#465572" }}>
+        <div style={{ marginTop: 18, fontSize: 34, fontWeight: 600, color: "#465572", lineHeight: 1.4 }}>
           {description}
         </div>
 
-        <div style={{ marginTop: 32, display: "flex" }}>
+        <div style={{ marginTop: 28, display: "flex" }}>
           <div
             style={{
-              backgroundColor: "#2FBF71",
+              backgroundColor: "#2EAF5D",
               color: "#fff",
               padding: "10px 16px",
               borderRadius: 999,

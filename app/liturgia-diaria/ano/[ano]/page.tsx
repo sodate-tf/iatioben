@@ -44,11 +44,8 @@ export async function generateMetadata({
   const canonicalPath = `/liturgia-diaria/ano/${year}`;
   const canonicalUrl = `${SITE_URL}${canonicalPath}`;
 
-  const ogImage = `${SITE_URL}/og?title=${encodeURIComponent(
-    `Liturgia Diária ${year}`
-  )}&description=${encodeURIComponent(
-    "Calendário anual com Evangelho, leituras e salmo de cada dia"
-  )}`;
+  // ✅ WhatsApp-friendly (rota limpa .png)
+  const ogImage = `${SITE_URL}/og/liturgia.png`;
 
   return {
     title,
@@ -76,10 +73,11 @@ export async function generateMetadata({
       card: "summary_large_image",
       title,
       description,
-      images: [ogImage],
+      images: [ogImage], // ✅ importante
     },
   };
 }
+
 
 
 /* =========================
