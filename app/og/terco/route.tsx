@@ -1,10 +1,21 @@
+// app/og/terco.png/route.tsx
 import { ImageResponse } from "next/og";
-import { NextRequest } from "next/server";
 
 export const runtime = "edge";
 export const contentType = "image/png";
+export const size = { width: 1200, height: 630 };
 
-const size = { width: 1200, height: 630 };
+// (opcional, mas ajuda alguns crawlers)
+export async function HEAD() {
+  return new Response(null, {
+    status: 200,
+    headers: {
+      "Content-Type": "image/png",
+      // Cache ok para crawlers; se você estiver testando muito, pode reduzir
+      "Cache-Control": "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800",
+    },
+  });
+}
 
 function clamp(text: string, max: number) {
   const s = String(text || "").replace(/\s+/g, " ").trim();
@@ -18,20 +29,10 @@ function arrayBufferToBase64(buffer: ArrayBuffer) {
   return btoa(binary);
 }
 
-export async function GET(request: NextRequest) {
-  const { origin, searchParams } = new URL(request.url);
+export async function GET(request: Request) {
+  const { origin } = new URL(request.url);
 
-  // ✅ Você pode permitir override por query se quiser (opcional)
-  // /og/terco?title=...&description=...
-  const titleRaw =
-    searchParams.get("title") ||
-    "Aprenda a rezar o Santo Terço";
-
-  const descRaw =
-    searchParams.get("description") ||
-    "Guia completo e prático: passo a passo, ordem das orações e mistérios para rezar com sentido. Clique e aprenda a devoção do Terço hoje.";
-
-  // ✅ Embute seu mockup padrão (public/og/base.png)
+  // ✅ usa seu mockup padrão
   const baseRes = await fetch(`${origin}/og/base.png`, { cache: "force-cache" });
   let backgroundImage: string | null = null;
 
@@ -40,12 +41,14 @@ export async function GET(request: NextRequest) {
     backgroundImage = `data:image/png;base64,${arrayBufferToBase64(buf)}`;
   }
 
-  const title = clamp(titleRaw, 85);
-  const description = clamp(descRaw, 210);
+  const title = clamp("Aprenda a rezar o Santo Terço", 70);
+  const description = clamp(
+    "Passo a passo, mistérios e dias certos. Um guia simples para começar hoje e rezar com sentido.",
+    160
+  );
 
-  // Badge: rosa + “SANTO TERÇO”
   const badgeText = "SANTO TERÇO";
-  const badgeColor = "#E55DA9"; // rosa (ajuste fino se quiser)
+  const badgeColor = "#E85AAE"; // rosa
 
   return new ImageResponse(
     (
@@ -73,13 +76,12 @@ export async function GET(request: NextRequest) {
           />
         )}
 
-        {/* Coluna de texto (description só após terminar o título) */}
         <div
           style={{
             position: "absolute",
             top: 135,
             left: 80,
-            width: 710,
+            width: 690,
             display: "flex",
             flexDirection: "column",
             gap: 18,
@@ -87,11 +89,11 @@ export async function GET(request: NextRequest) {
         >
           <div
             style={{
-              fontSize: 78,
+              fontSize: 76,
               fontWeight: 900,
-              lineHeight: 1.05,
+              lineHeight: 1.06,
               color: "#465572",
-              letterSpacing: -0.7,
+              letterSpacing: -0.6,
               wordBreak: "break-word",
             }}
           >
@@ -119,7 +121,7 @@ export async function GET(request: NextRequest) {
                 borderRadius: 999,
                 fontSize: 18,
                 fontWeight: 900,
-                letterSpacing: 0.7,
+                letterSpacing: 0.6,
                 textTransform: "uppercase",
                 boxShadow: "0 6px 16px rgba(0,0,0,0.12)",
               }}
@@ -133,8 +135,8 @@ export async function GET(request: NextRequest) {
     {
       ...size,
       headers: {
-        // Para WhatsApp, não recomendo immutable em OG dinâmico.
-        "Cache-Control": "public, max-age=3600",
+        "Content-Type": "image/png",
+        "Cache-Control": "public, max-age=0, s-maxage=86400, stale-while-revalidate=604800",
       },
     }
   );
