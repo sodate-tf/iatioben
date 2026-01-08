@@ -1,106 +1,51 @@
-// app/og/liturgia/[data].png/route.tsx
 import { ImageResponse } from "next/og";
+import { NextRequest } from "next/server";
 import { fetchLiturgiaByDate } from "@/lib/liturgia/api";
 import { parseSlugDate } from "@/lib/liturgia/date";
 
 export const runtime = "edge";
-export const contentType = "image/png";
-export const size = { width: 1200, height: 630 };
 
-function clamp(text: string, max: number) {
-  const s = String(text || "").replace(/\s+/g, " ").trim();
-  return s.length > max ? s.slice(0, max - 1) + "…" : s;
-}
-
-function arrayBufferToBase64(buffer: ArrayBuffer) {
-  let binary = "";
-  const bytes = new Uint8Array(buffer);
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary);
-}
+const size = { width: 1200, height: 630 };
 
 function formatBRDate(dt: Date) {
-  const dd = String(dt.getDate()).padStart(2, "0");
-  const mm = String(dt.getMonth() + 1).padStart(2, "0");
-  const yyyy = dt.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
+  return `${String(dt.getDate()).padStart(2, "0")}/${String(
+    dt.getMonth() + 1
+  ).padStart(2, "0")}/${dt.getFullYear()}`;
 }
 
-function buildRefsForImage(data: any) {
-  const primeira =
-    data?.primeiraRef || data?.primeiraLeituraRef || data?.primeiraLeitura || null;
-
-  const salmo =
-    data?.salmoRef || data?.salmoResponsorialRef || data?.salmo || null;
-
-  const segunda =
-    data?.segundaRef || data?.segundaLeituraRef || data?.segundaLeitura || null;
-
-  const evangelho = data?.evangelhoRef || data?.evangelho || null;
-
+function buildRefs(data: any) {
   const parts: string[] = [];
-  if (primeira) parts.push(`1ª leitura: ${primeira}`);
-  if (salmo) parts.push(`Salmo: ${salmo}`);
-  if (segunda) parts.push(`2ª leitura: ${segunda}`);
-  if (evangelho) parts.push(`Evangelho: ${evangelho}`);
-
+  if (data?.primeiraRef) parts.push(`1ª leitura: ${data.primeiraRef}`);
+  if (data?.salmoRef) parts.push(`Salmo: ${data.salmoRef}`);
+  if (data?.segundaRef) parts.push(`2ª leitura: ${data.segundaRef}`);
+  if (data?.evangelhoRef) parts.push(`Evangelho: ${data.evangelhoRef}`);
   parts.push("Acesse e reze com a Liturgia Diária no IA Tio Ben.");
-
   return parts.join(" • ");
 }
 
-export async function HEAD() {
-  return new Response(null, {
-    status: 200,
-    headers: {
-      "Content-Type": "image/png",
-      "Cache-Control": "public, max-age=31536000, immutable",
-    },
-  });
-}
-
-// ✅ assinatura compatível com o validator (sem tipagem rígida do context)
-export async function GET(request: Request, context: any) {
-  const { origin } = new URL(request.url);
-
-  const raw = String(context?.params?.data || "").trim();
-  const slug = raw.replace(/\.png$/i, "");
-
-  const dt = slug ? parseSlugDate(slug) : null;
-
-  // background /public/og/base.png embutido
-  const baseRes = await fetch(`${origin}/og/base.png`);
-  let backgroundImage: string | null = null;
-  if (baseRes.ok) {
-    const buf = await baseRes.arrayBuffer();
-    backgroundImage = `data:image/png;base64,${arrayBufferToBase64(buf)}`;
-  }
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ data: string }> }
+) {
+  const params = await context.params;
+  const slug = params.data.replace(/\.png$/i, "");
+  const dt = parseSlugDate(slug);
 
   let title = "Liturgia Diária";
   let description =
     "Evangelho, leituras e salmo do dia. Acesse e reze com a Liturgia Diária no IA Tio Ben.";
 
   if (dt) {
-    const day = dt.getDate();
-    const month = dt.getMonth() + 1;
-    const year = dt.getFullYear();
-
-    const dateLabel = formatBRDate(dt);
-    title = `Liturgia Diária — ${dateLabel}`;
-
+    title = `Liturgia Diária — ${formatBRDate(dt)}`;
     try {
-      const data = await fetchLiturgiaByDate(day, month, year);
-      description = buildRefsForImage(data);
-    } catch {
-      // mantém fallback
-    }
+      const data = await fetchLiturgiaByDate(
+        dt.getDate(),
+        dt.getMonth() + 1,
+        dt.getFullYear()
+      );
+      description = buildRefs(data);
+    } catch {}
   }
-
-  const t = clamp(title, 80);
-  const d = clamp(description, 200);
-
-  const badgeText = "LITURGIA";
-  const badgeColor = "#C8A24A";
 
   return new ImageResponse(
     (
@@ -108,87 +53,35 @@ export async function GET(request: Request, context: any) {
         style={{
           width: "100%",
           height: "100%",
-          position: "relative",
+          background: "#FFF6E8",
+          padding: 80,
           display: "flex",
-          backgroundColor: "#FFF6E8",
-          fontFamily: "system-ui, -apple-system, Segoe UI, Roboto",
+          flexDirection: "column",
+          justifyContent: "center",
+          fontFamily: "system-ui",
         }}
       >
-        {backgroundImage && (
-          <img
-            src={backgroundImage}
-            alt=""
-            style={{
-              position: "absolute",
-              inset: 0,
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-            }}
-          />
-        )}
-
-        <div
+        <h1 style={{ fontSize: 72, fontWeight: 900, color: "#465572" }}>
+          {title}
+        </h1>
+        <p style={{ fontSize: 30, marginTop: 24, color: "#465572" }}>
+          {description}
+        </p>
+        <span
           style={{
-            position: "absolute",
-            top: 135,
-            left: 80,
-            width: 690,
-            display: "flex",
-            flexDirection: "column",
-            gap: 18,
+            marginTop: 32,
+            background: "#C8A24A",
+            color: "#fff",
+            padding: "10px 18px",
+            borderRadius: 999,
+            fontWeight: 800,
+            width: "fit-content",
           }}
         >
-          <div
-            style={{
-              fontSize: 74,
-              fontWeight: 900,
-              lineHeight: 1.06,
-              color: "#465572",
-              letterSpacing: -0.6,
-              wordBreak: "break-word",
-            }}
-          >
-            {t}
-          </div>
-
-          <div
-            style={{
-              fontSize: 30,
-              fontWeight: 600,
-              lineHeight: 1.45,
-              color: "#465572",
-              wordBreak: "break-word",
-            }}
-          >
-            {d}
-          </div>
-
-          <div style={{ display: "flex", marginTop: 10 }}>
-            <div
-              style={{
-                backgroundColor: badgeColor,
-                color: "#fff",
-                padding: "10px 16px",
-                borderRadius: 999,
-                fontSize: 18,
-                fontWeight: 800,
-                letterSpacing: 0.6,
-                textTransform: "uppercase",
-                boxShadow: "0 6px 16px rgba(0,0,0,0.12)",
-              }}
-            >
-              {badgeText}
-            </div>
-          </div>
-        </div>
+          LITURGIA
+        </span>
       </div>
     ),
-    {
-      ...size,
-      headers: {
-        "Cache-Control": "public, max-age=31536000, immutable",
-      },
-    }
+    size
   );
 }
