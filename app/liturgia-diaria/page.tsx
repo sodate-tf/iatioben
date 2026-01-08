@@ -23,20 +23,26 @@ export const revalidate = 86400;
 export const metadata: Metadata = {
   title: "Liturgia Diária – Evangelho, Leituras e Salmo do dia",
   description:
-    "Liturgia diária com evangelho, leituras e salmo do dia. Consulte o calendário do ano e do mês para acessar qualquer data.",
+    "Acompanhe a Liturgia Diária com Evangelho, leituras e salmo. Reze, medite e consulte qualquer data pelo calendário mensal e anual.",
+
   alternates: { canonical: CANONICAL_URL },
 
   openGraph: {
     type: "website",
     url: CANONICAL_URL,
-    title: "Liturgia Diária – Evangelho, Leituras e Salmo do dia",
-    description:
-      "Acompanhe a liturgia do dia com Evangelho, leituras e salmo, ou consulte qualquer data pelo calendário mensal e anual.",
     siteName: "IA Tio Ben",
     locale: "pt_BR",
+
+    // 🔹 Título focado em valor + ação
+    title: "Liturgia Diária – Reze com a Palavra todos os dias",
+
+    // 🔹 Mensagem clara + CTA (isso aparece no preview do WhatsApp/Facebook)
+    description:
+      "Evangelho, leituras e salmo do dia organizados para a sua oração. Acesse agora a Liturgia Diária e acompanhe o calendário completo.",
+
     images: [
       {
-        // ✅ WhatsApp-friendly (rota limpa .png)
+        // ✅ mockup padrão (public/og/base.png embutido na rota)
         url: `${SITE_URL}/og/liturgia.png`,
         width: 1200,
         height: 630,
@@ -47,10 +53,12 @@ export const metadata: Metadata = {
 
   twitter: {
     card: "summary_large_image",
-    title: "Liturgia Diária – Evangelho, Leituras e Salmo do dia",
+
+    title: "Liturgia Diária – Reze com a Palavra todos os dias",
+
     description:
-      "Acompanhe a liturgia do dia e consulte qualquer data pelo calendário do mês e do ano.",
-    // ✅ inclua images também
+      "Evangelho, leituras e salmo do dia para rezar e meditar. Acesse a Liturgia Diária completa no IA Tio Ben.",
+
     images: [`${SITE_URL}/og/liturgia.png`],
   },
 };

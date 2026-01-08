@@ -88,36 +88,40 @@ const recommendedBlogLinks = [
   },
 ];
 
-export const metadata: Metadata = {
-  title: "Como rezar o Terço: guia completo (com mistérios) | IA Tio Ben",
-  description:
-    "Aprenda como rezar o Terço Católico com sentido: resposta rápida, passo a passo, mistérios, dias da semana, dúvidas frequentes e links para aprofundar.",
-  alternates: { canonical: CANONICAL_URL },
-  openGraph: {
-    title: "Como rezar o Terço: guia completo (com mistérios) | IA Tio Ben",
-    description:
-      "Guia claro para rezar o terço: ordem das orações, mistérios e quais dias rezar cada um.",
-    url: CANONICAL_URL,
-    type: "article",
-    locale: "pt_BR",
-    siteName: "IA Tio Ben",
-    images: [
-      {
-        url: `${SITE_URL}/images/santo-do-dia-ia-tio-ben.png`,
-        width: 1200,
-        height: 630,
-        alt: "Como rezar o Terço - IA Tio Ben",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Como rezar o Terço: guia completo | IA Tio Ben",
-    description:
-      "Aprenda a rezar o terço com sentido: resposta rápida, passo a passo, mistérios e dias da semana.",
-    images: [`${SITE_URL}/images/santo-do-dia-ia-tio-ben.png`],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const title = "Como rezar o Terço: guia completo (com mistérios) | IA Tio Ben";
+
+  const description =
+    "Aprenda a rezar o Santo Terço com sentido e constância: passo a passo, ordem das orações, mistérios e dias da semana. Comece hoje e aprofunde sua devoção.";
+
+  // OG dinâmica (rota limpa, boa para WhatsApp)
+  const ogImage = `${SITE_URL}/og/terco?v=1`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: CANONICAL_URL },
+
+    openGraph: {
+      title: "Aprenda a rezar o Santo Terço — passo a passo e mistérios",
+      description:
+        "Um guia prático para aprender tudo sobre o Terço e sua devoção: como começar, como meditar os mistérios e rezar com sentido. Clique e aprenda agora.",
+      url: CANONICAL_URL,
+      type: "article",
+      locale: "pt_BR",
+      siteName: "IA Tio Ben",
+      images: [{ url: ogImage, width: 1200, height: 630, alt: "Santo Terço – IA Tio Ben" }],
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      title: "Aprenda a rezar o Santo Terço — guia completo",
+      description:
+        "Passo a passo, ordem das orações, mistérios e dias da semana. Clique e aprenda a rezar o Terço com sentido.",
+      images: [ogImage],
+    },
+  };
+}
 
 /* =========================
    ADS COMPONENTS
