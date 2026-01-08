@@ -20,35 +20,38 @@ const ADS_SLOT_SIDEBAR_DESKTOP = "3041346283";
 const ADS_SLOT_SIDEBAR_MOBILE = "3041346283";
 
 export const metadata: Metadata = {
-  title: "Mistérios Gozosos do Terço: passagens bíblicas e reflexões",
+  title: "Santo Terço: Mistérios Gozosos — passagens bíblicas e reflexões",
   description:
-    "Conheça os Mistérios Gozosos do Terço (segunda e sábado): passagens bíblicas, reflexões profundas, como rezar e como meditar cada dezena.",
+    "Reze e medite os Mistérios Gozosos (segunda e sábado) com passagens bíblicas e reflexões para contemplar a infância de Jesus com Maria.",
   alternates: { canonical: CANONICAL_URL },
+
   openGraph: {
-    title: "Mistérios Gozosos do Terço: passagens bíblicas e reflexões",
+    title: "Santo Terço: Mistérios Gozosos",
     description:
-      "Lista dos 5 Mistérios Gozosos com Bíblia e meditação: Anunciação, Visitação, Nascimento, Apresentação, Encontro no Templo.",
+      "Segunda e sábado: contemple a alegria do Evangelho. Clique e reze com Bíblia e meditações em cada dezena.",
     url: CANONICAL_URL,
     type: "article",
     locale: "pt_BR",
     siteName: "IA Tio Ben",
     images: [
       {
-        url: `${SITE_URL}/images/santo-do-dia-ia-tio-ben.png`,
+        url: `${SITE_URL}/og/terco/misterios-gozosos.png?v=1`,
         width: 1200,
         height: 630,
-        alt: "Mistérios Gozosos do Terço - IA Tio Ben",
+        alt: "Santo Terço: Mistérios Gozosos — IA Tio Ben",
       },
     ],
   },
+
   twitter: {
     card: "summary_large_image",
-    title: "Mistérios Gozosos do Terço (com Bíblia e reflexão)",
+    title: "Santo Terço: Mistérios Gozosos",
     description:
-      "Medite os 5 Mistérios Gozosos com passagens bíblicas e reflexões para rezar com sentido.",
-    images: [`${SITE_URL}/images/santo-do-dia-ia-tio-ben.png`],
+      "Segunda e sábado: reze com sentido. Bíblia + reflexões para meditar a alegria do Evangelho em cada dezena.",
+    images: [`${SITE_URL}/og/terco/misterios-gozosos.png?v=1`],
   },
 };
+
 
 type Mystery = {
   id: string;

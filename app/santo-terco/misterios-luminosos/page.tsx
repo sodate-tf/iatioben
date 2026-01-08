@@ -17,35 +17,38 @@ const ADS_SLOT_SIDEBAR_DESKTOP = "8534838745";
 const ADS_SLOT_SIDEBAR_MOBILE = "1573844576";
 
 export const metadata: Metadata = {
-  title: "Mistérios Luminosos do Terço: passagens bíblicas e reflexões",
+  title: "Santo Terço: Mistérios Luminosos — passagens bíblicas e reflexões",
   description:
-    "Conheça os Mistérios Luminosos do Terço (quinta): passagens bíblicas, reflexões profundas, como rezar e como meditar cada dezena.",
+    "Reze e medite os Mistérios Luminosos (quinta-feira) com passagens bíblicas e reflexões para contemplar a vida pública de Jesus e sua luz.",
   alternates: { canonical: CANONICAL_URL },
+
   openGraph: {
-    title: "Mistérios Luminosos do Terço: passagens bíblicas e reflexões",
+    title: "Santo Terço: Mistérios Luminosos",
     description:
-      "Os 5 Mistérios Luminosos com Bíblia e meditação: Batismo, Caná, Anúncio do Reino, Transfiguração, Eucaristia.",
+      "Quinta-feira: contemple a luz de Cristo. Clique e reze com Bíblia e meditações em cada dezena.",
     url: CANONICAL_URL,
     type: "article",
     locale: "pt_BR",
     siteName: "IA Tio Ben",
     images: [
       {
-        url: `${SITE_URL}/images/santo-do-dia-ia-tio-ben.png`,
+        url: `${SITE_URL}/og/terco/misterios-luminosos.png?v=1`,
         width: 1200,
         height: 630,
-        alt: "Mistérios Luminosos do Terço - IA Tio Ben",
+        alt: "Santo Terço: Mistérios Luminosos — IA Tio Ben",
       },
     ],
   },
+
   twitter: {
     card: "summary_large_image",
-    title: "Mistérios Luminosos do Terço (com Bíblia e reflexão)",
+    title: "Santo Terço: Mistérios Luminosos",
     description:
-      "Medite os 5 Mistérios Luminosos com passagens bíblicas e reflexões para rezar com sentido.",
-    images: [`${SITE_URL}/images/santo-do-dia-ia-tio-ben.png`],
+      "Quinta-feira: reze com sentido. Bíblia + reflexões para meditar a luz de Cristo em cada dezena.",
+    images: [`${SITE_URL}/og/terco/misterios-luminosos.png?v=1`],
   },
 };
+
 
 type Mystery = {
   id: string;

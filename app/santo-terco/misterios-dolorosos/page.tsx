@@ -15,36 +15,42 @@ const ADS_SLOT_IN_ARTICLE = "6161802751";
 const ADS_SLOT_SIDEBAR_DESKTOP = "8534838745";
 const ADS_SLOT_SIDEBAR_MOBILE = "1573844576";
 
+
+
 export const metadata: Metadata = {
-  title: "Mistérios Dolorosos do Terço: passagens bíblicas e reflexões",
+  title: "Santo Terço: Mistérios Dolorosos — passagens bíblicas e reflexões",
   description:
-    "Conheça os Mistérios Dolorosos do Terço (terça e sexta): passagens bíblicas, reflexões profundas, como rezar e como meditar cada dezena.",
+    "Reze e medite os Mistérios Dolorosos (terça e sexta) com passagens bíblicas e reflexões para viver a Paixão de Cristo com sentido.",
   alternates: { canonical: CANONICAL_URL },
+
   openGraph: {
-    title: "Mistérios Dolorosos do Terço: passagens bíblicas e reflexões",
+    title: "Santo Terço: Mistérios Dolorosos",
     description:
-      "Os 5 Mistérios Dolorosos com Bíblia e meditação: Agonia, Flagelação, Coroação de espinhos, Cruz, Crucifixão.",
+      "Terça e sexta: aprofunde-se na Paixão de Cristo. Clique e reze com Bíblia e meditações em cada dezena.",
     url: CANONICAL_URL,
     type: "article",
     locale: "pt_BR",
     siteName: "IA Tio Ben",
     images: [
       {
-        url: `${SITE_URL}/images/santo-do-dia-ia-tio-ben.png`,
+        // ✅ OG no seu padrão (mockup base) + quebra de cache (WhatsApp)
+        url: `${SITE_URL}/og/terco/misterios-dolorosos.png?v=1`,
         width: 1200,
         height: 630,
-        alt: "Mistérios Dolorosos do Terço - IA Tio Ben",
+        alt: "Santo Terço: Mistérios Dolorosos — IA Tio Ben",
       },
     ],
   },
+
   twitter: {
     card: "summary_large_image",
-    title: "Mistérios Dolorosos do Terço (com Bíblia e reflexão)",
+    title: "Santo Terço: Mistérios Dolorosos",
     description:
-      "Medite os 5 Mistérios Dolorosos com passagens bíblicas e reflexões para rezar com sentido.",
-    images: [`${SITE_URL}/images/santo-do-dia-ia-tio-ben.png`],
+      "Terça e sexta: reze com sentido. Bíblia + reflexões para meditar a Paixão de Cristo em cada dezena.",
+    images: [`${SITE_URL}/og/terco/misterios-dolorosos.png?v=1`],
   },
 };
+
 
 type Mystery = {
   id: string;

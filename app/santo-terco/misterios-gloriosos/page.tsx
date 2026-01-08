@@ -15,36 +15,41 @@ const ADS_SLOT_IN_ARTICLE = "6161802751";
 const ADS_SLOT_SIDEBAR_DESKTOP = "8534838745";
 const ADS_SLOT_SIDEBAR_MOBILE = "1573844576";
 
+
+
 export const metadata: Metadata = {
-  title: "Mistérios Gloriosos do Terço: passagens bíblicas e reflexões",
+  title: "Santo Terço: Mistérios Gloriosos — passagens bíblicas e reflexões",
   description:
-    "Conheça os Mistérios Gloriosos do Terço (quarta e domingo): passagens bíblicas, reflexões profundas, como rezar e como meditar cada dezena.",
+    "Reze e medite os Mistérios Gloriosos (quarta e domingo) com passagens bíblicas e reflexões para contemplar a Ressurreição e a glória do Céu.",
   alternates: { canonical: CANONICAL_URL },
+
   openGraph: {
-    title: "Mistérios Gloriosos do Terço: passagens bíblicas e reflexões",
+    title: "Santo Terço: Mistérios Gloriosos",
     description:
-      "Os 5 Mistérios Gloriosos com Bíblia e meditação: Ressurreição, Ascensão, Pentecostes, Assunção, Coroação de Maria.",
+      "Quarta e domingo: contemple a Ressurreição e a esperança cristã. Clique e reze com Bíblia e meditações em cada dezena.",
     url: CANONICAL_URL,
     type: "article",
     locale: "pt_BR",
     siteName: "IA Tio Ben",
     images: [
       {
-        url: `${SITE_URL}/images/santo-do-dia-ia-tio-ben.png`,
+        url: `${SITE_URL}/og/terco/misterios-gloriosos.png?v=1`,
         width: 1200,
         height: 630,
-        alt: "Mistérios Gloriosos do Terço - IA Tio Ben",
+        alt: "Santo Terço: Mistérios Gloriosos — IA Tio Ben",
       },
     ],
   },
+
   twitter: {
     card: "summary_large_image",
-    title: "Mistérios Gloriosos do Terço (com Bíblia e reflexão)",
+    title: "Santo Terço: Mistérios Gloriosos",
     description:
-      "Medite os 5 Mistérios Gloriosos com passagens bíblicas e reflexões para rezar com sentido.",
-    images: [`${SITE_URL}/images/santo-do-dia-ia-tio-ben.png`],
+      "Quarta e domingo: reze com sentido. Bíblia + reflexões para meditar a glória de Cristo e de Maria em cada dezena.",
+    images: [`${SITE_URL}/og/terco/misterios-gloriosos.png?v=1`],
   },
 };
+
 
 type Mystery = {
   id: string;
