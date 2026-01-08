@@ -34,8 +34,6 @@ function buildDescription(dd: number, mm: number, yyyy: number) {
   return `Liturgia do dia ${d}/${m}/${yyyy} com Evangelho, leituras e salmo. Acompanhe o calendário e navegue por datas, mês e ano.`;
 }
 
-
-
 function formatBRDate(dt: Date) {
   const dd = String(dt.getDate()).padStart(2, "0");
   const mm = String(dt.getMonth() + 1).padStart(2, "0");
@@ -44,31 +42,10 @@ function formatBRDate(dt: Date) {
 }
 
 /**
- * Monte aqui as referências das leituras.
- * Ajuste os campos conforme sua fonte de dados.
+ * Monta description com refs (como você pediu) + CTA ao final.
+ * Ajuste defensivo: suporta diferentes nomes de campos.
  */
-function buildRefsDescription(args: {
-  primeiraRef?: string | null;
-  salmoRef?: string | null;
-  segundaRef?: string | null;
-  evangelhoRef?: string | null;
-}) {
-  const parts: string[] = [];
-
-  if (args.primeiraRef) parts.push(`1ª leitura: ${args.primeiraRef}`);
-  if (args.salmoRef) parts.push(`Salmo: ${args.salmoRef}`);
-  if (args.segundaRef) parts.push(`2ª leitura: ${args.segundaRef}`);
-  if (args.evangelhoRef) parts.push(`Evangelho: ${args.evangelhoRef}`);
-
-  // CTA após o evangelho
-  parts.push("Acesse e reze com a Liturgia Diária no IA Tio Ben.");
-
-  return parts.join(" • ");
-}
-
-
 function buildRefsDescriptionFromData(data: any) {
-  // Ajuste defensivo: suporta campos diferentes caso seu normalize mude
   const primeira =
     data?.primeiraRef || data?.primeiraLeituraRef || data?.primeiraLeitura || null;
 
@@ -78,8 +55,7 @@ function buildRefsDescriptionFromData(data: any) {
   const segunda =
     data?.segundaRef || data?.segundaLeituraRef || data?.segundaLeitura || null;
 
-  const evangelho =
-    data?.evangelhoRef || data?.evangelho || null;
+  const evangelho = data?.evangelhoRef || data?.evangelho || null;
 
   const parts: string[] = [];
   if (primeira) parts.push(`1ª leitura: ${primeira}`);
@@ -107,9 +83,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const description =
       "Evangelho, leituras e salmo do dia. Acesse e reze com a Liturgia Diária no IA Tio Ben.";
 
-    const ogImage = `${SITE_URL}/og?type=liturgia&title=${encodeURIComponent(
-      "Liturgia Diária"
-    )}&description=${encodeURIComponent(description)}`;
+    // ✅ OG limpa (WhatsApp-friendly)
+    const ogImage = `${SITE_URL}/og/liturgia.png`;
 
     return {
       title,
@@ -142,11 +117,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const dateLabel = formatBRDate(dt);
 
-  // ✅ Você pediu: "Liturgia diária e a data"
+  // ✅ Você pediu: "Liturgia Diária e a data"
   const title = `Liturgia Diária — ${dateLabel}`;
 
-  // ✅ Buscar refs das leituras para montar description
-  // (usa a mesma função que você já usa na página)
+  // ✅ Description com refs das leituras + CTA
   let description =
     "Liturgia diária com Evangelho, leituras e salmo. Acesse e reze com a Liturgia Diária no IA Tio Ben.";
 
@@ -154,15 +128,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const data = await fetchLiturgiaByDate(day, month, year);
     description = buildRefsDescriptionFromData(data);
   } catch {
-    // se falhar a fetch, mantém fallback acima (não quebra o build)
+    // mantém fallback
   }
 
   const canonical = `${SITE_URL}/liturgia-diaria/${slug}`;
 
-  // ✅ OG com badge Liturgia (dourado) via type=liturgia
-  const ogImage = `${SITE_URL}/og?type=liturgia&title=${encodeURIComponent(
-    title
-  )}&description=${encodeURIComponent(description)}`;
+  // ✅ OG limpa por data (WhatsApp-friendly)
+  const ogImage = `${SITE_URL}/og/liturgia/${slug}.png`;
 
   return {
     title,
@@ -188,9 +160,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     },
   };
 }
-
-
-
 
 export default async function LiturgiaDayPage({ params }: PageProps) {
   const resolved = await Promise.resolve(params);
@@ -326,11 +295,9 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
             <div className="mt-6 lg:hidden">
               <AdsenseSidebarMobile300x250 slot={ADS_SLOT_SIDEBAR_MOBILE} />
             </div>
-
-            {/* Removido: bloco “Acesso rápido” mobile duplicado (o aside já cobre isso) */}
           </main>
 
-          {/* ASIDE: só no desktop para evitar duplicar anúncio e blocos no mobile */}
+          {/* ASIDE: só no desktop */}
           <div className="hidden lg:block">
             <LiturgiaAside
               year={year}
@@ -360,7 +327,7 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
             />
           </div>
 
-          {/* ASIDE (mobile): sem anúncio (você já tem o bloco Adsense mobile acima) */}
+          {/* ASIDE (mobile): sem anúncio */}
           <div className="mt-6 lg:hidden">
             <LiturgiaAside
               year={year}

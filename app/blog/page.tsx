@@ -39,12 +39,8 @@ export async function generateMetadata({
 
   const canonicalBase = `${SITE_URL}/blog`;
 
-  // OG padrão com badge automático BLOG (verde)
-  const ogImageBase = `${SITE_URL}/og?type=blog&title=${encodeURIComponent(
-    baseTitle
-  )}&description=${encodeURIComponent(
-    "Santos, liturgia e espiritualidade católica — clique e aprenda mais."
-  )}`;
+  // ✅ WhatsApp-friendly (rota limpa .png)
+  const ogImageBase = `${SITE_URL}/og/blog.png`;
 
   // Busca interna: NÃO indexar
   if (q) {
@@ -89,11 +85,8 @@ export async function generateMetadata({
     const description = baseDesc;
     const canonical = `${canonicalBase}?page=${page}`;
 
-    const ogImage = `${SITE_URL}/og?type=blog&title=${encodeURIComponent(
-      title
-    )}&description=${encodeURIComponent(
-      "Explore novos posts e fortaleça sua fé com santos, liturgia e reflexões católicas."
-    )}`;
+    // ✅ Mantém a mesma imagem estática (melhor para cache/crawlers)
+    const ogImage = ogImageBase;
 
     return {
       title,
@@ -159,6 +152,7 @@ export async function generateMetadata({
     },
   };
 }
+
 
 
 

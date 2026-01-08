@@ -29,11 +29,11 @@ export async function GET() {
           fontFamily: "system-ui, -apple-system, Segoe UI, Roboto",
         }}
       >
-        <div style={{ fontSize: 72, fontWeight: 900, color: "#465572", lineHeight: 1.05 }}>
-          Teste OG WhatsApp
+        <div style={{ fontSize: 76, fontWeight: 900, color: "#465572", lineHeight: 1.05 }}>
+          Blog Tio Ben
         </div>
-        <div style={{ marginTop: 18, fontSize: 32, fontWeight: 600, color: "#465572" }}>
-          Se esta imagem aparecer no WhatsApp, a rota .png está OK.
+        <div style={{ marginTop: 18, fontSize: 34, fontWeight: 600, color: "#465572" }}>
+          Santos, liturgia e reflexões católicas para fortalecer sua fé.
         </div>
 
         <div style={{ marginTop: 32, display: "flex" }}>
@@ -49,7 +49,7 @@ export async function GET() {
               textTransform: "uppercase",
             }}
           >
-            TESTE
+            BLOG
           </div>
         </div>
       </div>

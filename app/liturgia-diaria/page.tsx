@@ -20,43 +20,41 @@ const ADS_SLOT_SIDEBAR_MOBILE = "1573844576";
 export const dynamic = "force-static";
 export const revalidate = 86400;
 
-/* =========================
-   METADATA (HEAD)
-   ========================= */
 export const metadata: Metadata = {
   title: "Liturgia Diária – Evangelho, Leituras e Salmo do dia",
   description:
     "Liturgia diária com evangelho, leituras e salmo do dia. Consulte o calendário do ano e do mês para acessar qualquer data.",
   alternates: { canonical: CANONICAL_URL },
+
   openGraph: {
-  type: "website",
-  url: CANONICAL_URL,
-  title: "Liturgia Diária – Evangelho, Leituras e Salmo do dia",
-  description:
-    "Acompanhe a liturgia do dia com Evangelho, leituras e salmo, ou consulte qualquer data pelo calendário mensal e anual.",
-  siteName: "IA Tio Ben",
-  locale: "pt_BR",
-  images: [
-    {
-      url: `${SITE_URL}/og?title=${encodeURIComponent(
-        "Liturgia Diária"
-      )}&description=${encodeURIComponent(
-        "Evangelho, leituras e salmo do dia com calendário mensal e anual"
-      )}`,
-      width: 1200,
-      height: 630,
-      alt: "Liturgia Diária – IA Tio Ben",
-    },
-  ],
-},
+    type: "website",
+    url: CANONICAL_URL,
+    title: "Liturgia Diária – Evangelho, Leituras e Salmo do dia",
+    description:
+      "Acompanhe a liturgia do dia com Evangelho, leituras e salmo, ou consulte qualquer data pelo calendário mensal e anual.",
+    siteName: "IA Tio Ben",
+    locale: "pt_BR",
+    images: [
+      {
+        // ✅ WhatsApp-friendly (rota limpa .png)
+        url: `${SITE_URL}/og/liturgia.png`,
+        width: 1200,
+        height: 630,
+        alt: "Liturgia Diária – IA Tio Ben",
+      },
+    ],
+  },
 
   twitter: {
     card: "summary_large_image",
     title: "Liturgia Diária – Evangelho, Leituras e Salmo do dia",
     description:
       "Acompanhe a liturgia do dia e consulte qualquer data pelo calendário do mês e do ano.",
+    // ✅ inclua images também
+    images: [`${SITE_URL}/og/liturgia.png`],
   },
 };
+
 
 /* =========================
    HELPERS

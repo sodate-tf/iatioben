@@ -27,32 +27,31 @@ async function getPostDataBySlug(slug: string): Promise<Post | null> {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: { slug: string } | Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const resolved = await Promise.resolve(params);
+  const slug = (resolved.slug || "").trim();
+
   const postData = await getPostDataBySlug(slug);
 
   if (!postData) {
     return {
-      title: "Página Não Encontrada - Blog IA Tio Ben",
+      title: "Página Não Encontrada - Blog Tio Ben",
       robots: { index: false, follow: false },
     };
   }
 
   const canonical = `${SITE_URL}/blog/${postData.slug}`;
-  const title = postData.title;
-  const description = postData.metaDescription ?? postData.title;
+  const title = postData.title || "Blog Tio Ben";
+  const description = (postData.metaDescription || postData.title || "").trim();
 
-  // Preferência:
-  // 1) coverImageUrl (se for 1200x630 e absoluta)
-  // 2) OG dinâmica /og (melhor consistência)
-  // 3) fallback estático
+  // ✅ WhatsApp-friendly:
+  // 1) se coverImageUrl for absoluta, usa ela
+  // 2) senão, usa rota limpa .png (sem query)
   const ogImage =
     postData.coverImageUrl?.startsWith("http")
       ? postData.coverImageUrl
-      : `${SITE_URL}/og?title=${encodeURIComponent(title)}&description=${encodeURIComponent(
-          description
-        )}`;
+      : `${SITE_URL}/og/blog/${postData.slug}.png`;
 
   return {
     title,
@@ -65,7 +64,7 @@ export async function generateMetadata({
       description,
       type: "article",
       url: canonical,
-      siteName: "Blog IA Tio Ben",
+      siteName: "Blog Tio Ben",
       locale: "pt_BR",
       images: [
         {
@@ -85,6 +84,7 @@ export async function generateMetadata({
     },
   };
 }
+
 
 
 export default async function BlogPostPage({
