@@ -147,7 +147,19 @@ export default function LiturgiaHubPerfectEN({
   const antCommunionHtml = (data as any).antComunhaoHtml as string | undefined;
 
   const dayHref = (slug: string) => `/en/daily-mass-readings/${slug}`;
+  function formatUSDateFromString(dateStr: string): string {
+  if (!dateStr) return "";
 
+  const dt = new Date(dateStr);
+  if (Number.isNaN(dt.getTime())) return "";
+
+  const mm = String(dt.getMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getDate()).padStart(2, "0");
+  const yyyy = dt.getFullYear();
+
+  return `${mm}/${dd}/${yyyy}`;
+}
+ const dateLabelUS = formatUSDateFromString(data.dateLabel);
   return (
     <article
       className={[
@@ -166,7 +178,7 @@ export default function LiturgiaHubPerfectEN({
         </p>
 
         <h1 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight">
-          Daily Mass Readings for {data.dateLabel}: Gospel & Readings
+          Daily Mass Readings for {dateLabelUS}: Gospel & Readings
         </h1>
 
         <p className="mt-2 text-sm text-slate-600">
