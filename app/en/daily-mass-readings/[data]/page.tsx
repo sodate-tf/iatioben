@@ -12,10 +12,11 @@ import { fetchLiturgiaByDate } from "@/lib/liturgia/api";
 import { pad2 } from "@/lib/liturgia/date";
 import { AdsenseSidebarMobile300x250 } from "@/components/ads/AdsenseBlocks";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
-import { fetchNetBibleText } from "@/lib/liturgia/bible-en";
+import { fetchNetBibleHtml, fetchNetBibleText } from "@/lib/liturgia/bible-en";
 import { toReadableHtml } from "@/lib/liturgia/api"; // helper already exists in your codebase
 import LiturgiaHubPerfectEN from "@/components/liturgia/LiturgiaHubPerfectEN";
 import LiturgiaAsideEN from "@/components/liturgia/LiturgiaAsideEN";
+
 
 export const dynamic = "force-static";
 export const revalidate = 86400;
@@ -132,33 +133,37 @@ function buildRefsDescriptionFromData(data: any) {
 }
 
 async function buildDataEN(data: any) {
-  const [firstEn, psalmEn, secondEn, gospelEn] = await Promise.all([
-    data?.primeiraRef ? fetchNetBibleText(data.primeiraRef) : Promise.resolve(null),
-    data?.salmoRef ? fetchNetBibleText(data.salmoRef) : Promise.resolve(null),
-    data?.segundaRef ? fetchNetBibleText(data.segundaRef) : Promise.resolve(null),
-    data?.evangelhoRef ? fetchNetBibleText(data.evangelhoRef) : Promise.resolve(null),
+  const [firstHtml, psalmHtml, secondHtml, gospelHtml] = await Promise.all([
+    data?.primeiraRef ? fetchNetBibleHtml(data.primeiraRef) : Promise.resolve(null),
+    data?.salmoRef ? fetchNetBibleHtml(data.salmoRef) : Promise.resolve(null),
+    data?.segundaRef ? fetchNetBibleHtml(data.segundaRef) : Promise.resolve(null),
+    data?.evangelhoRef ? fetchNetBibleHtml(data.evangelhoRef) : Promise.resolve(null),
   ]);
 
-  const primeiraTexto = firstEn ?? data.primeiraTexto;
-  const salmoTexto = psalmEn ?? data.salmoTexto;
-  const segundaTexto = secondEn ?? data.segundaTexto;
-  const evangelhoTexto = gospelEn ?? data.evangelhoTexto;
+  // Texto: pode manter PT (ou, se você quiser, também pode manter EN como texto sem HTML)
+  const primeiraTexto = data.primeiraTexto;
+  const salmoTexto = data.salmoTexto;
+  const segundaTexto = data.segundaTexto;
+  const evangelhoTexto = data.evangelhoTexto;
 
   return {
     ...data,
-    // override texts that your Hub reads
+
+    // mantêm os campos texto (não muda PT)
     primeiraTexto,
     salmoTexto,
     segundaTexto,
     evangelhoTexto,
 
-    // generate HTML for the same renderer
-    primeiraHtml: toReadableHtml(primeiraTexto),
-    salmoHtml: toReadableHtml(salmoTexto),
-    segundaHtml: toReadableHtml(segundaTexto),
-    evangelhoHtml: toReadableHtml(evangelhoTexto),
+    // HTML: se tiver EN, usa ele; se não, cai no PT via toReadableHtml
+    primeiraHtml: firstHtml ?? toReadableHtml(primeiraTexto),
+    salmoHtml: psalmHtml ?? toReadableHtml(salmoTexto),
+    segundaHtml: secondHtml ?? toReadableHtml(segundaTexto),
+    evangelhoHtml: gospelHtml ?? toReadableHtml(evangelhoTexto),
   };
 }
+
+
 
 /**
  * "Today" based on America/Sao_Paulo regardless of server TZ.

@@ -1,14 +1,9 @@
 // lib/liturgia/bible-en.ts
-// Busca texto bíblico em inglês a partir de uma referência PT (ex: "Lc 24, 1-12")
-// usando NET Bible (labs.bible.org).
-// Docs do formato do "passage=": John 3:16-17 etc. (aceita ranges) :contentReference[oaicite:1]{index=1}
-
 import "server-only";
 
 const NET_BIBLE_ENDPOINT = "https://labs.bible.org/api/";
 
 const BOOK_MAP: Record<string, string> = {
-  // Pentateuco / Históricos
   Gn: "Genesis",
   Ex: "Exodus",
   Lv: "Leviticus",
@@ -29,7 +24,6 @@ const BOOK_MAP: Record<string, string> = {
   Jt: "Judith",
   Est: "Esther",
 
-  // Sabedoria / Profetas (alguns podem não existir na NET Bible, depende do corpus)
   Jó: "Job",
   Sl: "Psalm",
   Pr: "Proverbs",
@@ -53,7 +47,6 @@ const BOOK_MAP: Record<string, string> = {
   Zc: "Zechariah",
   Ml: "Malachi",
 
-  // NT
   Mt: "Matthew",
   Mc: "Mark",
   Lc: "Luke",
@@ -92,25 +85,41 @@ function stripParenSuffix(s: string) {
   return s.replace(/\s*\([^)]*\)\s*/g, " ").trim();
 }
 
+function safeStr(v: unknown) {
+  return String(v ?? "").trim();
+}
+
+function escapeHtml(s: string) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 /**
- * Converte referência PT para um "passage" compatível com labs.bible.org
+ * Converte referência PT para "passage" compatível com labs.bible.org
  * Exemplos:
  * - "Lc 24, 1-12" -> "Luke 24:1-12"
  * - "Sl 103" -> "Psalm 103"
- * - "Ex 15, 1-6. 17-18" -> "Exodus 15:1-6,17-18" (heurística)
+ * - "Ex 15, 1-6. 17-18" -> "Exodus 15:1-6,17-18"
  */
 export function ptRefToNetPassage(ptRef: string): string | null {
-  const raw = stripParenSuffix(normalizeDashes(String(ptRef || "").trim()));
+  const raw = stripParenSuffix(normalizeDashes(safeStr(ptRef)));
   if (!raw) return null;
 
-  // separa "Livro" do resto: "Lc 24, 1-12"
+  // "Lc 24, 1-12"
   const m = raw.match(/^([1-3]?\s?[A-Za-zÀ-ÿ]+)\s+(.+)$/);
   if (!m) {
-    // pode ser só "Sl 103"
+    // "Sl 103"
     const m2 = raw.match(/^([1-3]?\s?[A-Za-zÀ-ÿ]+)\s+(\d+)\s*$/);
     if (!m2) return null;
-    const book = BOOK_MAP[m2[1].replace(/\s+/g, "")] || BOOK_MAP[m2[1].trim()];
+
+    const k1 = m2[1].replace(/\s+/g, "");
+    const book = BOOK_MAP[k1] || BOOK_MAP[m2[1].trim()];
     if (!book) return null;
+
     return `${book} ${m2[2]}`;
   }
 
@@ -119,25 +128,104 @@ export function ptRefToNetPassage(ptRef: string): string | null {
   if (!book) return null;
 
   let rest = m[2].trim();
-
-  // Formato comum: "24, 1-12"
-  // troca "," (separador capítulo/verso) por ":" e limpa espaços
-  // mantém "." como separador de segmentos (ex: "1-6. 17-18")
   rest = rest
-    .replace(/\s*,\s*/g, ":")
-    .replace(/\s*\.\s*/g, ",") // trata "1-6. 17-18" como lista
+    .replace(/\s*,\s*/g, ":") // cap, verso -> cap:verso
+    .replace(/\s*\.\s*/g, ",") // "1-6. 17-18" -> "1-6,17-18"
     .replace(/\s+/g, "");
 
-  // Se rest ficou só capítulo: "103"
-  // Se ficou "24:1-12" ok
   return `${book} ${rest}`;
 }
 
+/**
+ * Classe Tailwind para "pill" do versículo (padrão Tio Ben).
+ */
+const VERSE_PILL_CLASS =
+  "mx-0.5 align-baseline rounded bg-amber-50 px-1 text-[0.75em] font-semibold text-amber-900/90 border border-amber-100";
+
+/**
+ * Junta o retorno do labs.bible.org preservando versículos
+ * - normal: "1 In the beginning..."
+ * - se mudar capítulo dentro do range: "3:16 For this is..."
+ */
+function joinNetVerses(
+  rows: Array<{ chapter?: string; verse?: string; text?: string }>,
+  opts?: { showChapterWhenChanges?: boolean }
+) {
+  const showChapterWhenChanges = opts?.showChapterWhenChanges ?? true;
+
+  let lastChapter: string | null = null;
+  const parts: string[] = [];
+
+  for (const r of rows) {
+    const chapter = safeStr(r.chapter);
+    const verse = safeStr(r.verse);
+    const txt = safeStr(r.text);
+    if (!txt) continue;
+
+    let label = "";
+    if (chapter && verse) {
+      if (showChapterWhenChanges && lastChapter && chapter !== lastChapter) {
+        label = `${chapter}:${verse} `;
+      } else {
+        label = `${verse} `;
+      }
+      lastChapter = chapter;
+    }
+
+    parts.push(label + txt);
+  }
+
+  return parts.join(" ");
+}
+
+/**
+ * Garante que "3:16For" vire "3:16 For" (defensivo)
+ */
+function normalizeVerseSpacing(s: string) {
+  return s
+    .replace(/(\d{1,3}:\d{1,3})(?=\S)/g, "$1 ")
+    .replace(/(^|\s)(\d{1,3})(?=\S)/g, "$1$2 ");
+}
+
+/**
+ * Converte números de versículo para <sup class="...">...</sup>
+ * - escapa HTML antes (seguro)
+ * - suporta aspas/parênteses logo após o número (EN comum)
+ * - suporta "3:16" e "16"
+ */
+function formatVersesToSupHtmlEN(plain: string) {
+  const raw = safeStr(plain);
+  if (!raw) return "";
+  if (raw.includes("<sup")) return raw; // evita duplicar (defensivo)
+
+  let s = escapeHtml(normalizeVerseSpacing(raw));
+
+  // após o número pode vir espaço + aspas/parênteses + letra
+  const NEXT_IS_TEXT = String.raw`(?=\s*["“”'‘(\[]?[A-Za-zÀ-ÿ])`;
+
+  // capítulo:verso
+  s = s.replace(
+    new RegExp(String.raw`(^|[\s.;:!?—–-])(\d{1,3}:\d{1,3})${NEXT_IS_TEXT}`, "g"),
+    (_m, before, num) => `${before}<sup class="${VERSE_PILL_CLASS}">${num}</sup>`
+  );
+
+  // só verso
+  s = s.replace(
+    new RegExp(String.raw`(^|[\s.;:!?—–-])(\d{1,3})${NEXT_IS_TEXT}`, "g"),
+    (_m, before, num) => `${before}<sup class="${VERSE_PILL_CLASS}">${num}</sup>`
+  );
+
+  return s;
+}
+
+/**
+ * Retorna texto EN com numeração consistente.
+ * Útil para metadados/descrição e fallback.
+ */
 export async function fetchNetBibleText(ptRef: string) {
   const passage = ptRefToNetPassage(ptRef);
   if (!passage) return null;
 
-  // labs.bible.org usa querystring "passage=" e "type=json"
   const url = new URL(NET_BIBLE_ENDPOINT);
   url.searchParams.set("passage", passage);
   url.searchParams.set("type", "json");
@@ -153,13 +241,19 @@ export async function fetchNetBibleText(ptRef: string) {
     text?: string;
   }>;
 
-  if (!Array.isArray(json) || !json.length) return null;
+  if (!Array.isArray(json) || json.length === 0) return null;
 
-  // junta em texto contínuo
-  const text = json
-    .map((v) => (v?.text || "").trim())
-    .filter(Boolean)
-    .join(" ");
+  const joined = joinNetVerses(json, { showChapterWhenChanges: true });
+  return joined ? normalizeVerseSpacing(joined).trim() : null;
+}
 
-  return text || null;
+/**
+ * Retorna HTML (EN-only) já com <sup> e pronto para render.
+ * Observação: este HTML deve ser renderizado diretamente (dangerouslySetInnerHTML)
+ * e NÃO passar por toReadableHtml (senão vai escapar).
+ */
+export async function fetchNetBibleHtml(ptRef: string) {
+  const text = await fetchNetBibleText(ptRef);
+  if (!text) return null;
+  return formatVersesToSupHtmlEN(text);
 }
