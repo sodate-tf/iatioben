@@ -15,9 +15,7 @@ export const metadata: Metadata = {
 export default function EnLayout({ children }: { children: React.ReactNode }) {
   return (
     <div lang="en-US">
-      <Cabecalho />
       <main className="pb-20">{children}</main>
-      <Footer />
     </div>
   );
 }
