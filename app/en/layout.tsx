@@ -14,12 +14,10 @@ export const metadata: Metadata = {
 
 export default function EnLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-US">
-      <body>
-        <Cabecalho />
-        <main className="pb-20">{children}</main>
-        <Footer />
-      </body>
-    </html>
+    <div lang="en-US">
+      <Cabecalho />
+      <main className="pb-20">{children}</main>
+      <Footer />
+    </div>
   );
 }
