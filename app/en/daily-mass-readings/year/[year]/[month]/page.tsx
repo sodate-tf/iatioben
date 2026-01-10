@@ -1,17 +1,18 @@
 // app/en/daily-mass-readings/year/[year]/[month]/page.tsx
 //
-// English monthly calendar page (parallel to PT, does NOT change PT indexed URLs).
-// - Uses “Daily Mass Readings” as the culturally standard term.
-// - Keeps dd-mm-yyyy slugs to match your existing fetch/parse logic.
-// - Uses English month labels and weekday headers.
-// - Keeps internal linking (prev/next month, today, year hub, and crawlable day list).
-// - Keeps your existing LiturgiaAside (links still point to PT blog unless you later create EN versions).
+// English monthly calendar page.
+// - EN slugs: MM-DD-YYYY (matches your corrected EN day page).
+// - English month labels and weekday headers.
+// - Internal linking (prev/next month, today, year hub, and crawlable day list).
+// - Uses LiturgiaAsideEN.
+//
+// IMPORTANT: This page now links to EN day pages using MM-DD-YYYY.
+// Example day URL: /en/daily-mass-readings/01-10-2026 (Jan 10, 2026)
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { daysInMonth, pad2 } from "@/lib/liturgia/date";
-import LiturgiaAside from "@/components/liturgia/LiturgiaAside";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 import LiturgiaAsideEN from "@/components/liturgia/LiturgiaAsideEN";
 
@@ -67,7 +68,6 @@ export async function generateMetadata({
 
   const monthName = monthLabelEN(year, month);
 
-  // SEO: “Daily Mass Readings” is the head term; month name is the qualifier
   const title = `Daily Mass Readings for ${monthName} – Readings, Psalm and Gospel`;
   const description =
     `Monthly calendar for the Daily Mass Readings in ${monthName}. ` +
@@ -76,7 +76,6 @@ export async function generateMetadata({
   const canonicalPath = `/en/daily-mass-readings/year/${year}/${pad2(month)}`;
   const canonicalUrl = `${SITE_URL}${canonicalPath}`;
 
-  // WhatsApp-friendly (clean .png)
   const ogImage = `${SITE_URL}/og/liturgia.png`;
 
   return {
@@ -125,20 +124,28 @@ function weekdayIndexMondayFirst(date: Date) {
   return (date.getDay() + 6) % 7; // Mon=0..Sun=6
 }
 
-function slugFromDate(d: Date) {
-  const dd = pad2(d.getDate());
+/**
+ * EN day slugs: MM-DD-YYYY
+ */
+function slugFromDateUS(d: Date) {
   const mm = pad2(d.getMonth() + 1);
+  const dd = pad2(d.getDate());
   const yyyy = d.getFullYear();
-  return `${dd}-${mm}-${yyyy}`;
+  return `${mm}-${dd}-${yyyy}`;
 }
 
-function labelFromSlugEN(slug: string) {
-  // slug is dd-mm-yyyy; convert to MM/DD/YYYY for EN label
-  const [dd, mm, yyyy] = slug.split("-");
-  if (!dd || !mm || !yyyy) return slug.replaceAll("-", "/");
+/**
+ * EN label: MM/DD/YYYY from US slug
+ */
+function labelFromSlugUS(slug: string) {
+  const [mm, dd, yyyy] = slug.split("-");
+  if (!mm || !dd || !yyyy) return slug.replaceAll("-", "/");
   return `${mm}/${dd}/${yyyy}`;
 }
 
+/**
+ * Today in Sao Paulo time (stable regardless of server TZ)
+ */
 function getTodayInSaoPaulo(): Date {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Sao_Paulo",
@@ -180,10 +187,10 @@ export default async function DailyMassReadingsMonthPage({
   const totalDays = daysInMonth(year, month);
   const monthName = monthLabelEN(year, month);
 
-  // Day links (IMPORTANT: point to EN day pages)
+  // Day links (IMPORTANT: point to EN day pages with MM-DD-YYYY)
   const days = Array.from({ length: totalDays }, (_, i) => {
     const day = i + 1;
-    const slug = `${pad2(day)}-${pad2(month)}-${year}`;
+    const slug = `${pad2(month)}-${pad2(day)}-${year}`; // MM-DD-YYYY
     return { day, slug, href: `/en/daily-mass-readings/${slug}` };
   });
 
@@ -206,8 +213,8 @@ export default async function DailyMassReadingsMonthPage({
 
   // Aside props
   const today = getTodayInSaoPaulo();
-  const todaySlug = slugFromDate(today);
-  const todayLabel = labelFromSlugEN(todaySlug);
+  const todaySlug = slugFromDateUS(today);
+  const todayLabel = labelFromSlugUS(todaySlug);
 
   const isMonthOfToday = today.getFullYear() === year && today.getMonth() + 1 === month;
   const baseDate = isMonthOfToday ? today : new Date(year, month - 1, 1);
@@ -218,8 +225,8 @@ export default async function DailyMassReadingsMonthPage({
   const nextDate = new Date(baseDate);
   nextDate.setDate(baseDate.getDate() + 1);
 
-  const prevSlug = slugFromDate(prevDate);
-  const nextSlug = slugFromDate(nextDate);
+  const prevSlug = slugFromDateUS(prevDate);
+  const nextSlug = slugFromDateUS(nextDate);
 
   // Weekday headers (Mon-first)
   const dow = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -251,47 +258,46 @@ export default async function DailyMassReadingsMonthPage({
           </nav>
 
           <header className="mb-6">
-  <div className="flex items-start justify-between gap-4">
-    <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
-      Daily Mass Readings Calendar for {monthName}
-    </h1>
+            <div className="flex items-start justify-between gap-4">
+              <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
+                Daily Mass Readings Calendar for {monthName}
+              </h1>
 
-    <div className="shrink-0">
-      <LanguageSwitcher />
-    </div>
-  </div>
+              <div className="shrink-0">
+                <LanguageSwitcher />
+              </div>
+            </div>
 
-  <p className="mt-2 text-sm text-gray-700 max-w-3xl">
-    Browse the <strong>Daily Mass Readings</strong> for any date in{" "}
-    <strong>{monthName}</strong>. Each day includes the <strong>Mass readings</strong>, the{" "}
-    <strong>responsorial psalm</strong>, and the <strong>Gospel of the day</strong>, organized for
-    study, prayer and preparation for Mass.
-  </p>
+            <p className="mt-2 text-sm text-gray-700 max-w-3xl">
+              Browse the <strong>Daily Mass Readings</strong> for any date in{" "}
+              <strong>{monthName}</strong>. Each day includes the <strong>Mass readings</strong>, the{" "}
+              <strong>responsorial psalm</strong>, and the <strong>Gospel of the day</strong>, organized for
+              study, prayer and preparation for Mass.
+            </p>
 
-  <div className="mt-4 flex flex-wrap items-center gap-2">
-    <Link
-      href={`/en/daily-mass-readings/year/${prevMonth.year}/${pad2(prevMonth.month)}`}
-      className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-gray-50"
-    >
-      ← {monthLabelEN(prevMonth.year, prevMonth.month)}
-    </Link>
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <Link
+                href={`/en/daily-mass-readings/year/${prevMonth.year}/${pad2(prevMonth.month)}`}
+                className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-gray-50"
+              >
+                ← {monthLabelEN(prevMonth.year, prevMonth.month)}
+              </Link>
 
-    <Link
-      href={`/en/daily-mass-readings/year/${nextMonth.year}/${pad2(nextMonth.month)}`}
-      className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-gray-50"
-    >
-      {monthLabelEN(nextMonth.year, nextMonth.month)} →
-    </Link>
+              <Link
+                href={`/en/daily-mass-readings/year/${nextMonth.year}/${pad2(nextMonth.month)}`}
+                className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-gray-50"
+              >
+                {monthLabelEN(nextMonth.year, nextMonth.month)} →
+              </Link>
 
-    <Link
-      href={`/en/daily-mass-readings/${todaySlug}`}
-      className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold hover:bg-amber-100 text-amber-900"
-    >
-      Today’s readings ({todayLabel})
-    </Link>
-  </div>
-</header>
-
+              <Link
+                href={`/en/daily-mass-readings/${todaySlug}`}
+                className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold hover:bg-amber-100 text-amber-900"
+              >
+                Today’s readings ({todayLabel})
+              </Link>
+            </div>
+          </header>
 
           {/* Visual calendar */}
           <section

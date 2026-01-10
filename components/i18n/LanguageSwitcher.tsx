@@ -15,25 +15,45 @@ function pad2(n: number) {
   return String(n).padStart(2, "0");
 }
 
-function todaySlug() {
-  const now = new Date();
-  // normaliza para evitar bug de fuso
-  const d = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    12,
-    0,
-    0
-  );
+/**
+ * Returns "today" parts in America/Sao_Paulo to avoid server/client TZ drift.
+ */
+function getTodayPartsSaoPaulo() {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
 
-  const dd = pad2(d.getDate());
-  const mm = pad2(d.getMonth() + 1);
-  const yyyy = d.getFullYear();
+  const yyyy = Number(parts.find((p) => p.type === "year")?.value);
+  const mm = Number(parts.find((p) => p.type === "month")?.value);
+  const dd = Number(parts.find((p) => p.type === "day")?.value);
 
-  return `${dd}-${mm}-${yyyy}`;
+  // Fallback to local date if Intl fails for any reason
+  if (!Number.isFinite(yyyy) || !Number.isFinite(mm) || !Number.isFinite(dd)) {
+    const now = new Date();
+    return { yyyy: now.getFullYear(), mm: now.getMonth() + 1, dd: now.getDate() };
+  }
+
+  return { yyyy, mm, dd };
 }
 
+/**
+ * PT day slug: DD-MM-YYYY
+ */
+function todaySlugPT() {
+  const { yyyy, mm, dd } = getTodayPartsSaoPaulo();
+  return `${pad2(dd)}-${pad2(mm)}-${yyyy}`;
+}
+
+/**
+ * EN day slug: MM-DD-YYYY
+ */
+function todaySlugEN() {
+  const { yyyy, mm, dd } = getTodayPartsSaoPaulo();
+  return `${pad2(mm)}-${pad2(dd)}-${yyyy}`;
+}
 
 export default function LanguageSwitcher() {
   const pathname = usePathname();
@@ -43,18 +63,15 @@ export default function LanguageSwitcher() {
   const active: "pt" | "en" = isEN ? "en" : "pt";
 
   function go(lang: "pt" | "en") {
-  setLangCookie(lang);
+    setLangCookie(lang);
 
-  const slug = todaySlug();
+    const target =
+      lang === "pt"
+        ? `/liturgia-diaria/${todaySlugPT()}`
+        : `/en/daily-mass-readings/${todaySlugEN()}`;
 
-  const target =
-    lang === "pt"
-      ? `/liturgia-diaria/${slug}`
-      : `/en/daily-mass-readings/${slug}`;
-
-  router.push(target);
-}
-
+    router.push(target);
+  }
 
   const baseBtn =
     "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold transition-all focus:outline-none focus:ring-2 focus:ring-amber-300";
@@ -92,7 +109,7 @@ export default function LanguageSwitcher() {
         <span className="hidden sm:inline">EN</span>
       </button>
 
-      {/* fallback crawl / sem JS */}
+      {/* fallback crawl / no JS */}
       <noscript>
         <span className="sr-only">Language links</span>
         <Link href={PT_HOME}>PT</Link>

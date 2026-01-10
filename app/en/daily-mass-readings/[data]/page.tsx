@@ -1,21 +1,19 @@
 // app/en/daily-mass-readings/[data]/page.tsx
 //
-// English day page (parallel to PT) with culturally natural Catholic English terms.
-// - Keeps the slug format dd-mm-yyyy (so your current data fetching works unchanged).
-// - Uses “Daily Mass Readings” / “Mass Readings for <date>” for SEO and expectations.
-// - Translates all visible UI strings, JSON-LD FAQ, and meta descriptions contextually.
-// - Keeps PT URLs intact because this file lives under /en/* only.
+// English day page (parallel to PT) using US date slug pattern MM-DD-YYYY.
+// - Route slug format: MM-DD-YYYY (e.g., /en/daily-mass-readings/01-10-2026)
+// - Uses “Daily Mass Readings” / “Mass Readings for <date>” for SEO.
+// - Translates visible UI strings and meta descriptions contextually.
+// - Fetches PT liturgy data but replaces texts with English (NET Bible) when available.
 
 import type { Metadata } from "next";
 import Script from "next/script";
 import { fetchLiturgiaByDate } from "@/lib/liturgia/api";
-import { parseSlugDate, slugFromDate, pad2 } from "@/lib/liturgia/date";
-import LiturgiaHubPerfect from "@/components/liturgia/LiturgiaHubPerfect";
-import LiturgiaAside from "@/components/liturgia/LiturgiaAside";
+import { pad2 } from "@/lib/liturgia/date";
 import { AdsenseSidebarMobile300x250 } from "@/components/ads/AdsenseBlocks";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 import { fetchNetBibleText } from "@/lib/liturgia/bible-en";
-import { toReadableHtml } from "@/lib/liturgia/api"; // você já tem esse helper
+import { toReadableHtml } from "@/lib/liturgia/api"; // helper already exists in your codebase
 import LiturgiaHubPerfectEN from "@/components/liturgia/LiturgiaHubPerfectEN";
 import LiturgiaAsideEN from "@/components/liturgia/LiturgiaAsideEN";
 
@@ -34,8 +32,38 @@ function safeSlug(slug: string) {
   return (slug || "").trim();
 }
 
-function formatUSDate(dt: Date) {
-  // Human-friendly English label
+function isValidDateParts(y: number, m: number, d: number) {
+  if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d)) return false;
+  if (y < 1900 || y > 2100) return false;
+  if (m < 1 || m > 12) return false;
+  if (d < 1 || d > 31) return false;
+
+  const dt = new Date(y, m - 1, d);
+  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
+}
+
+/**
+ * EN route slug format: MM-DD-YYYY
+ * Example: 01-10-2026 (Jan 10, 2026)
+ */
+function parseSlugDateUS(slug: string): Date | null {
+  const s = safeSlug(slug);
+  const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(s);
+  if (!m) return null;
+
+  const mm = Number(m[1]);
+  const dd = Number(m[2]);
+  const yyyy = Number(m[3]);
+
+  if (!isValidDateParts(yyyy, mm, dd)) return null;
+  return new Date(yyyy, mm - 1, dd);
+}
+
+function slugFromDateUS(dt: Date) {
+  return `${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}-${dt.getFullYear()}`;
+}
+
+function formatUSDateLong(dt: Date) {
   return new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Sao_Paulo",
     weekday: "long",
@@ -46,7 +74,6 @@ function formatUSDate(dt: Date) {
 }
 
 function formatSlashDateUS(dt: Date) {
-  // For compact references in titles/descriptions: MM/DD/YYYY
   const mm = String(dt.getMonth() + 1).padStart(2, "0");
   const dd = String(dt.getDate()).padStart(2, "0");
   const yyyy = dt.getFullYear();
@@ -55,10 +82,9 @@ function formatSlashDateUS(dt: Date) {
 
 /**
  * SEO title for the specific day.
- * We avoid literal “Daily Liturgy” and use the term people actually search: “Daily Mass Readings”.
  */
 function buildTitle(dt: Date) {
-  const pretty = formatUSDate(dt);
+  const pretty = formatUSDateLong(dt);
   return `Daily Mass Readings — ${pretty}`;
 }
 
@@ -71,18 +97,26 @@ function buildDescription(dt: Date) {
 }
 
 /**
- * Builds meta description including reading references (as requested), plus CTA.
- * Defensive: supports different field names.
+ * Builds meta description including reading references (defensive with field names), plus CTA.
  */
 function buildRefsDescriptionFromData(data: any) {
   const first =
-    data?.primeiraRef || data?.primeiraLeituraRef || data?.primeiraLeitura || null;
+    data?.primeiraRef ||
+    data?.primeiraLeituraRef ||
+    data?.primeiraLeitura ||
+    null;
 
   const psalm =
-    data?.salmoRef || data?.salmoResponsorialRef || data?.salmo || null;
+    data?.salmoRef ||
+    data?.salmoResponsorialRef ||
+    data?.salmo ||
+    null;
 
   const second =
-    data?.segundaRef || data?.segundaLeituraRef || data?.segundaLeitura || null;
+    data?.segundaRef ||
+    data?.segundaLeituraRef ||
+    data?.segundaLeitura ||
+    null;
 
   const gospel = data?.evangelhoRef || data?.evangelho || null;
 
@@ -92,7 +126,6 @@ function buildRefsDescriptionFromData(data: any) {
   if (second) parts.push(`Second Reading: ${second}`);
   if (gospel) parts.push(`Gospel: ${gospel}`);
 
-  // CTA at the end (matches your original intent)
   parts.push("Open and pray with the Daily Mass Readings on IA Tio Ben.");
 
   return parts.join(" • ");
@@ -113,13 +146,13 @@ async function buildDataEN(data: any) {
 
   return {
     ...data,
-    // sobrescreve os textos que o Hub lê
+    // override texts that your Hub reads
     primeiraTexto,
     salmoTexto,
     segundaTexto,
     evangelhoTexto,
 
-    // gera html para o mesmo renderer
+    // generate HTML for the same renderer
     primeiraHtml: toReadableHtml(primeiraTexto),
     salmoHtml: toReadableHtml(salmoTexto),
     segundaHtml: toReadableHtml(segundaTexto),
@@ -127,12 +160,30 @@ async function buildDataEN(data: any) {
   };
 }
 
+/**
+ * "Today" based on America/Sao_Paulo regardless of server TZ.
+ * Returns { yyyy, mm, dd } numeric parts.
+ */
+function getTodayPartsInSaoPaulo(now: Date) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+
+  const yyyy = Number(parts.find((p) => p.type === "year")?.value);
+  const mm = Number(parts.find((p) => p.type === "month")?.value);
+  const dd = Number(parts.find((p) => p.type === "day")?.value);
+
+  return { yyyy, mm, dd };
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolved = await Promise.resolve(params);
   const slug = safeSlug(resolved.data);
 
-  const dt = slug ? parseSlugDate(slug) : null;
+  const dt = slug ? parseSlugDateUS(slug) : null;
 
   // Fallback: invalid route (do not index)
   if (!dt) {
@@ -181,14 +232,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   try {
     const data = await fetchLiturgiaByDate(day, month, year);
     const dataEN = await buildDataEN(data);
-     description = buildRefsDescriptionFromData(dataEN);
+    description = buildRefsDescriptionFromData(dataEN);
   } catch {
     // keep fallback
   }
 
   const canonical = `${SITE_URL}${HUB_CANONICAL_PATH}/${slug}`;
 
-  // Your current OG route uses the same image path pattern; keep it consistent.
+  // Keep consistent with your current OG route pattern (ensure your OG generator supports US slugs)
   const ogImage = `${SITE_URL}/og/liturgia/${slug}.png`;
 
   return {
@@ -220,14 +271,15 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
   const resolved = await Promise.resolve(params);
   const slug = safeSlug(resolved.data);
 
-  const dt = slug ? parseSlugDate(slug) : null;
+  const dt = slug ? parseSlugDateUS(slug) : null;
+
   if (!dt) {
     return (
       <article className="mx-auto max-w-3xl px-4 py-10 bg-white text-slate-900 min-h-screen">
         <h1 className="text-2xl font-bold">Invalid date</h1>
         <p className="mt-2 text-sm text-slate-600">
-          Please use the format <span className="font-semibold">dd-mm-yyyy</span>. Example:{" "}
-          <span className="font-semibold">/en/daily-mass-readings/05-01-2026</span>
+          Please use the format <span className="font-semibold">mm-dd-yyyy</span>. Example:{" "}
+          <span className="font-semibold">/en/daily-mass-readings/01-10-2026</span>
         </p>
         <div className="mt-4">
           <a
@@ -251,8 +303,8 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
   const prev = new Date(year, month - 1, day - 1);
   const next = new Date(year, month - 1, day + 1);
 
-  const prevSlug = slugFromDate(prev);
-  const nextSlug = slugFromDate(next);
+  const prevSlug = slugFromDateUS(prev);
+  const nextSlug = slugFromDateUS(next);
 
   const canonical = `${SITE_URL}${HUB_CANONICAL_PATH}/${slug}`;
 
@@ -283,7 +335,7 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
     publisher: { "@type": "Organization", name: "IA Tio Ben" },
   };
 
-  const prettyDateEN = formatUSDate(dt);
+  const prettyDateEN = formatUSDateLong(dt);
 
   const faqJsonLd = {
     "@context": "https://schema.org",
@@ -310,21 +362,16 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
         name: "How do I access the readings for another date?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Use the /en/daily-mass-readings page and the month/year calendar to open any date at /en/daily-mass-readings/dd-mm-yyyy.",
+          text: "Use the /en/daily-mass-readings page and the month/year calendar to open any date at /en/daily-mass-readings/mm-dd-yyyy.",
         },
       },
     ],
   };
 
-  // Keep as-is (server time) to match your current behavior
-  const today = new Date();
-  const todaySlug = `${pad2(today.getDate())}-${pad2(today.getMonth() + 1)}-${today.getFullYear()}`;
-  const todayLabelEN = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Sao_Paulo",
-    month: "2-digit",
-    day: "2-digit",
-    year: "numeric",
-  }).format(today);
+  // Today (Sao Paulo time), for the “Today” button in Hub/Aside
+  const { yyyy, mm, dd } = getTodayPartsInSaoPaulo(new Date());
+  const todaySlug = `${pad2(mm)}-${pad2(dd)}-${yyyy}`; // MM-DD-YYYY
+  const todayLabelEN = `${pad2(mm)}/${pad2(dd)}/${yyyy}`; // MM/DD/YYYY
 
   return (
     <>
@@ -347,28 +394,27 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
       <article className="mx-auto w-full max-w-7xl px-3 sm:px-4 lg:px-6 py-6 bg-white text-slate-900 leading-relaxed min-h-screen">
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6">
           <main className="min-w-0">
-  <div className="mb-4 flex items-start justify-end">
-    <LanguageSwitcher />
-  </div>
+            <div className="mb-4 flex items-start justify-end">
+              <LanguageSwitcher />
+            </div>
 
-<LiturgiaHubPerfectEN
-  siteUrl={SITE_URL}
-  hubCanonicalPath={`${HUB_CANONICAL_PATH}/${slug}`}
-  dateSlug={slug}
-  data={dataEN}
-  prevSlug={prevSlug}
-  nextSlug={nextSlug}
-  todaySlug={todaySlug}
-  todayLabel={todayLabelEN}
-  className="max-w-none px-0 py-0"
-/>
+            <LiturgiaHubPerfectEN
+              siteUrl={SITE_URL}
+              hubCanonicalPath={`${HUB_CANONICAL_PATH}/${slug}`}
+              dateSlug={slug}
+              data={dataEN}
+              prevSlug={prevSlug}
+              nextSlug={nextSlug}
+              todaySlug={todaySlug}
+              todayLabel={todayLabelEN}
+              className="max-w-none px-0 py-0"
+            />
 
-  {/* Mobile ad (only here, to avoid duplication with the aside) */}
-  <div className="mt-6 lg:hidden">
-    <AdsenseSidebarMobile300x250 slot={ADS_SLOT_SIDEBAR_MOBILE} />
-  </div>
-</main>
-
+            {/* Mobile ad (only here, to avoid duplication with the aside) */}
+            <div className="mt-6 lg:hidden">
+              <AdsenseSidebarMobile300x250 slot={ADS_SLOT_SIDEBAR_MOBILE} />
+            </div>
+          </main>
 
           {/* ASIDE: desktop only */}
           <div className="hidden lg:block">
@@ -430,7 +476,9 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
           </div>
         </div>
 
-        <link rel="canonical" href={canonical} />
+        {/* Avoid duplicating canonical if you already set it via metadata.
+            If you have a canonical duplication issue, remove this line. */}
+        {/* <link rel="canonical" href={canonical} /> */}
       </article>
     </>
   );

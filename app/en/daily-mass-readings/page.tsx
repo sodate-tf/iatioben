@@ -1,10 +1,10 @@
 // app/en/daily-mass-readings/page.tsx
 //
-// English hub page (keeps PT URLs intact by living under /en/*)
+// English hub page (under /en/*)
 // Notes:
-// - Uses the culturally standard term “Daily Mass Readings” for SEO and user expectation.
-// - Keeps your existing date slug format dd-mm-yyyy to avoid reworking data fetching.
-// - Formats visible dates in English (en-US) for better UX, while the slug stays the same.
+// - Uses “Daily Mass Readings” for SEO/user expectation.
+// - EN day slugs are US-style: MM-DD-YYYY (consistent with your corrected EN day page).
+// - Visible dates are formatted in English (en-US).
 
 import Link from "next/link";
 import Script from "next/script";
@@ -74,10 +74,13 @@ export const metadata: Metadata = {
    HELPERS
    ========================= */
 
-function buildSlug(dd: number, mm: number, yyyy: number) {
-  const d = String(dd).padStart(2, "0");
+/**
+ * EN day slugs: MM-DD-YYYY
+ */
+function buildSlugUS(mm: number, dd: number, yyyy: number) {
   const m = String(mm).padStart(2, "0");
-  return `${d}-${m}-${yyyy}`;
+  const d = String(dd).padStart(2, "0");
+  return `${m}-${d}-${yyyy}`;
 }
 
 function getTodayInSaoPauloParts() {
@@ -101,7 +104,6 @@ function getTodayInSaoPauloParts() {
 }
 
 function formatDateLabelEN(year: number, month: number, day: number) {
-  // Human-friendly English label; slug remains dd-mm-yyyy
   const dt = new Date(Date.UTC(year, month - 1, day));
   return new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Sao_Paulo",
@@ -129,14 +131,17 @@ export default async function DailyMassReadingsHubPage() {
 
   const today: LiturgiaNormalized = await fetchLiturgiaByDate(day, month, year);
 
+  // Ensure EN day links use the US slug, independent of today.dateSlug (PT dd-mm-yyyy)
+  const todaySlugUS = buildSlugUS(month, day, year);
+
   const base = new Date(year, month - 1, day);
   const prev = new Date(base);
   prev.setDate(base.getDate() - 1);
   const next = new Date(base);
   next.setDate(base.getDate() + 1);
 
-  const prevSlug = buildSlug(prev.getDate(), prev.getMonth() + 1, prev.getFullYear());
-  const nextSlug = buildSlug(next.getDate(), next.getMonth() + 1, next.getFullYear());
+  const prevSlug = buildSlugUS(prev.getMonth() + 1, prev.getDate(), prev.getFullYear());
+  const nextSlug = buildSlugUS(next.getMonth() + 1, next.getDate(), next.getFullYear());
 
   const todayLabelEN = formatDateLabelEN(year, month, day);
 
@@ -177,7 +182,7 @@ export default async function DailyMassReadingsHubPage() {
         acceptedAnswer: {
           "@type": "Answer",
           text:
-            "Use the yearly and monthly calendar. Each day has its own URL in the format /en/daily-mass-readings/dd-mm-yyyy.",
+            "Use the yearly and monthly calendar. Each day has its own URL in the format /en/daily-mass-readings/mm-dd-yyyy.",
         },
       },
     ],
@@ -224,60 +229,59 @@ export default async function DailyMassReadingsHubPage() {
       <main className="mx-auto w-full max-w-7xl px-3 sm:px-4 lg:px-6 py-6 bg-white text-slate-900 leading-relaxed min-h-screen">
         <article className="min-w-0">
           <header className="mb-6">
-  <div className="flex items-start justify-between gap-4">
-    <div className="min-w-0">
-      <p className="text-xs font-semibold tracking-wide text-amber-700 uppercase">
-        IA Tio Ben • Liturgy
-      </p>
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold tracking-wide text-amber-700 uppercase">
+                  IA Tio Ben • Liturgy
+                </p>
 
-      <h1 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight">
-        Daily Mass Readings – Gospel, Readings &amp; Psalm of the Day
-      </h1>
-    </div>
+                <h1 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight">
+                  Daily Mass Readings – Gospel, Readings &amp; Psalm of the Day
+                </h1>
+              </div>
 
-    <div className="shrink-0">
-      <LanguageSwitcher />
-    </div>
-  </div>
+              <div className="shrink-0">
+                <LanguageSwitcher />
+              </div>
+            </div>
 
-  <p className="mt-3 text-base text-slate-600 max-w-3xl">
-    Here you’ll find the <strong>Daily Mass Readings</strong> for each day of the year, including the{" "}
-    <strong>Mass readings</strong>, <strong>responsorial psalm</strong>, and the{" "}
-    <strong>Gospel of the day</strong>. Use the monthly and yearly calendars to browse any date and
-    prepare your prayer and participation at Mass.
-  </p>
+            <p className="mt-3 text-base text-slate-600 max-w-3xl">
+              Here you’ll find the <strong>Daily Mass Readings</strong> for each day of the year, including the{" "}
+              <strong>Mass readings</strong>, <strong>responsorial psalm</strong>, and the{" "}
+              <strong>Gospel of the day</strong>. Use the monthly and yearly calendars to browse any date and
+              prepare your prayer and participation at Mass.
+            </p>
 
-  <div className="mt-4 flex flex-wrap gap-2">
-    <Link
-      href={`/en/daily-mass-readings/${today.dateSlug}`}
-      className="rounded-xl bg-amber-500 text-white px-4 py-2 text-sm font-semibold hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300"
-    >
-      Today’s Mass Readings • {todayLabelEN}
-    </Link>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link
+                href={`/en/daily-mass-readings/${todaySlugUS}`}
+                className="rounded-xl bg-amber-500 text-white px-4 py-2 text-sm font-semibold hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300"
+              >
+                Today’s Mass Readings • {todayLabelEN}
+              </Link>
 
-    <Link
-      href={`/en/daily-mass-readings/${prevSlug}`}
-      className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-    >
-      Yesterday
-    </Link>
+              <Link
+                href={`/en/daily-mass-readings/${prevSlug}`}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+              >
+                Yesterday
+              </Link>
 
-    <Link
-      href={`/en/daily-mass-readings/${nextSlug}`}
-      className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-    >
-      Tomorrow
-    </Link>
+              <Link
+                href={`/en/daily-mass-readings/${nextSlug}`}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+              >
+                Tomorrow
+              </Link>
 
-    <Link
-      href={`/en/daily-mass-readings/year/${year}`}
-      className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
-    >
-      Yearly calendar
-    </Link>
-  </div>
-</header>
-
+              <Link
+                href={`/en/daily-mass-readings/year/${year}`}
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+              >
+                Yearly calendar
+              </Link>
+            </div>
+          </header>
 
           <section className="mb-6">
             <AdsenseInArticle slot={ADS_SLOT_BODY_TOP} />
@@ -321,7 +325,7 @@ export default async function DailyMassReadingsHubPage() {
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Link
-                    href={`/en/daily-mass-readings/${today.dateSlug}`}
+                    href={`/en/daily-mass-readings/${todaySlugUS}`}
                     className="inline-flex rounded-xl bg-amber-500 text-white px-4 py-2 text-sm font-semibold hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-300"
                   >
                     Open full readings
@@ -390,7 +394,7 @@ export default async function DailyMassReadingsHubPage() {
                     <h3 className="font-bold">How do I access the readings for another date?</h3>
                     <p className="mt-2 text-sm text-slate-600">
                       Use the yearly and monthly calendar. Each day opens at{" "}
-                      <strong>/en/daily-mass-readings/dd-mm-yyyy</strong>.
+                      <strong>/en/daily-mass-readings/mm-dd-yyyy</strong>.
                     </p>
                   </div>
                 </div>
@@ -409,7 +413,7 @@ export default async function DailyMassReadingsHubPage() {
                 <LiturgiaAsideEN
                   year={year}
                   month={month}
-                  todaySlug={today.dateSlug}
+                  todaySlug={todaySlugUS}
                   todayLabel={todayLabelEN}
                   prevSlug={prevSlug}
                   nextSlug={nextSlug}
@@ -439,7 +443,7 @@ export default async function DailyMassReadingsHubPage() {
                 <LiturgiaAsideEN
                   year={year}
                   month={month}
-                  todaySlug={today.dateSlug}
+                  todaySlug={todaySlugUS}
                   todayLabel={todayLabelEN}
                   prevSlug={prevSlug}
                   nextSlug={nextSlug}

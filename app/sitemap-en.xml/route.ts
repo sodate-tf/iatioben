@@ -7,11 +7,14 @@ function pad2(n: number) {
   return String(n).padStart(2, "0");
 }
 
-function slugFromDate(d: Date) {
-  const dd = pad2(d.getDate());
+/**
+ * EN day slugs: MM-DD-YYYY (matches /en/daily-mass-readings/[data])
+ */
+function slugFromDateUS(d: Date) {
   const mm = pad2(d.getMonth() + 1);
+  const dd = pad2(d.getDate());
   const yyyy = d.getFullYear();
-  return `${dd}-${mm}-${yyyy}`;
+  return `${mm}-${dd}-${yyyy}`;
 }
 
 function isoDate(d: Date) {
@@ -22,7 +25,12 @@ function isoDate(d: Date) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function urlNode(loc: string, lastmod?: string, changefreq?: string, priority?: string) {
+function urlNode(
+  loc: string,
+  lastmod?: string,
+  changefreq?: string,
+  priority?: string
+) {
   return [
     "<url>",
     `<loc>${loc}</loc>`,
@@ -35,17 +43,42 @@ function urlNode(loc: string, lastmod?: string, changefreq?: string, priority?: 
     .join("");
 }
 
+/**
+ * Get "today" in America/Sao_Paulo to avoid year mismatch around midnight UTC.
+ */
+function getTodaySaoPauloYMD() {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  const yyyy = Number(parts.find((p) => p.type === "year")?.value);
+  const mm = Number(parts.find((p) => p.type === "month")?.value);
+  const dd = Number(parts.find((p) => p.type === "day")?.value);
+
+  if (!Number.isFinite(yyyy) || !Number.isFinite(mm) || !Number.isFinite(dd)) {
+    const now = new Date();
+    return { yyyy: now.getFullYear(), mm: now.getMonth() + 1, dd: now.getDate() };
+  }
+
+  return { yyyy, mm, dd };
+}
+
 export async function GET() {
-  const now = new Date();
-  const year = now.getFullYear();
+  // Use Sao Paulo date for consistent year boundaries
+  const { yyyy } = getTodaySaoPauloYMD();
+  const year = yyyy;
 
   // normalize base dates to midday to reduce DST edge cases
   const start = new Date(year, 0, 1, 12, 0, 0);
   const end = new Date(year + 1, 0, 1, 12, 0, 0);
 
+  const now = new Date();
   const urls: string[] = [];
 
-  // --- EN Static pages (your structure in the screenshot) ---
+  // --- EN Static pages ---
   urls.push(
     urlNode(`${SITE_URL}/en`, isoDate(now), "daily", "1.0"),
     urlNode(`${SITE_URL}/en/how-to-use-the-liturgy`, isoDate(now), "monthly", "0.9"),
@@ -73,10 +106,11 @@ export async function GET() {
     );
   }
 
-  // --- All daily pages for the year (dd-mm-yyyy) ---
+  // --- All daily pages for the year (MM-DD-YYYY) ---
   for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
-    const slug = slugFromDate(d);
+    const slug = slugFromDateUS(d);
     const lastmod = isoDate(d);
+
     urls.push(
       urlNode(
         `${SITE_URL}/en/daily-mass-readings/${slug}`,
@@ -96,7 +130,6 @@ export async function GET() {
   return new NextResponse(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      // Cache ok; ajuste se quiser mais agressivo
       "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
     },
   });
