@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { monthLabelPT, pad2 } from "@/lib/liturgia/date";
+import LanguageSwitcher from "@/components/i18n/LanguageSwitcher"; // ✅ ADD
 
 export const dynamic = "force-static";
 export const revalidate = 86400;
@@ -44,7 +45,6 @@ export async function generateMetadata({
   const canonicalPath = `/liturgia-diaria/ano/${year}`;
   const canonicalUrl = `${SITE_URL}${canonicalPath}`;
 
-  // ✅ WhatsApp-friendly (rota limpa .png)
   const ogImage = `${SITE_URL}/og/liturgia.png`;
 
   return {
@@ -73,12 +73,10 @@ export async function generateMetadata({
       card: "summary_large_image",
       title,
       description,
-      images: [ogImage], // ✅ importante
+      images: [ogImage],
     },
   };
 }
-
-
 
 /* =========================
    PAGE
@@ -94,7 +92,6 @@ export default async function LiturgiaAnoPage({ params }: { params: ParamsInput 
     label: monthLabelPT(year, m),
   }));
 
-  // Navegação ano anterior/próximo (cluster interno)
   const prevYear = year - 1;
   const nextYear = year + 1;
 
@@ -115,9 +112,16 @@ export default async function LiturgiaAnoPage({ params }: { params: ParamsInput 
         </nav>
 
         <header className="mb-6">
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
-            Calendário da Liturgia Diária – Ano {year}
-          </h1>
+          {/* ✅ Title + Language Switcher aligned */}
+          <div className="flex items-start justify-between gap-4">
+            <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
+              Calendário da Liturgia Diária – Ano {year}
+            </h1>
+
+            <div className="shrink-0">
+              <LanguageSwitcher />
+            </div>
+          </div>
 
           <p className="mt-2 text-sm text-gray-700 max-w-3xl">
             Este é o calendário anual da <strong>Liturgia Diária</strong> em <strong>{year}</strong>.

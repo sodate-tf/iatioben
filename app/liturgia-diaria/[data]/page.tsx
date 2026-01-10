@@ -7,6 +7,7 @@ import { parseSlugDate, slugFromDate, pad2 } from "@/lib/liturgia/date";
 import LiturgiaHubPerfect from "@/components/liturgia/LiturgiaHubPerfect";
 import LiturgiaAside from "@/components/liturgia/LiturgiaAside";
 import { AdsenseSidebarMobile300x250 } from "@/components/ads/AdsenseBlocks";
+import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 
 export const dynamic = "force-static";
 export const revalidate = 86400;
@@ -279,17 +280,30 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
       <article className="mx-auto w-full max-w-7xl px-3 sm:px-4 lg:px-6 py-6 bg-white text-slate-900 leading-relaxed min-h-screen">
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6">
           <main className="min-w-0">
-            <LiturgiaHubPerfect
-              siteUrl={SITE_URL}
-              hubCanonicalPath={`/liturgia-diaria/${slug}`}
-              dateSlug={slug}
-              data={data}
-              prevSlug={prevSlug}
-              nextSlug={nextSlug}
-              todaySlug={todaySlug}
-              todayLabel={todayLabel}
-              className="max-w-none px-0 py-0"
-            />
+            <main className="min-w-0">
+                {/* Language switcher (PT/EN) */}
+                <div className="mb-4 flex items-center justify-end">
+                  <LanguageSwitcher />
+                </div>
+
+                <LiturgiaHubPerfect
+                  siteUrl={SITE_URL}
+                  hubCanonicalPath={`/liturgia-diaria/${slug}`}
+                  dateSlug={slug}
+                  data={data}
+                  prevSlug={prevSlug}
+                  nextSlug={nextSlug}
+                  todaySlug={todaySlug}
+                  todayLabel={todayLabel}
+                  className="max-w-none px-0 py-0"
+                />
+
+                {/* Anúncio mobile (somente aqui, para não duplicar com o aside) */}
+                <div className="mt-6 lg:hidden">
+                  <AdsenseSidebarMobile300x250 slot={ADS_SLOT_SIDEBAR_MOBILE} />
+                </div>
+              </main>
+
 
             {/* Anúncio mobile (somente aqui, para não duplicar com o aside) */}
             <div className="mt-6 lg:hidden">

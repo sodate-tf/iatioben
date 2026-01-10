@@ -1,18 +1,26 @@
-// app/liturgia-diaria/ano/[ano]/[mes]/page.tsx
+// app/en/daily-mass-readings/year/[year]/[month]/page.tsx
+//
+// English monthly calendar page (parallel to PT, does NOT change PT indexed URLs).
+// - Uses “Daily Mass Readings” as the culturally standard term.
+// - Keeps dd-mm-yyyy slugs to match your existing fetch/parse logic.
+// - Uses English month labels and weekday headers.
+// - Keeps internal linking (prev/next month, today, year hub, and crawlable day list).
+// - Keeps your existing LiturgiaAside (links still point to PT blog unless you later create EN versions).
 
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { daysInMonth, monthLabelPT, pad2 } from "@/lib/liturgia/date";
+import { daysInMonth, pad2 } from "@/lib/liturgia/date";
 import LiturgiaAside from "@/components/liturgia/LiturgiaAside";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
+import LiturgiaAsideEN from "@/components/liturgia/LiturgiaAsideEN";
 
 export const dynamic = "force-static";
-export const revalidate = 86400; // mantém "Hoje" atualizado
+export const revalidate = 86400; // keep "Today" updated
 
 const SITE_URL = "https://www.iatioben.com.br";
 
-type RouteParams = { ano: string; mes: string };
+type RouteParams = { year: string; month: string };
 type ParamsInput = RouteParams | Promise<RouteParams>;
 
 /* =========================
@@ -23,8 +31,8 @@ async function resolveParams(params: ParamsInput): Promise<RouteParams> {
 }
 
 function parseYearMonth(p: RouteParams) {
-  const year = Number(p.ano);
-  const month = Number(p.mes);
+  const year = Number(p.year);
+  const month = Number(p.month);
 
   if (!Number.isFinite(year) || !Number.isFinite(month)) return null;
   if (!Number.isInteger(year) || !Number.isInteger(month)) return null;
@@ -34,6 +42,18 @@ function parseYearMonth(p: RouteParams) {
   return { year, month };
 }
 
+function monthLabelEN(year: number, month: number) {
+  const dt = new Date(Date.UTC(year, month - 1, 1));
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    month: "long",
+    year: "numeric",
+  }).format(dt);
+}
+
+/* =========================
+   SEO METADATA
+   ========================= */
 export async function generateMetadata({
   params,
 }: {
@@ -45,16 +65,18 @@ export async function generateMetadata({
 
   const { year, month } = ym;
 
-  const monthName = monthLabelPT(year, month);
-  const title = `Liturgia diária de ${monthName} – Leituras, Salmo e Evangelho do dia`;
-  const description =
-    `Calendário mensal da Liturgia Diária de ${monthName}. ` +
-    `Acesse leituras da Missa, salmo responsorial e evangelho completos de cada dia.`;
+  const monthName = monthLabelEN(year, month);
 
-  const canonicalPath = `/liturgia-diaria/ano/${year}/${pad2(month)}`;
+  // SEO: “Daily Mass Readings” is the head term; month name is the qualifier
+  const title = `Daily Mass Readings for ${monthName} – Readings, Psalm and Gospel`;
+  const description =
+    `Monthly calendar for the Daily Mass Readings in ${monthName}. ` +
+    `Access the Mass readings, responsorial psalm and Gospel for each day.`;
+
+  const canonicalPath = `/en/daily-mass-readings/year/${year}/${pad2(month)}`;
   const canonicalUrl = `${SITE_URL}${canonicalPath}`;
 
-  // ✅ WhatsApp-friendly (rota limpa .png)
+  // WhatsApp-friendly (clean .png)
   const ogImage = `${SITE_URL}/og/liturgia.png`;
 
   return {
@@ -68,13 +90,13 @@ export async function generateMetadata({
       title,
       description,
       siteName: "IA Tio Ben",
-      locale: "pt_BR",
+      locale: "en_US",
       images: [
         {
           url: ogImage,
           width: 1200,
           height: 630,
-          alt: `Liturgia Diária – ${monthName} – IA Tio Ben`,
+          alt: `Daily Mass Readings – ${monthName} – IA Tio Ben`,
         },
       ],
     },
@@ -83,12 +105,10 @@ export async function generateMetadata({
       card: "summary_large_image",
       title,
       description,
-      images: [ogImage], // ✅ importante
+      images: [ogImage],
     },
   };
 }
-
-
 
 /* =========================
    HELPERS
@@ -102,7 +122,7 @@ function getNextMonth(year: number, month: number) {
 }
 
 function weekdayIndexMondayFirst(date: Date) {
-  return (date.getDay() + 6) % 7; // seg=0..dom=6
+  return (date.getDay() + 6) % 7; // Mon=0..Sun=6
 }
 
 function slugFromDate(d: Date) {
@@ -112,12 +132,15 @@ function slugFromDate(d: Date) {
   return `${dd}-${mm}-${yyyy}`;
 }
 
-function labelFromSlug(slug: string) {
-  return slug.replaceAll("-", "/");
+function labelFromSlugEN(slug: string) {
+  // slug is dd-mm-yyyy; convert to MM/DD/YYYY for EN label
+  const [dd, mm, yyyy] = slug.split("-");
+  if (!dd || !mm || !yyyy) return slug.replaceAll("-", "/");
+  return `${mm}/${dd}/${yyyy}`;
 }
 
 function getTodayInSaoPaulo(): Date {
-  const parts = new Intl.DateTimeFormat("pt-BR", {
+  const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Sao_Paulo",
     year: "numeric",
     month: "2-digit",
@@ -143,7 +166,11 @@ function isSameYMD(a: Date, b: Date) {
 /* =========================
    PAGE
    ========================= */
-export default async function LiturgiaMesPage({ params }: { params: ParamsInput }) {
+export default async function DailyMassReadingsMonthPage({
+  params,
+}: {
+  params: ParamsInput;
+}) {
   const raw = await resolveParams(params);
   const ym = parseYearMonth(raw);
   if (!ym) notFound();
@@ -151,15 +178,16 @@ export default async function LiturgiaMesPage({ params }: { params: ParamsInput 
   const { year, month } = ym;
 
   const totalDays = daysInMonth(year, month);
-  const monthName = monthLabelPT(year, month);
+  const monthName = monthLabelEN(year, month);
 
+  // Day links (IMPORTANT: point to EN day pages)
   const days = Array.from({ length: totalDays }, (_, i) => {
     const day = i + 1;
     const slug = `${pad2(day)}-${pad2(month)}-${year}`;
-    return { day, slug, href: `/liturgia-diaria/${slug}` };
+    return { day, slug, href: `/en/daily-mass-readings/${slug}` };
   });
 
-  // Grid do calendário
+  // Calendar grid
   const firstDate = new Date(year, month - 1, 1);
   const startOffset = weekdayIndexMondayFirst(firstDate);
 
@@ -179,7 +207,7 @@ export default async function LiturgiaMesPage({ params }: { params: ParamsInput 
   // Aside props
   const today = getTodayInSaoPaulo();
   const todaySlug = slugFromDate(today);
-  const todayLabel = labelFromSlug(todaySlug);
+  const todayLabel = labelFromSlugEN(todaySlug);
 
   const isMonthOfToday = today.getFullYear() === year && today.getMonth() + 1 === month;
   const baseDate = isMonthOfToday ? today : new Date(year, month - 1, 1);
@@ -193,9 +221,10 @@ export default async function LiturgiaMesPage({ params }: { params: ParamsInput 
   const prevSlug = slugFromDate(prevDate);
   const nextSlug = slugFromDate(nextDate);
 
-  const dow = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+  // Weekday headers (Mon-first)
+  const dow = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-  const yearHref = `/liturgia-diaria/ano/${year}`;
+  const yearHref = `/en/daily-mass-readings/year/${year}`;
   const ADS_SLOT_ASIDE_300x250 = "8534838745";
 
   return (
@@ -206,8 +235,8 @@ export default async function LiturgiaMesPage({ params }: { params: ParamsInput 
           <nav aria-label="Breadcrumb" className="mb-4 text-sm text-gray-600">
             <ol className="flex flex-wrap items-center gap-2">
               <li>
-                <Link href="/liturgia-diaria" className="hover:underline">
-                  Liturgia Diária
+                <Link href="/en/daily-mass-readings" className="hover:underline">
+                  Daily Mass Readings
                 </Link>
               </li>
               <li aria-hidden="true">/</li>
@@ -224,7 +253,7 @@ export default async function LiturgiaMesPage({ params }: { params: ParamsInput 
           <header className="mb-6">
   <div className="flex items-start justify-between gap-4">
     <h1 className="text-3xl font-extrabold tracking-tight text-gray-900">
-      Calendário da Liturgia Diária de {monthName}
+      Daily Mass Readings Calendar for {monthName}
     </h1>
 
     <div className="shrink-0">
@@ -233,40 +262,40 @@ export default async function LiturgiaMesPage({ params }: { params: ParamsInput 
   </div>
 
   <p className="mt-2 text-sm text-gray-700 max-w-3xl">
-    Consulte a <strong>Liturgia Diária</strong> de qualquer data em{" "}
-    <strong>{monthName}</strong>. Em cada dia você encontra as{" "}
-    <strong>leituras da Missa</strong>, o <strong>salmo responsorial</strong> e o{" "}
-    <strong>evangelho do dia</strong>, organizados para estudo, oração e preparação para a Missa.
+    Browse the <strong>Daily Mass Readings</strong> for any date in{" "}
+    <strong>{monthName}</strong>. Each day includes the <strong>Mass readings</strong>, the{" "}
+    <strong>responsorial psalm</strong>, and the <strong>Gospel of the day</strong>, organized for
+    study, prayer and preparation for Mass.
   </p>
 
   <div className="mt-4 flex flex-wrap items-center gap-2">
     <Link
-      href={`/liturgia-diaria/ano/${prevMonth.year}/${pad2(prevMonth.month)}`}
+      href={`/en/daily-mass-readings/year/${prevMonth.year}/${pad2(prevMonth.month)}`}
       className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-gray-50"
     >
-      ← {monthLabelPT(prevMonth.year, prevMonth.month)}
+      ← {monthLabelEN(prevMonth.year, prevMonth.month)}
     </Link>
 
     <Link
-      href={`/liturgia-diaria/ano/${nextMonth.year}/${pad2(nextMonth.month)}`}
+      href={`/en/daily-mass-readings/year/${nextMonth.year}/${pad2(nextMonth.month)}`}
       className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-gray-50"
     >
-      {monthLabelPT(nextMonth.year, nextMonth.month)} →
+      {monthLabelEN(nextMonth.year, nextMonth.month)} →
     </Link>
 
     <Link
-      href={`/liturgia-diaria/${todaySlug}`}
+      href={`/en/daily-mass-readings/${todaySlug}`}
       className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold hover:bg-amber-100 text-amber-900"
     >
-      Liturgia de hoje ({todayLabel})
+      Today’s readings ({todayLabel})
     </Link>
   </div>
 </header>
 
 
-          {/* Calendário visual */}
+          {/* Visual calendar */}
           <section
-            aria-label={`Calendário mensal de ${monthName}`}
+            aria-label={`Monthly calendar for ${monthName}`}
             className="rounded-2xl border border-gray-200 overflow-hidden bg-white"
           >
             <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
@@ -301,13 +330,13 @@ export default async function LiturgiaMesPage({ params }: { params: ParamsInput 
                       "flex flex-col justify-between",
                       isToday ? "ring-1 ring-amber-300 bg-amber-50/40" : "",
                     ].join(" ")}
-                    aria-label={`Abrir liturgia do dia ${pad2(cell.day)}/${pad2(month)}/${year}`}
+                    aria-label={`Open the Mass readings for ${pad2(month)}/${pad2(cell.day)}/${year}`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <span className="text-sm font-extrabold text-gray-900">{cell.day}</span>
                       {isToday ? (
                         <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-900">
-                          Hoje
+                          Today
                         </span>
                       ) : null}
                     </div>
@@ -324,13 +353,13 @@ export default async function LiturgiaMesPage({ params }: { params: ParamsInput 
             </div>
           </section>
 
-          {/* Lista SEO (crawl) */}
+          {/* SEO day list (crawl) */}
           <section className="mt-10">
             <h2 className="text-xl font-extrabold tracking-tight text-gray-900">
-              Liturgia de cada dia em {monthName}
+              Daily Mass Readings for each day in {monthName}
             </h2>
             <p className="mt-2 text-sm text-gray-700 max-w-3xl">
-              Links diretos para cada data. Cada página contém leituras, salmo e evangelho completos.
+              Direct links for each date. Every page includes the complete readings, psalm and Gospel.
             </p>
 
             <ul className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
@@ -340,7 +369,7 @@ export default async function LiturgiaMesPage({ params }: { params: ParamsInput 
                     href={x.href}
                     className="block rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold hover:bg-gray-50"
                   >
-                    {pad2(x.day)}/{pad2(month)}/{year}
+                    {pad2(month)}/{pad2(x.day)}/{year}
                   </Link>
                 </li>
               ))}
@@ -351,13 +380,13 @@ export default async function LiturgiaMesPage({ params }: { params: ParamsInput 
                 href={yearHref}
                 className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold hover:bg-gray-50"
               >
-                Ver calendário do ano {year}
+                View the {year} yearly calendar
               </Link>
               <Link
-                href="/liturgia-diaria"
+                href="/en/daily-mass-readings"
                 className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold hover:bg-gray-50"
               >
-                Voltar
+                Back
               </Link>
             </div>
           </section>
@@ -365,7 +394,7 @@ export default async function LiturgiaMesPage({ params }: { params: ParamsInput 
 
         {/* ASIDE (desktop) */}
         <aside className="hidden lg:block">
-          <LiturgiaAside
+          <LiturgiaAsideEN
             year={year}
             month={month}
             todaySlug={todaySlug}
@@ -377,9 +406,9 @@ export default async function LiturgiaMesPage({ params }: { params: ParamsInput 
         </aside>
       </div>
 
-      {/* ASIDE (mobile): sem adsSlotDesktop300x250 para não duplicar anúncios */}
+      {/* ASIDE (mobile): no adsSlotDesktop300x250 to avoid duplicated ads */}
       <div className="mt-8 lg:hidden">
-        <LiturgiaAside
+        <LiturgiaAsideEN
           year={year}
           month={month}
           todaySlug={todaySlug}
