@@ -64,15 +64,25 @@ function slugFromDateUS(dt: Date) {
   return `${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}-${dt.getFullYear()}`;
 }
 
+// Para títulos, breadcrumbs, textos humanos (SEO)
 function formatUSDateLong(dt: Date) {
   return new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Sao_Paulo",
     weekday: "long",
     year: "numeric",
     month: "long",
-    day: "2-digit",
+    day: "numeric",
   }).format(dt);
 }
+
+// Para datas numéricas (slug visível, labels, UI compacta)
+function formatUSDate(dt: Date) {
+  const mm = String(dt.getMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getDate()).padStart(2, "0");
+  const yyyy = dt.getFullYear();
+  return `${mm}/${dd}/${yyyy}`;
+}
+
 
 function formatSlashDateUS(dt: Date) {
   const mm = String(dt.getMonth() + 1).padStart(2, "0");
