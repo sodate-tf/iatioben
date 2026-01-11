@@ -146,8 +146,8 @@ export default function LiturgiaHubPerfectEN({
   const antEntranceHtml = (data as any).antEntradaHtml as string | undefined;
   const antCommunionHtml = (data as any).antComunhaoHtml as string | undefined;
 
-  const dayHref = (slug: string) => `/en/daily-mass-readings/${slug}`;
-  function formatUSDateFromString(dateStr: string): string {
+const dayHref = (slug: string) => `/en/daily-mass-readings/${slug}`;
+function formatUSDateFromString(dateStr: string): string {
   if (!dateStr) return "";
 
   const dt = new Date(dateStr);
@@ -159,7 +159,8 @@ export default function LiturgiaHubPerfectEN({
 
   return `${mm}/${dd}/${yyyy}`;
 }
- const dateLabelUS = formatUSDateFromString(data.dateLabel);
+const dateLabelUS = formatUSDateFromString(data.dateLabel);
+
   return (
     <article
       className={[
