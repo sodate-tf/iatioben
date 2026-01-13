@@ -2,9 +2,11 @@
 //
 // English day page (parallel to PT) using US date slug pattern MM-DD-YYYY.
 // - Route slug format: MM-DD-YYYY (e.g., /en/daily-mass-readings/01-13-2026)
-// - SEO: “Daily Mass Readings — <weekday, month day, year>”
+// - SEO: “Daily Mass Readings — <weekday, month day, year>” (America/Sao_Paulo-safe)
 // - Fetches PT liturgy data, but swaps texts with English (NET Bible) when available.
 // - Canonical ALWAYS normalized to MM-DD-YYYY; legacy DD-MM-YYYY gets redirected.
+//
+// FIX: Prevent weekday/day shift in title/OG/FAQ by formatting from ISO with a safe midday anchor.
 
 import type { Metadata } from "next";
 import Script from "next/script";
@@ -101,7 +103,11 @@ function normalizeUSSlugOrNull(inputSlug: string): {
   const s = safeSlug(inputSlug);
   const dtUS = parseSlugUS(s);
   if (dtUS) {
-    return { dt: dtUS, normalizedSlug: slugFromDateUS(dtUS), needsRedirect: false };
+    return {
+      dt: dtUS,
+      normalizedSlug: slugFromDateUS(dtUS),
+      needsRedirect: false,
+    };
   }
 
   const dtLegacy = parseSlugLegacyDMY(s);
@@ -128,16 +134,6 @@ function todayInSaoPaulo(): Date {
   return new Date(yyyy, mm - 1, dd);
 }
 
-function formatUSDateLong(dt: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Sao_Paulo",
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(dt);
-}
-
 function formatSlashDateUS(dt: Date) {
   const mm = String(dt.getMonth() + 1).padStart(2, "0");
   const dd = String(dt.getDate()).padStart(2, "0");
@@ -145,12 +141,40 @@ function formatSlashDateUS(dt: Date) {
   return `${mm}/${dd}/${yyyy}`;
 }
 
-function buildTitle(dt: Date) {
-  return `Daily Mass Readings — ${formatUSDateLong(dt)}`;
+/**
+ * FIX: Use ISO + midday anchor to avoid weekday shifting across environments.
+ */
+function dateISOFromDate(dt: Date) {
+  return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
 }
 
-function buildDescription(dt: Date) {
-  const compact = formatSlashDateUS(dt);
+function formatEnglishLongFromISO(dateISO: string) {
+  // dateISO: YYYY-MM-DD
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) return "";
+
+  const [y, m, d] = dateISO.split("-").map(Number);
+
+  // Midday local anchor avoids any timezone boundary issues
+  const anchor = new Date(y, m - 1, d, 12, 0, 0);
+
+  return anchor.toLocaleDateString("en-US", {
+    timeZone: "America/Sao_Paulo",
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function buildTitleFromISO(dateISO: string) {
+  const pretty = formatEnglishLongFromISO(dateISO);
+  return `Daily Mass Readings — ${pretty}`;
+}
+
+function buildDescriptionFromISO(dateISO: string) {
+  // Keep your previous compact format stable in description
+  const [y, m, d] = dateISO.split("-"); // YYYY MM DD
+  const compact = `${m}/${d}/${y}`;
   return `Mass readings for ${compact}: Gospel, readings and responsorial psalm. Browse the calendar and navigate by date, month and year.`;
 }
 
@@ -166,7 +190,11 @@ function pickRef(data: any, keys: string[]) {
 }
 
 function buildRefsDescriptionFromData(data: any) {
-  const first = pickRef(data, ["primeiraRef", "primeiraLeituraRef", "primeiraLeitura"]);
+  const first = pickRef(data, [
+    "primeiraRef",
+    "primeiraLeituraRef",
+    "primeiraLeitura",
+  ]);
   const psalm = pickRef(data, ["salmoRef", "salmoResponsorialRef", "salmo"]);
   const second = pickRef(data, ["segundaRef", "segundaLeituraRef", "segundaLeitura"]);
   const gospel = pickRef(data, ["evangelhoRef", "evangelho"]);
@@ -195,7 +223,12 @@ function pickText(data: any, keys: string[]) {
  * - Falls back to PT text rendered via toReadableHtml
  */
 async function buildDataEN(dataPT: any) {
-  const primeiraRef = pickRef(dataPT, ["primeiraRef", "primeiraLeituraRef", "primeiraLeituraRefTxt", "primeiraLeitura"]);
+  const primeiraRef = pickRef(dataPT, [
+    "primeiraRef",
+    "primeiraLeituraRef",
+    "primeiraLeituraRefTxt",
+    "primeiraLeitura",
+  ]);
   const salmoRef = pickRef(dataPT, ["salmoRef", "salmoResponsorialRef", "salmo"]);
   const segundaRef = pickRef(dataPT, ["segundaRef", "segundaLeituraRef", "segundaLeitura"]);
   const evangelhoRef = pickRef(dataPT, ["evangelhoRef", "evangelho"]);
@@ -288,7 +321,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
-  const title = buildTitle(dt);
+  const dateISO = dateISOFromDate(dt);
+  const title = buildTitleFromISO(dateISO);
 
   let description =
     "Gospel, readings and responsorial psalm of the day. Open and pray with the Daily Mass Readings on IA Tio Ben.";
@@ -366,12 +400,13 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
   const nextSlug = slugFromDateUS(next);
 
   const canonical = `${SITE_URL}${HUB_CANONICAL_PATH}/${normalizedSlug}`;
-  const prettyDateEN = formatUSDateLong(dt);
 
-  // Ensure these exist even if your data model differs
+  // Prefer ISO from data if present, else derive from dt
   const dateISO =
-    (typeof dataEN?.dateISO === "string" && dataEN.dateISO) ||
-    `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
+    (typeof dataEN?.dateISO === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dataEN.dateISO) && dataEN.dateISO) ||
+    dateISOFromDate(dt);
+
+  const prettyDateEN = formatEnglishLongFromISO(dateISO);
 
   const dateLabel =
     (typeof dataEN?.dateLabel === "string" && dataEN.dateLabel) ||
@@ -395,8 +430,8 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
   const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: buildTitle(dt),
-    description: buildDescription(dt),
+    headline: buildTitleFromISO(dateISO),
+    description: buildDescriptionFromISO(dateISO),
     mainEntityOfPage: canonical,
     datePublished: `${dateISO}T06:00:00-03:00`,
     dateModified: `${dateISO}T06:00:00-03:00`,
