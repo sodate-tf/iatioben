@@ -8,15 +8,28 @@ import DailyParagraph from "./DailyParagraph";
 
 type Props = {
   siteUrl: string;
-  hubCanonicalPath: string; // ex: /en/daily-mass-readings/05-01-2026
-  dateSlug: string; // dd-mm-yyyy
+
+  /**
+   * Canonical base path for the English hub (no trailing date).
+   * Example: /en/daily-mass-readings
+   */
+  hubCanonicalPath: string;
+
+  /**
+   * Current page slug for EN routes.
+   * IMPORTANT: EN uses MM-DD-YYYY (e.g., 01-13-2026)
+   */
+  dateSlug: string; // mm-dd-yyyy
+
   data: LiturgiaNormalized;
 
+  /** Adjacent day slugs for EN routes (MM-DD-YYYY) */
   prevSlug: string;
   nextSlug: string;
 
-  todaySlug: string;
-  todayLabel: string; // ex: 01/10/2026 (en-US) ou “January 10, 2026” — você decide no page.tsx
+  /** Today slug/label (EN) */
+  todaySlug: string; // mm-dd-yyyy
+  todayLabel: string; // e.g., 01/13/2026 or “January 13, 2026”
 
   className?: string;
 };
@@ -50,7 +63,13 @@ function TabButton({
   );
 }
 
-function HtmlBody({ html, fallbackText }: { html?: string; fallbackText?: string }) {
+function HtmlBody({
+  html,
+  fallbackText,
+}: {
+  html?: string;
+  fallbackText?: string;
+}) {
   const hasHtml = Boolean(html && html.trim());
   const hasText = Boolean(fallbackText && fallbackText.trim());
 
@@ -65,6 +84,7 @@ function HtmlBody({ html, fallbackText }: { html?: string; fallbackText?: string
           "[&_a]:text-amber-700 [&_a]:font-semibold [&_a]:underline [&_a]:decoration-amber-300 hover:[&_a]:decoration-amber-500",
           "[&_sub]:align-baseline",
         ].join(" ")}
+        // NOTE: ensure upstream sanitizer/normalizer produces safe HTML
         dangerouslySetInnerHTML={{ __html: safeHtml }}
       />
     );
@@ -95,7 +115,9 @@ function ReadingBlock({
           {title}
         </p>
         {refText ? (
-          <p className="text-sm sm:text-base font-bold text-slate-900">{refText}</p>
+          <p className="text-sm sm:text-base font-bold text-slate-900">
+            {refText}
+          </p>
         ) : null}
       </div>
 
@@ -109,15 +131,58 @@ function ReadingBlock({
 function Chip({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <p className="text-[11px] font-semibold text-slate-500 uppercase">{label}</p>
-      <p className="mt-1 text-sm font-bold text-slate-900 break-words">{value || "—"}</p>
+      <p className="text-[11px] font-semibold text-slate-500 uppercase">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-bold text-slate-900 break-words">
+        {value || "—"}
+      </p>
     </div>
   );
 }
 
+function isValidEnSlugMMDDYYYY(slug: string): boolean {
+  // MM-DD-YYYY (with leading zeros)
+  if (!slug) return false;
+  if (!/^\d{2}-\d{2}-\d{4}$/.test(slug)) return false;
+
+  const [mmS, ddS, yyyyS] = slug.split("-");
+  const mm = Number(mmS);
+  const dd = Number(ddS);
+  const yyyy = Number(yyyyS);
+  if (!mm || !dd || !yyyy) return false;
+  if (mm < 1 || mm > 12) return false;
+  if (dd < 1 || dd > 31) return false;
+
+  // Validate real date
+  const dt = new Date(Date.UTC(yyyy, mm - 1, dd, 12, 0, 0));
+  return (
+    dt.getUTCFullYear() === yyyy &&
+    dt.getUTCMonth() === mm - 1 &&
+    dt.getUTCDate() === dd
+  );
+}
+
+function enUSLabelFromISO(dateISO?: string): string {
+  // dateISO: YYYY-MM-DD
+  if (!dateISO) return "";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) return "";
+
+  // Use midday UTC to avoid timezone edge cases
+  const dt = new Date(`${dateISO}T12:00:00Z`);
+  if (Number.isNaN(dt.getTime())) return "";
+  return dt.toLocaleDateString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric",
+  });
+}
+
 export default function LiturgiaHubPerfectEN({
-  siteUrl,
-  hubCanonicalPath,
+  // siteUrl and hubCanonicalPath are intentionally not used inside the client component:
+  // canonical/metadata must be handled in generateMetadata (server side).
+  siteUrl: _siteUrl,
+  hubCanonicalPath: _hubCanonicalPath,
   dateSlug,
   data,
   prevSlug,
@@ -126,19 +191,9 @@ export default function LiturgiaHubPerfectEN({
   todayLabel,
   className,
 }: Props) {
-  const canonical = `${siteUrl}${hubCanonicalPath}`;
-
-  const hasSecond = useMemo(() => {
-    return Boolean(
-      (data.segundaRef && data.segundaRef.trim()) ||
-        (data.segundaTexto && data.segundaTexto.trim()) ||
-        ((data as any).segundaHtml && String((data as any).segundaHtml).trim())
-    );
-  }, [data]);
-
   const [tab, setTab] = useState<TabKey>("readings");
 
-  // Prefer HTML when present (your normalizer already provides it)
+  // Prefer normalized HTML when present
   const firstHtml = (data as any).primeiraHtml as string | undefined;
   const psalmHtml = (data as any).salmoHtml as string | undefined;
   const secondHtml = (data as any).segundaHtml as string | undefined;
@@ -147,29 +202,35 @@ export default function LiturgiaHubPerfectEN({
   const antEntranceHtml = (data as any).antEntradaHtml as string | undefined;
   const antCommunionHtml = (data as any).antComunhaoHtml as string | undefined;
 
-const dayHref = (slug: string) => `/en/daily-mass-readings/${slug}`;
-function formatUSDateFromString(dateStr: string): string {
-  if (!dateStr) return "";
+  const hasSecond = useMemo(() => {
+    return Boolean(
+      (data.segundaRef && data.segundaRef.trim()) ||
+        (data.segundaTexto && data.segundaTexto.trim()) ||
+        (secondHtml && secondHtml.trim())
+    );
+  }, [data.segundaRef, data.segundaTexto, secondHtml]);
 
-  // Espera formato dd/mm/yyyy
-  const parts = dateStr.split("/");
-  if (parts.length !== 3) return "";
+  const dayHref = (slug: string) => `/en/daily-mass-readings/${slug}`;
 
-  const [dd, mm, yyyy] = parts.map(Number);
-  if (!dd || !mm || !yyyy) return "";
+  // Robust title label derived from ISO (not from PT dateLabel)
+  const dateLabelUS = useMemo(() => enUSLabelFromISO(data?.dateISO), [data?.dateISO]);
 
-  // Cria a data corretamente (month é 0-based)
-  const dt = new Date(yyyy, mm - 1, dd);
-  if (Number.isNaN(dt.getTime())) return "";
+  // Defensive: if caller passes an invalid slug, still render but avoid generating broken self-link
+  const safeDateSlug = useMemo(() => {
+    return isValidEnSlugMMDDYYYY(dateSlug) ? dateSlug : todaySlug;
+  }, [dateSlug, todaySlug]);
 
-  const usMM = String(dt.getMonth() + 1).padStart(2, "0");
-  const usDD = String(dt.getDate()).padStart(2, "0");
-  const usYYYY = dt.getFullYear();
+  const safePrevSlug = useMemo(() => {
+    return isValidEnSlugMMDDYYYY(prevSlug) ? prevSlug : todaySlug;
+  }, [prevSlug, todaySlug]);
 
-  return `${usMM}/${usDD}/${usYYYY}`;
-}
+  const safeNextSlug = useMemo(() => {
+    return isValidEnSlugMMDDYYYY(nextSlug) ? nextSlug : todaySlug;
+  }, [nextSlug, todaySlug]);
 
-const dateLabelUS = formatUSDateFromString(data.dateLabel);
+  const safeTodaySlug = useMemo(() => {
+    return isValidEnSlugMMDDYYYY(todaySlug) ? todaySlug : safeDateSlug;
+  }, [todaySlug, safeDateSlug]);
 
   return (
     <article
@@ -181,26 +242,25 @@ const dateLabelUS = formatUSDateFromString(data.dateLabel);
       itemScope
       itemType="https://schema.org/Article"
     >
-      <link rel="canonical" href={canonical} />
-
       <header className="mb-6">
         <p className="text-xs font-semibold tracking-wide text-amber-700 uppercase">
           IA Tio Ben • Liturgy
         </p>
 
         <h1 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight">
-          Daily Mass Readings for {dateLabelUS}: Gospel & Readings
+          Daily Mass Readings for {dateLabelUS || todayLabel}: Gospel &amp; Readings
         </h1>
 
         <p className="mt-2 text-sm text-slate-600">
           {data.celebration ? data.celebration : ""}
           {data.color ? ` • Liturgical color: ${data.color}` : ""}
         </p>
-          {/* ADD: editorial paragraph of the day (Liturgical season / special dates) */}
+
+        {/* Editorial paragraph of the day (Liturgical season / special dates) */}
         <div className="mt-3">
-          <DailyParagraph date={dateSlug} locale="en" />
+          <DailyParagraph date={safeDateSlug} locale="en" />
         </div>
-        
+
         <div className="mt-4 flex flex-wrap gap-2">
           <Link
             href="/en/daily-mass-readings"
@@ -210,21 +270,21 @@ const dateLabelUS = formatUSDateFromString(data.dateLabel);
           </Link>
 
           <Link
-            href={dayHref(todaySlug)}
+            href={dayHref(safeTodaySlug)}
             className="rounded-xl bg-amber-600 text-white px-4 py-2 text-sm font-semibold hover:bg-amber-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
           >
             Today • {todayLabel}
           </Link>
 
           <Link
-            href={dayHref(prevSlug)}
+            href={dayHref(safePrevSlug)}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
           >
             Yesterday
           </Link>
 
           <Link
-            href={dayHref(nextSlug)}
+            href={dayHref(safeNextSlug)}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
           >
             Tomorrow
@@ -233,11 +293,13 @@ const dateLabelUS = formatUSDateFromString(data.dateLabel);
       </header>
 
       {/* Quick view (references) */}
-      <section className="rounded-2xl border border-amber-100 bg-white p-5 shadow-sm">    
+      <section className="rounded-2xl border border-amber-100 bg-white p-5 shadow-sm">
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Chip label="First Reading" value={data.primeiraRef || "—"} />
           <Chip label="Responsorial Psalm" value={data.salmoRef || "—"} />
-          {hasSecond ? <Chip label="Second Reading" value={data.segundaRef || "—"} /> : null}
+          {hasSecond ? (
+            <Chip label="Second Reading" value={data.segundaRef || "—"} />
+          ) : null}
           <Chip label="Gospel" value={data.evangelhoRef || "—"} />
         </div>
       </section>
@@ -297,7 +359,7 @@ const dateLabelUS = formatUSDateFromString(data.dateLabel);
         </div>
       </section>
 
-      {(data.antEntrada || data.antComunhao) ? (
+      {data.antEntrada || data.antComunhao ? (
         <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg sm:text-xl font-bold tracking-tight">Antiphons</h2>
 
@@ -329,10 +391,12 @@ const dateLabelUS = formatUSDateFromString(data.dateLabel);
 
       <footer className="mt-8 border-t border-slate-200 pt-6">
         <p className="text-xs text-slate-500 break-words">
-          This page: <span className="font-semibold">{dayHref(dateSlug)}</span>
+          This page:{" "}
+          <span className="font-semibold">{dayHref(safeDateSlug)}</span>
         </p>
       </footer>
 
+      {/* Use ISO (stable) for structured data timestamps */}
       <meta itemProp="datePublished" content={`${data.dateISO}T06:00:00-03:00`} />
       <meta itemProp="dateModified" content={`${data.dateISO}T06:00:00-03:00`} />
     </article>
