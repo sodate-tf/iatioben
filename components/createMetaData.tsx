@@ -54,8 +54,7 @@ export default function MetaDataLiturgia({ date }: MetaDataLiturgiaProps) {
     <>
       <title>{title}</title>
       <meta name="description" content={description} />
-      <link rel="canonical" href={canonicalUrl} />
-
+    
       {/* Open Graph */}
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />

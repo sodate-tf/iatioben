@@ -1,7 +1,7 @@
 // app/en/daily-mass-readings/[data]/page.tsx
 //
 // English day page (parallel to PT) using US date slug pattern MM-DD-YYYY.
-// - Route slug format: MM-DD-YYYY (e.g., /en/daily-mass-readings/01-10-2026)
+// - Route slug format: MM-DD-YYYY (e.g., /en/daily-mass-readings/01-13-2026)
 // - Uses “Daily Mass Readings” / “Mass Readings for <date>” for SEO.
 // - Translates visible UI strings and meta descriptions contextually.
 // - Fetches PT liturgy data but replaces texts with English (NET Bible) when available.
@@ -12,12 +12,11 @@ import { fetchLiturgiaByDate } from "@/lib/liturgia/api";
 import { pad2 } from "@/lib/liturgia/date";
 import { AdsenseSidebarMobile300x250 } from "@/components/ads/AdsenseBlocks";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
-import { fetchNetBibleHtml, fetchNetBibleText } from "@/lib/liturgia/bible-en";
+import { fetchNetBibleHtml } from "@/lib/liturgia/bible-en";
 import { toReadableHtml } from "@/lib/liturgia/api"; // helper already exists in your codebase
 import LiturgiaHubPerfectEN from "@/components/liturgia/LiturgiaHubPerfectEN";
 import LiturgiaAsideEN from "@/components/liturgia/LiturgiaAsideEN";
 import { redirect } from "next/navigation";
-
 
 export const dynamic = "force-static";
 export const revalidate = 86400;
@@ -35,78 +34,68 @@ function safeSlug(slug: string) {
 }
 
 function isValidDateParts(y: number, m: number, d: number) {
-  if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d)) return false;
+  if (!Number.isInteger(y) || !Number.isInteger(m) || !Number.isInteger(d))
+    return false;
   if (y < 1900 || y > 2100) return false;
   if (m < 1 || m > 12) return false;
   if (d < 1 || d > 31) return false;
 
   const dt = new Date(y, m - 1, d);
-  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
+  return (
+    dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d
+  );
 }
 
 /**
  * EN route slug format: MM-DD-YYYY
- * Example: 01-10-2026 (Jan 10, 2026)
+ * Example: 01-13-2026 (Jan 13, 2026)
  */
 function parseSlugDateEN(slug: string): Date | null {
   const s = safeSlug(slug);
-  // Slug padrão do site: dd-mm-yyyy (mesmo do PT), para manter compatibilidade com sua API/normalizador.
   const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(s);
   if (!m) return null;
 
-  const dd = Number(m[1]);
-  const mm = Number(m[2]);
+  const mm = Number(m[1]);
+  const dd = Number(m[2]);
   const yyyy = Number(m[3]);
 
   if (!isValidDateParts(yyyy, mm, dd)) return null;
   return new Date(yyyy, mm - 1, dd);
 }
 
+/**
+ * EN slug builder: MM-DD-YYYY
+ */
 function slugFromDateEN(dt: Date) {
-  return `${pad2(dt.getDate())}-${pad2(dt.getMonth() + 1)}-${dt.getFullYear()}`;
+  return `${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}-${dt.getFullYear()}`;
 }
 
+/**
+ * Accepts MM-DD-YYYY (primary). Optionally also accepts DD-MM-YYYY as a legacy fallback.
+ */
 function parseSlugDateFlexible(slug: string): Date | null {
-  // slug esperado: 01-13-2026 (MM-DD-YYYY)
-  const parts = slug.split("-");
+  const s = safeSlug(slug);
+  const parts = s.split("-");
   if (parts.length !== 3) return null;
 
   const [a, b, c] = parts.map((x) => Number(x));
-  if (!a || !b || !c) return null;
+  if (!Number.isFinite(a) || !Number.isFinite(b) || !Number.isFinite(c))
+    return null;
 
   const yyyy = c;
 
-  // 1) Tenta MM-DD-YYYY
+  // 1) Try MM-DD-YYYY
   {
     const mm = a;
     const dd = b;
-    if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) {
-      const dt = new Date(yyyy, mm - 1, dd);
-      // valida “overflow” (ex.: 02-31-2026 vira março)
-      if (
-        dt.getFullYear() === yyyy &&
-        dt.getMonth() === mm - 1 &&
-        dt.getDate() === dd
-      ) {
-        return dt;
-      }
-    }
+    if (isValidDateParts(yyyy, mm, dd)) return new Date(yyyy, mm - 1, dd);
   }
 
-  // 2) (Opcional) Tenta DD-MM-YYYY caso alguém cole DD-MM-YYYY no EN
+  // 2) Optional: Try DD-MM-YYYY if someone pasted PT format in EN
   {
     const dd = a;
     const mm = b;
-    if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) {
-      const dt = new Date(yyyy, mm - 1, dd);
-      if (
-        dt.getFullYear() === yyyy &&
-        dt.getMonth() === mm - 1 &&
-        dt.getDate() === dd
-      ) {
-        return dt;
-      }
-    }
+    if (isValidDateParts(yyyy, mm, dd)) return new Date(yyyy, mm - 1, dd);
   }
 
   return null;
@@ -120,8 +109,6 @@ function slugFromDateUS(d: Date) {
 }
 
 function todayInSaoPaulo(): Date {
-  // Garante o “hoje” no fuso do usuário (America/Sao_Paulo).
-  // Sem libs: usa Intl para obter YYYY-MM-DD no fuso e reconstrói a Date.
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Sao_Paulo",
     year: "numeric",
@@ -129,15 +116,14 @@ function todayInSaoPaulo(): Date {
     day: "2-digit",
   }).formatToParts(new Date());
 
-  const yyyy = Number(parts.find(p => p.type === "year")?.value);
-  const mm = Number(parts.find(p => p.type === "month")?.value);
-  const dd = Number(parts.find(p => p.type === "day")?.value);
+  const yyyy = Number(parts.find((p) => p.type === "year")?.value);
+  const mm = Number(parts.find((p) => p.type === "month")?.value);
+  const dd = Number(parts.find((p) => p.type === "day")?.value);
 
   return new Date(yyyy, mm - 1, dd);
 }
 
-
-// Para títulos, breadcrumbs, textos humanos (SEO)
+// For titles, breadcrumbs, human-readable SEO text
 function formatUSDateLong(dt: Date) {
   return new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Sao_Paulo",
@@ -148,15 +134,7 @@ function formatUSDateLong(dt: Date) {
   }).format(dt);
 }
 
-// Para datas numéricas (slug visível, labels, UI compacta)
-function formatUSDate(dt: Date) {
-  const mm = String(dt.getMonth() + 1).padStart(2, "0");
-  const dd = String(dt.getDate()).padStart(2, "0");
-  const yyyy = dt.getFullYear();
-  return `${mm}/${dd}/${yyyy}`;
-}
-
-
+// For numeric UI labels
 function formatSlashDateUS(dt: Date) {
   const mm = String(dt.getMonth() + 1).padStart(2, "0");
   const dd = String(dt.getDate()).padStart(2, "0");
@@ -190,11 +168,7 @@ function buildRefsDescriptionFromData(data: any) {
     data?.primeiraLeitura ||
     null;
 
-  const psalm =
-    data?.salmoRef ||
-    data?.salmoResponsorialRef ||
-    data?.salmo ||
-    null;
+  const psalm = data?.salmoRef || data?.salmoResponsorialRef || data?.salmo || null;
 
   const second =
     data?.segundaRef ||
@@ -223,7 +197,6 @@ async function buildDataEN(data: any) {
     data?.evangelhoRef ? fetchNetBibleHtml(data.evangelhoRef) : Promise.resolve(null),
   ]);
 
-  // Texto: pode manter PT (ou, se você quiser, também pode manter EN como texto sem HTML)
   const primeiraTexto = data.primeiraTexto;
   const salmoTexto = data.salmoTexto;
   const segundaTexto = data.segundaTexto;
@@ -231,22 +204,18 @@ async function buildDataEN(data: any) {
 
   return {
     ...data,
-
-    // mantêm os campos texto (não muda PT)
+    // keep text fields (PT) for fallback and internal use
     primeiraTexto,
     salmoTexto,
     segundaTexto,
     evangelhoTexto,
-
-    // HTML: se tiver EN, usa ele; se não, cai no PT via toReadableHtml
+    // HTML: if NET is available use it; else fall back to PT via toReadableHtml
     primeiraHtml: firstHtml ?? toReadableHtml(primeiraTexto),
     salmoHtml: psalmHtml ?? toReadableHtml(salmoTexto),
     segundaHtml: secondHtml ?? toReadableHtml(segundaTexto),
     evangelhoHtml: gospelHtml ?? toReadableHtml(evangelhoTexto),
   };
 }
-
-
 
 /**
  * "Today" based on America/Sao_Paulo regardless of server TZ.
@@ -276,11 +245,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   // Fallback: invalid route (do not index)
   if (!dt) {
     const canonical = `${SITE_URL}${HUB_CANONICAL_PATH}`;
-
     const title = "Daily Mass Readings — IA Tio Ben";
     const description =
       "Gospel, readings and responsorial psalm of the day. Open and pray with the Daily Mass Readings on IA Tio Ben.";
-
     const ogImage = `${SITE_URL}/og/liturgia.png`;
 
     return {
@@ -288,7 +255,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       robots: { index: false, follow: false },
       alternates: { canonical },
-
       openGraph: {
         type: "website",
         url: canonical,
@@ -298,7 +264,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         description,
         images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
       },
-
       twitter: {
         card: "summary_large_image",
         title,
@@ -327,7 +292,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   const canonical = `${SITE_URL}${HUB_CANONICAL_PATH}/${slug}`;
 
-  // Keep consistent with your current OG route pattern (ensure your OG generator supports US slugs)
+  // Ensure your OG generator supports US slugs (MM-DD-YYYY)
   const ogImage = `${SITE_URL}/og/liturgia/${slug}.png`;
 
   return {
@@ -335,7 +300,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description,
     alternates: { canonical },
     robots: { index: true, follow: true },
-
     openGraph: {
       title,
       description,
@@ -345,7 +309,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       locale: "en_US",
       images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
     },
-
     twitter: {
       card: "summary_large_image",
       title,
@@ -357,37 +320,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function DailyMassReadingsDayPage({ params }: PageProps) {
   const resolved = await Promise.resolve(params);
-  const slug = resolved.data;
+  const slug = safeSlug(resolved.data);
 
   const dt = parseSlugDateFlexible(slug);
 
   if (!dt) {
-    // Sem mensagem; manda para a URL correta de HOJE.
+    // Invalid -> redirect to TODAY (Sao Paulo time)
     const today = todayInSaoPaulo();
     const todaySlug = slugFromDateUS(today);
     redirect(`/en/daily-mass-readings/${todaySlug}`);
-  }
-
-  
-
-  if (!dt) {
-    return (
-      <article className="mx-auto max-w-3xl px-4 py-10 bg-white text-slate-900 min-h-screen">
-        <h1 className="text-2xl font-bold">Invalid date</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Please use the format <span className="font-semibold">mm-dd-yyyy</span>. Example:{" "}
-          <span className="font-semibold">/en/daily-mass-readings/01-10-2026</span>
-        </p>
-        <div className="mt-4">
-          <a
-            href="/en/daily-mass-readings"
-            className="inline-flex rounded-xl bg-amber-500 text-white px-4 py-2 text-sm font-semibold hover:bg-amber-600"
-          >
-            Back to Daily Mass Readings
-          </a>
-        </div>
-      </article>
-    );
   }
 
   const day = dt.getDate();
@@ -400,6 +341,7 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
   const prev = new Date(year, month - 1, day - 1);
   const next = new Date(year, month - 1, day + 1);
 
+  // IMPORTANT: prev/next must be US slug (MM-DD-YYYY)
   const prevSlug = slugFromDateEN(prev);
   const nextSlug = slugFromDateEN(next);
 
@@ -556,7 +498,7 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
                 {
                   href: "/liturgia/ano-liturgico",
                   title: "Liturgical Year: seasons, colors and calendar",
-                  desc: "Understand what changes throughout the year and how to follow it.",
+                  desc: "Understand what changes throughout the year and how to follow them.",
                 },
                 {
                   href: "/liturgia/leituras-da-missa",
@@ -573,8 +515,8 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Avoid duplicating canonical if you already set it via metadata.
-            If you have a canonical duplication issue, remove this line. */}
+        {/* Do NOT add a manual canonical here; Next metadata already emits it.
+            If you still see duplicated canonicals, the other one is coming from a parent layout/head. */}
         {/* <link rel="canonical" href={canonical} /> */}
       </article>
     </>
