@@ -5,6 +5,7 @@
 import Link from "next/link";
 import React, { useMemo, useState } from "react";
 import type { LiturgiaNormalized } from "@/lib/liturgia/api";
+import DailyParagraph from "@/components/liturgia/DailyParagraph"; // <-- ADD
 
 type Props = {
   siteUrl: string;
@@ -60,23 +61,22 @@ function HtmlBody({
   const hasHtml = Boolean(html && html.trim());
   const hasText = Boolean(fallbackText && fallbackText.trim());
 
-if (hasHtml) {
-  const safeHtml: string = html ?? "";
+  if (hasHtml) {
+    const safeHtml: string = html ?? "";
 
-  return (
-    <div
-      className={[
-        "text-[15px] sm:text-[16px] leading-7 text-slate-800",
-        "[&>p]:mt-3 [&>p:first-child]:mt-0",
-        "break-words",
-        "[&_a]:text-amber-700 [&_a]:font-semibold [&_a]:underline [&_a]:decoration-amber-300 hover:[&_a]:decoration-amber-500",
-        "[&_sub]:align-baseline",
-      ].join(" ")}
-      dangerouslySetInnerHTML={{ __html: safeHtml }}
-    />
-  );
-}
-
+    return (
+      <div
+        className={[
+          "text-[15px] sm:text-[16px] leading-7 text-slate-800",
+          "[&>p]:mt-3 [&>p:first-child]:mt-0",
+          "break-words",
+          "[&_a]:text-amber-700 [&_a]:font-semibold [&_a]:underline [&_a]:decoration-amber-300 hover:[&_a]:decoration-amber-500",
+          "[&_sub]:align-baseline",
+        ].join(" ")}
+        dangerouslySetInnerHTML={{ __html: safeHtml }}
+      />
+    );
+  }
 
   return (
     <div className="whitespace-pre-line text-[15px] sm:text-[16px] leading-7 text-slate-800 break-words">
@@ -116,17 +116,15 @@ function ReadingBlock({
   );
 }
 
-function Chip({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function Chip({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <p className="text-[11px] font-semibold text-slate-500 uppercase">{label}</p>
-      <p className="mt-1 text-sm font-bold text-slate-900 break-words">{value || "—"}</p>
+      <p className="text-[11px] font-semibold text-slate-500 uppercase">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-bold text-slate-900 break-words">
+        {value || "—"}
+      </p>
     </div>
   );
 }
@@ -148,14 +146,12 @@ export default function LiturgiaHubPerfect({
     return Boolean(
       (data.segundaRef && data.segundaRef.trim()) ||
         (data.segundaTexto && data.segundaTexto.trim()) ||
-        // quando existir:
         ((data as any).segundaHtml && String((data as any).segundaHtml).trim())
     );
   }, [data]);
 
   const [tab, setTab] = useState<TabKey>("leituras");
 
-  // Preferir HTML (novo), cair para Texto (antigo)
   const primeiraHtml = (data as any).primeiraHtml as string | undefined;
   const salmoHtml = (data as any).salmoHtml as string | undefined;
   const segundaHtml = (data as any).segundaHtml as string | undefined;
@@ -168,7 +164,6 @@ export default function LiturgiaHubPerfect({
     <article
       className={[
         "mx-auto w-full max-w-5xl px-3 sm:px-4 lg:px-6 py-6 bg-white text-slate-900 leading-relaxed",
-        // melhora de leitura: limita linhas e dá “respiro”
         "overflow-x-hidden",
         className || "",
       ].join(" ")}
@@ -190,6 +185,11 @@ export default function LiturgiaHubPerfect({
           {data.celebration || ""}
           {data.color ? ` • Cor litúrgica: ${data.color}` : ""}
         </p>
+
+        {/* ADD: parágrafo editorial do dia (Tempo Litúrgico / datas especiais) */}
+        <div className="mt-3">
+          <DailyParagraph date={dateSlug} locale="pt" />
+        </div>
 
         <div className="mt-4 flex flex-wrap gap-2">
           <Link
@@ -224,30 +224,18 @@ export default function LiturgiaHubPerfect({
 
       {/* Visão rápida (referências) */}
       <section className="rounded-2xl border border-amber-100 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="text-lg sm:text-xl font-bold tracking-tight">Referências do dia</h2>
-          <p className="text-xs text-slate-500">
-            Use as abas abaixo para ler com conforto.
-          </p>
-        </div>
-
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Chip label="Primeira Leitura" value={data.primeiraRef || "—"} />
           <Chip label="Salmo" value={data.salmoRef || "—"} />
-          {hasSecond ? <Chip label="Segunda Leitura" value={data.segundaRef || "—"} /> : null}
+          {hasSecond ? (
+            <Chip label="Segunda Leitura" value={data.segundaRef || "—"} />
+          ) : null}
           <Chip label="Evangelho" value={data.evangelhoRef || "—"} />
         </div>
       </section>
 
       {/* Tabs */}
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-lg sm:text-xl font-bold tracking-tight">Texto completo</h2>
-          <p className="text-xs text-slate-500">
-            Alternar seções reduz “rolagem” e melhora a leitura.
-          </p>
-        </div>
-
         <div className="mt-4 flex flex-wrap gap-2">
           <TabButton active={tab === "leituras"} onClick={() => setTab("leituras")}>
             Leituras
@@ -307,7 +295,9 @@ export default function LiturgiaHubPerfect({
           <div className="mt-4 space-y-4">
             {data.antEntrada ? (
               <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
-                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Entrada</p>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+                  Entrada
+                </p>
                 <div className="mt-3">
                   <HtmlBody html={antEntradaHtml} fallbackText={data.antEntrada} />
                 </div>
@@ -316,7 +306,9 @@ export default function LiturgiaHubPerfect({
 
             {data.antComunhao ? (
               <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
-                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Comunhão</p>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+                  Comunhão
+                </p>
                 <div className="mt-3">
                   <HtmlBody html={antComunhaoHtml} fallbackText={data.antComunhao} />
                 </div>

@@ -16,6 +16,7 @@ import { fetchNetBibleHtml, fetchNetBibleText } from "@/lib/liturgia/bible-en";
 import { toReadableHtml } from "@/lib/liturgia/api"; // helper already exists in your codebase
 import LiturgiaHubPerfectEN from "@/components/liturgia/LiturgiaHubPerfectEN";
 import LiturgiaAsideEN from "@/components/liturgia/LiturgiaAsideEN";
+import { redirect } from "next/navigation";
 
 
 export const dynamic = "force-static";
@@ -47,22 +48,94 @@ function isValidDateParts(y: number, m: number, d: number) {
  * EN route slug format: MM-DD-YYYY
  * Example: 01-10-2026 (Jan 10, 2026)
  */
-function parseSlugDateUS(slug: string): Date | null {
+function parseSlugDateEN(slug: string): Date | null {
   const s = safeSlug(slug);
+  // Slug padrão do site: dd-mm-yyyy (mesmo do PT), para manter compatibilidade com sua API/normalizador.
   const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(s);
   if (!m) return null;
 
-  const mm = Number(m[1]);
-  const dd = Number(m[2]);
+  const dd = Number(m[1]);
+  const mm = Number(m[2]);
   const yyyy = Number(m[3]);
 
   if (!isValidDateParts(yyyy, mm, dd)) return null;
   return new Date(yyyy, mm - 1, dd);
 }
 
-function slugFromDateUS(dt: Date) {
-  return `${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}-${dt.getFullYear()}`;
+function slugFromDateEN(dt: Date) {
+  return `${pad2(dt.getDate())}-${pad2(dt.getMonth() + 1)}-${dt.getFullYear()}`;
 }
+
+function parseSlugDateFlexible(slug: string): Date | null {
+  // slug esperado: 01-13-2026 (MM-DD-YYYY)
+  const parts = slug.split("-");
+  if (parts.length !== 3) return null;
+
+  const [a, b, c] = parts.map((x) => Number(x));
+  if (!a || !b || !c) return null;
+
+  const yyyy = c;
+
+  // 1) Tenta MM-DD-YYYY
+  {
+    const mm = a;
+    const dd = b;
+    if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) {
+      const dt = new Date(yyyy, mm - 1, dd);
+      // valida “overflow” (ex.: 02-31-2026 vira março)
+      if (
+        dt.getFullYear() === yyyy &&
+        dt.getMonth() === mm - 1 &&
+        dt.getDate() === dd
+      ) {
+        return dt;
+      }
+    }
+  }
+
+  // 2) (Opcional) Tenta DD-MM-YYYY caso alguém cole DD-MM-YYYY no EN
+  {
+    const dd = a;
+    const mm = b;
+    if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) {
+      const dt = new Date(yyyy, mm - 1, dd);
+      if (
+        dt.getFullYear() === yyyy &&
+        dt.getMonth() === mm - 1 &&
+        dt.getDate() === dd
+      ) {
+        return dt;
+      }
+    }
+  }
+
+  return null;
+}
+
+function slugFromDateUS(d: Date) {
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${mm}-${dd}-${yyyy}`;
+}
+
+function todayInSaoPaulo(): Date {
+  // Garante o “hoje” no fuso do usuário (America/Sao_Paulo).
+  // Sem libs: usa Intl para obter YYYY-MM-DD no fuso e reconstrói a Date.
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+
+  const yyyy = Number(parts.find(p => p.type === "year")?.value);
+  const mm = Number(parts.find(p => p.type === "month")?.value);
+  const dd = Number(parts.find(p => p.type === "day")?.value);
+
+  return new Date(yyyy, mm - 1, dd);
+}
+
 
 // Para títulos, breadcrumbs, textos humanos (SEO)
 function formatUSDateLong(dt: Date) {
@@ -198,7 +271,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const resolved = await Promise.resolve(params);
   const slug = safeSlug(resolved.data);
 
-  const dt = slug ? parseSlugDateUS(slug) : null;
+  const dt = slug ? parseSlugDateEN(slug) : null;
 
   // Fallback: invalid route (do not index)
   if (!dt) {
@@ -284,9 +357,18 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function DailyMassReadingsDayPage({ params }: PageProps) {
   const resolved = await Promise.resolve(params);
-  const slug = safeSlug(resolved.data);
+  const slug = resolved.data;
 
-  const dt = slug ? parseSlugDateUS(slug) : null;
+  const dt = parseSlugDateFlexible(slug);
+
+  if (!dt) {
+    // Sem mensagem; manda para a URL correta de HOJE.
+    const today = todayInSaoPaulo();
+    const todaySlug = slugFromDateUS(today);
+    redirect(`/en/daily-mass-readings/${todaySlug}`);
+  }
+
+  
 
   if (!dt) {
     return (
@@ -318,8 +400,8 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
   const prev = new Date(year, month - 1, day - 1);
   const next = new Date(year, month - 1, day + 1);
 
-  const prevSlug = slugFromDateUS(prev);
-  const nextSlug = slugFromDateUS(next);
+  const prevSlug = slugFromDateEN(prev);
+  const nextSlug = slugFromDateEN(next);
 
   const canonical = `${SITE_URL}${HUB_CANONICAL_PATH}/${slug}`;
 

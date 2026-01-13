@@ -68,8 +68,7 @@ function getTodaySaoPauloYMD() {
 
 export async function GET() {
   // Use Sao Paulo date for consistent year boundaries
-  const { yyyy } = getTodaySaoPauloYMD();
-  const year = yyyy;
+  const year = 2026;
 
   // normalize base dates to midday to reduce DST edge cases
   const start = new Date(year, 0, 1, 12, 0, 0);

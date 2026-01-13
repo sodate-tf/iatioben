@@ -4,6 +4,7 @@
 import Link from "next/link";
 import React, { useMemo, useState } from "react";
 import type { LiturgiaNormalized } from "@/lib/liturgia/api";
+import DailyParagraph from "./DailyParagraph";
 
 type Props = {
   siteUrl: string;
@@ -150,15 +151,24 @@ const dayHref = (slug: string) => `/en/daily-mass-readings/${slug}`;
 function formatUSDateFromString(dateStr: string): string {
   if (!dateStr) return "";
 
-  const dt = new Date(dateStr);
+  // Espera formato dd/mm/yyyy
+  const parts = dateStr.split("/");
+  if (parts.length !== 3) return "";
+
+  const [dd, mm, yyyy] = parts.map(Number);
+  if (!dd || !mm || !yyyy) return "";
+
+  // Cria a data corretamente (month é 0-based)
+  const dt = new Date(yyyy, mm - 1, dd);
   if (Number.isNaN(dt.getTime())) return "";
 
-  const mm = String(dt.getMonth() + 1).padStart(2, "0");
-  const dd = String(dt.getDate()).padStart(2, "0");
-  const yyyy = dt.getFullYear();
+  const usMM = String(dt.getMonth() + 1).padStart(2, "0");
+  const usDD = String(dt.getDate()).padStart(2, "0");
+  const usYYYY = dt.getFullYear();
 
-  return `${mm}/${dd}/${yyyy}`;
+  return `${usMM}/${usDD}/${usYYYY}`;
 }
+
 const dateLabelUS = formatUSDateFromString(data.dateLabel);
 
   return (
@@ -186,7 +196,11 @@ const dateLabelUS = formatUSDateFromString(data.dateLabel);
           {data.celebration ? data.celebration : ""}
           {data.color ? ` • Liturgical color: ${data.color}` : ""}
         </p>
-
+          {/* ADD: editorial paragraph of the day (Liturgical season / special dates) */}
+        <div className="mt-3">
+          <DailyParagraph date={dateSlug} locale="en" />
+        </div>
+        
         <div className="mt-4 flex flex-wrap gap-2">
           <Link
             href="/en/daily-mass-readings"
@@ -219,12 +233,7 @@ const dateLabelUS = formatUSDateFromString(data.dateLabel);
       </header>
 
       {/* Quick view (references) */}
-      <section className="rounded-2xl border border-amber-100 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-          <h2 className="text-lg sm:text-xl font-bold tracking-tight">Today’s references</h2>
-          <p className="text-xs text-slate-500">Use the tabs below for easier reading.</p>
-        </div>
-
+      <section className="rounded-2xl border border-amber-100 bg-white p-5 shadow-sm">    
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Chip label="First Reading" value={data.primeiraRef || "—"} />
           <Chip label="Responsorial Psalm" value={data.salmoRef || "—"} />
@@ -235,11 +244,6 @@ const dateLabelUS = formatUSDateFromString(data.dateLabel);
 
       {/* Tabs */}
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-lg sm:text-xl font-bold tracking-tight">Full text</h2>
-          <p className="text-xs text-slate-500">Switch sections to reduce scrolling.</p>
-        </div>
-
         <div className="mt-4 flex flex-wrap gap-2">
           <TabButton active={tab === "readings"} onClick={() => setTab("readings")}>
             Readings
