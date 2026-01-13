@@ -2,27 +2,29 @@
 //
 // English day page (parallel to PT) using US date slug pattern MM-DD-YYYY.
 // - Route slug format: MM-DD-YYYY (e.g., /en/daily-mass-readings/01-13-2026)
-// - Uses “Daily Mass Readings” / “Mass Readings for <date>” for SEO.
-// - Translates visible UI strings and meta descriptions contextually.
-// - Fetches PT liturgy data but replaces texts with English (NET Bible) when available.
+// - SEO: “Daily Mass Readings — <weekday, month day, year>”
+// - Fetches PT liturgy data, but swaps texts with English (NET Bible) when available.
+// - Canonical ALWAYS normalized to MM-DD-YYYY; legacy DD-MM-YYYY gets redirected.
 
 import type { Metadata } from "next";
 import Script from "next/script";
-import { fetchLiturgiaByDate } from "@/lib/liturgia/api";
+import { redirect } from "next/navigation";
+
+import { fetchLiturgiaByDate, toReadableHtml } from "@/lib/liturgia/api";
 import { pad2 } from "@/lib/liturgia/date";
+import { fetchNetBibleHtml } from "@/lib/liturgia/bible-en";
+
 import { AdsenseSidebarMobile300x250 } from "@/components/ads/AdsenseBlocks";
 import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
-import { fetchNetBibleHtml } from "@/lib/liturgia/bible-en";
-import { toReadableHtml } from "@/lib/liturgia/api"; // helper already exists in your codebase
 import LiturgiaHubPerfectEN from "@/components/liturgia/LiturgiaHubPerfectEN";
 import LiturgiaAsideEN from "@/components/liturgia/LiturgiaAsideEN";
-import { redirect } from "next/navigation";
 
 export const dynamic = "force-static";
 export const revalidate = 86400;
 
 const SITE_URL = "https://www.iatioben.com.br";
 const HUB_CANONICAL_PATH = "/en/daily-mass-readings";
+
 const ADS_SLOT_SIDEBAR_DESKTOP = "8534838745";
 const ADS_SLOT_SIDEBAR_MOBILE = "1573844576";
 
@@ -47,10 +49,9 @@ function isValidDateParts(y: number, m: number, d: number) {
 }
 
 /**
- * EN route slug format: MM-DD-YYYY
- * Example: 01-13-2026 (Jan 13, 2026)
+ * Primary EN route slug format: MM-DD-YYYY
  */
-function parseSlugDateEN(slug: string): Date | null {
+function parseSlugUS(slug: string): Date | null {
   const s = safeSlug(slug);
   const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(s);
   if (!m) return null;
@@ -64,41 +65,19 @@ function parseSlugDateEN(slug: string): Date | null {
 }
 
 /**
- * EN slug builder: MM-DD-YYYY
+ * Legacy fallback: DD-MM-YYYY (if someone pasted PT slug in EN route)
  */
-function slugFromDateEN(dt: Date) {
-  return `${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}-${dt.getFullYear()}`;
-}
-
-/**
- * Accepts MM-DD-YYYY (primary). Optionally also accepts DD-MM-YYYY as a legacy fallback.
- */
-function parseSlugDateFlexible(slug: string): Date | null {
+function parseSlugLegacyDMY(slug: string): Date | null {
   const s = safeSlug(slug);
-  const parts = s.split("-");
-  if (parts.length !== 3) return null;
+  const m = /^(\d{2})-(\d{2})-(\d{4})$/.exec(s);
+  if (!m) return null;
 
-  const [a, b, c] = parts.map((x) => Number(x));
-  if (!Number.isFinite(a) || !Number.isFinite(b) || !Number.isFinite(c))
-    return null;
+  const dd = Number(m[1]);
+  const mm = Number(m[2]);
+  const yyyy = Number(m[3]);
 
-  const yyyy = c;
-
-  // 1) Try MM-DD-YYYY
-  {
-    const mm = a;
-    const dd = b;
-    if (isValidDateParts(yyyy, mm, dd)) return new Date(yyyy, mm - 1, dd);
-  }
-
-  // 2) Optional: Try DD-MM-YYYY if someone pasted PT format in EN
-  {
-    const dd = a;
-    const mm = b;
-    if (isValidDateParts(yyyy, mm, dd)) return new Date(yyyy, mm - 1, dd);
-  }
-
-  return null;
+  if (!isValidDateParts(yyyy, mm, dd)) return null;
+  return new Date(yyyy, mm - 1, dd);
 }
 
 function slugFromDateUS(d: Date) {
@@ -106,6 +85,32 @@ function slugFromDateUS(d: Date) {
   const dd = String(d.getDate()).padStart(2, "0");
   const yyyy = d.getFullYear();
   return `${mm}-${dd}-${yyyy}`;
+}
+
+/**
+ * Normalize incoming slug:
+ * - If already MM-DD-YYYY -> ok
+ * - If it looks like DD-MM-YYYY -> redirect to normalized MM-DD-YYYY
+ * - Else invalid -> null
+ */
+function normalizeUSSlugOrNull(inputSlug: string): {
+  dt: Date | null;
+  normalizedSlug: string | null;
+  needsRedirect: boolean;
+} {
+  const s = safeSlug(inputSlug);
+  const dtUS = parseSlugUS(s);
+  if (dtUS) {
+    return { dt: dtUS, normalizedSlug: slugFromDateUS(dtUS), needsRedirect: false };
+  }
+
+  const dtLegacy = parseSlugLegacyDMY(s);
+  if (dtLegacy) {
+    const normalized = slugFromDateUS(dtLegacy);
+    return { dt: dtLegacy, normalizedSlug: normalized, needsRedirect: true };
+  }
+
+  return { dt: null, normalizedSlug: null, needsRedirect: false };
 }
 
 function todayInSaoPaulo(): Date {
@@ -123,7 +128,6 @@ function todayInSaoPaulo(): Date {
   return new Date(yyyy, mm - 1, dd);
 }
 
-// For titles, breadcrumbs, human-readable SEO text
 function formatUSDateLong(dt: Date) {
   return new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Sao_Paulo",
@@ -134,7 +138,6 @@ function formatUSDateLong(dt: Date) {
   }).format(dt);
 }
 
-// For numeric UI labels
 function formatSlashDateUS(dt: Date) {
   const mm = String(dt.getMonth() + 1).padStart(2, "0");
   const dd = String(dt.getDate()).padStart(2, "0");
@@ -142,41 +145,31 @@ function formatSlashDateUS(dt: Date) {
   return `${mm}/${dd}/${yyyy}`;
 }
 
-/**
- * SEO title for the specific day.
- */
 function buildTitle(dt: Date) {
-  const pretty = formatUSDateLong(dt);
-  return `Daily Mass Readings — ${pretty}`;
+  return `Daily Mass Readings — ${formatUSDateLong(dt)}`;
 }
 
-/**
- * Short SEO description for the specific day.
- */
 function buildDescription(dt: Date) {
   const compact = formatSlashDateUS(dt);
   return `Mass readings for ${compact}: Gospel, readings and responsorial psalm. Browse the calendar and navigate by date, month and year.`;
 }
 
 /**
- * Builds meta description including reading references (defensive with field names), plus CTA.
+ * Defensive refs extraction (supports multiple possible shapes).
  */
+function pickRef(data: any, keys: string[]) {
+  for (const k of keys) {
+    const v = data?.[k];
+    if (typeof v === "string" && v.trim()) return v.trim();
+  }
+  return null;
+}
+
 function buildRefsDescriptionFromData(data: any) {
-  const first =
-    data?.primeiraRef ||
-    data?.primeiraLeituraRef ||
-    data?.primeiraLeitura ||
-    null;
-
-  const psalm = data?.salmoRef || data?.salmoResponsorialRef || data?.salmo || null;
-
-  const second =
-    data?.segundaRef ||
-    data?.segundaLeituraRef ||
-    data?.segundaLeitura ||
-    null;
-
-  const gospel = data?.evangelhoRef || data?.evangelho || null;
+  const first = pickRef(data, ["primeiraRef", "primeiraLeituraRef", "primeiraLeitura"]);
+  const psalm = pickRef(data, ["salmoRef", "salmoResponsorialRef", "salmo"]);
+  const second = pickRef(data, ["segundaRef", "segundaLeituraRef", "segundaLeitura"]);
+  const gospel = pickRef(data, ["evangelhoRef", "evangelho"]);
 
   const parts: string[] = [];
   if (first) parts.push(`First Reading: ${first}`);
@@ -185,31 +178,49 @@ function buildRefsDescriptionFromData(data: any) {
   if (gospel) parts.push(`Gospel: ${gospel}`);
 
   parts.push("Open and pray with the Daily Mass Readings on IA Tio Ben.");
-
   return parts.join(" • ");
 }
 
-async function buildDataEN(data: any) {
+function pickText(data: any, keys: string[]) {
+  for (const k of keys) {
+    const v = data?.[k];
+    if (typeof v === "string" && v.trim()) return v;
+  }
+  return "";
+}
+
+/**
+ * Build EN render fields:
+ * - Attempts NET bible html by reference
+ * - Falls back to PT text rendered via toReadableHtml
+ */
+async function buildDataEN(dataPT: any) {
+  const primeiraRef = pickRef(dataPT, ["primeiraRef", "primeiraLeituraRef", "primeiraLeituraRefTxt", "primeiraLeitura"]);
+  const salmoRef = pickRef(dataPT, ["salmoRef", "salmoResponsorialRef", "salmo"]);
+  const segundaRef = pickRef(dataPT, ["segundaRef", "segundaLeituraRef", "segundaLeitura"]);
+  const evangelhoRef = pickRef(dataPT, ["evangelhoRef", "evangelho"]);
+
   const [firstHtml, psalmHtml, secondHtml, gospelHtml] = await Promise.all([
-    data?.primeiraRef ? fetchNetBibleHtml(data.primeiraRef) : Promise.resolve(null),
-    data?.salmoRef ? fetchNetBibleHtml(data.salmoRef) : Promise.resolve(null),
-    data?.segundaRef ? fetchNetBibleHtml(data.segundaRef) : Promise.resolve(null),
-    data?.evangelhoRef ? fetchNetBibleHtml(data.evangelhoRef) : Promise.resolve(null),
+    primeiraRef ? fetchNetBibleHtml(primeiraRef).catch(() => null) : Promise.resolve(null),
+    salmoRef ? fetchNetBibleHtml(salmoRef).catch(() => null) : Promise.resolve(null),
+    segundaRef ? fetchNetBibleHtml(segundaRef).catch(() => null) : Promise.resolve(null),
+    evangelhoRef ? fetchNetBibleHtml(evangelhoRef).catch(() => null) : Promise.resolve(null),
   ]);
 
-  const primeiraTexto = data.primeiraTexto;
-  const salmoTexto = data.salmoTexto;
-  const segundaTexto = data.segundaTexto;
-  const evangelhoTexto = data.evangelhoTexto;
+  const primeiraTexto = pickText(dataPT, ["primeiraTexto", "primeiraLeituraTexto", "primeiraLeitura"]);
+  const salmoTexto = pickText(dataPT, ["salmoTexto", "salmoResponsorialTexto", "salmo"]);
+  const segundaTexto = pickText(dataPT, ["segundaTexto", "segundaLeituraTexto", "segundaLeitura"]);
+  const evangelhoTexto = pickText(dataPT, ["evangelhoTexto", "evangelho"]);
 
   return {
-    ...data,
-    // keep text fields (PT) for fallback and internal use
+    ...dataPT,
+    // Keep original text fields for fallback, if your components still expect them:
     primeiraTexto,
     salmoTexto,
     segundaTexto,
     evangelhoTexto,
-    // HTML: if NET is available use it; else fall back to PT via toReadableHtml
+
+    // Inject HTML fields used by EN components:
     primeiraHtml: firstHtml ?? toReadableHtml(primeiraTexto),
     salmoHtml: psalmHtml ?? toReadableHtml(salmoTexto),
     segundaHtml: secondHtml ?? toReadableHtml(segundaTexto),
@@ -218,37 +229,41 @@ async function buildDataEN(data: any) {
 }
 
 /**
- * "Today" based on America/Sao_Paulo regardless of server TZ.
- * Returns { yyyy, mm, dd } numeric parts.
+ * Today slug/label in Sao Paulo TZ (for "Today" button).
  */
-function getTodayPartsInSaoPaulo(now: Date) {
+function getTodaySlugLabelUS() {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Sao_Paulo",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).formatToParts(now);
+  }).formatToParts(new Date());
 
   const yyyy = Number(parts.find((p) => p.type === "year")?.value);
   const mm = Number(parts.find((p) => p.type === "month")?.value);
   const dd = Number(parts.find((p) => p.type === "day")?.value);
 
-  return { yyyy, mm, dd };
+  const todaySlug = `${pad2(mm)}-${pad2(dd)}-${yyyy}`;
+  const todayLabelEN = `${pad2(mm)}/${pad2(dd)}/${yyyy}`;
+  return { todaySlug, todayLabelEN };
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolved = await Promise.resolve(params);
-  const slug = safeSlug(resolved.data);
+  const inputSlug = safeSlug(resolved.data);
 
-  const dt = slug ? parseSlugDateEN(slug) : null;
+  const { dt, normalizedSlug } = normalizeUSSlugOrNull(inputSlug);
 
-  // Fallback: invalid route (do not index)
-  if (!dt) {
+  // Invalid route: noindex and canonical to hub root
+  if (!dt || !normalizedSlug) {
     const canonical = `${SITE_URL}${HUB_CANONICAL_PATH}`;
     const title = "Daily Mass Readings — IA Tio Ben";
     const description =
       "Gospel, readings and responsorial psalm of the day. Open and pray with the Daily Mass Readings on IA Tio Ben.";
-    const ogImage = `${SITE_URL}/og/liturgia.png`;
+
+    const ogImage = `${SITE_URL}/og?title=${encodeURIComponent(
+      "Daily Mass Readings"
+    )}&description=${encodeURIComponent(description)}`;
 
     return {
       title,
@@ -273,27 +288,29 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
-  const day = dt.getDate();
-  const month = dt.getMonth() + 1;
-  const year = dt.getFullYear();
-
   const title = buildTitle(dt);
 
   let description =
     "Gospel, readings and responsorial psalm of the day. Open and pray with the Daily Mass Readings on IA Tio Ben.";
 
+  // Best-effort to include refs; keep SEO stable if fetch fails
   try {
-    const data = await fetchLiturgiaByDate(day, month, year);
-    const dataEN = await buildDataEN(data);
+    const day = dt.getDate();
+    const month = dt.getMonth() + 1;
+    const year = dt.getFullYear();
+
+    const dataPT = await fetchLiturgiaByDate(day, month, year);
+    const dataEN = await buildDataEN(dataPT);
     description = buildRefsDescriptionFromData(dataEN);
   } catch {
     // keep fallback
   }
 
-  const canonical = `${SITE_URL}${HUB_CANONICAL_PATH}/${slug}`;
+  const canonical = `${SITE_URL}${HUB_CANONICAL_PATH}/${normalizedSlug}`;
 
-  // Ensure your OG generator supports US slugs (MM-DD-YYYY)
-  const ogImage = `${SITE_URL}/og/liturgia/${slug}.png`;
+  // NOTE: This assumes you actually generate and store that PNG.
+  // If you don't, switch to /og?title=... style to avoid broken OG.
+  const ogImage = `${SITE_URL}/og/liturgia/${normalizedSlug}.png`;
 
   return {
     title,
@@ -320,15 +337,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function DailyMassReadingsDayPage({ params }: PageProps) {
   const resolved = await Promise.resolve(params);
-  const slug = safeSlug(resolved.data);
+  const inputSlug = safeSlug(resolved.data);
 
-  const dt = parseSlugDateFlexible(slug);
+  const { dt, normalizedSlug, needsRedirect } = normalizeUSSlugOrNull(inputSlug);
 
-  if (!dt) {
-    // Invalid -> redirect to TODAY (Sao Paulo time)
+  // Invalid slug: redirect to TODAY (Sao Paulo time)
+  if (!dt || !normalizedSlug) {
     const today = todayInSaoPaulo();
-    const todaySlug = slugFromDateUS(today);
-    redirect(`/en/daily-mass-readings/${todaySlug}`);
+    redirect(`${HUB_CANONICAL_PATH}/${slugFromDateUS(today)}`);
+  }
+
+  // If user used legacy DD-MM-YYYY, redirect to normalized US slug
+  if (needsRedirect) {
+    redirect(`${HUB_CANONICAL_PATH}/${normalizedSlug}`);
   }
 
   const day = dt.getDate();
@@ -341,11 +362,20 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
   const prev = new Date(year, month - 1, day - 1);
   const next = new Date(year, month - 1, day + 1);
 
-  // IMPORTANT: prev/next must be US slug (MM-DD-YYYY)
   const prevSlug = slugFromDateUS(prev);
   const nextSlug = slugFromDateUS(next);
 
-  const canonical = `${SITE_URL}${HUB_CANONICAL_PATH}/${slug}`;
+  const canonical = `${SITE_URL}${HUB_CANONICAL_PATH}/${normalizedSlug}`;
+  const prettyDateEN = formatUSDateLong(dt);
+
+  // Ensure these exist even if your data model differs
+  const dateISO =
+    (typeof dataEN?.dateISO === "string" && dataEN.dateISO) ||
+    `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
+
+  const dateLabel =
+    (typeof dataEN?.dateLabel === "string" && dataEN.dateLabel) ||
+    formatSlashDateUS(dt);
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -358,7 +388,7 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
         name: "Daily Mass Readings",
         item: `${SITE_URL}${HUB_CANONICAL_PATH}`,
       },
-      { "@type": "ListItem", position: 3, name: dataEN.dateLabel, item: canonical },
+      { "@type": "ListItem", position: 3, name: dateLabel, item: canonical },
     ],
   };
 
@@ -368,13 +398,11 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
     headline: buildTitle(dt),
     description: buildDescription(dt),
     mainEntityOfPage: canonical,
-    datePublished: `${dataEN.dateISO}T06:00:00-03:00`,
-    dateModified: `${dataEN.dateISO}T06:00:00-03:00`,
+    datePublished: `${dateISO}T06:00:00-03:00`,
+    dateModified: `${dateISO}T06:00:00-03:00`,
     author: { "@type": "Organization", name: "IA Tio Ben" },
     publisher: { "@type": "Organization", name: "IA Tio Ben" },
   };
-
-  const prettyDateEN = formatUSDateLong(dt);
 
   const faqJsonLd = {
     "@context": "https://schema.org",
@@ -401,16 +429,13 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
         name: "How do I access the readings for another date?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Use the /en/daily-mass-readings page and the month/year calendar to open any date at /en/daily-mass-readings/mm-dd-yyyy.",
+          text: "Use the Daily Mass Readings hub and navigate by month/year to open any date at /en/daily-mass-readings/mm-dd-yyyy.",
         },
       },
     ],
   };
 
-  // Today (Sao Paulo time), for the “Today” button in Hub/Aside
-  const { yyyy, mm, dd } = getTodayPartsInSaoPaulo(new Date());
-  const todaySlug = `${pad2(mm)}-${pad2(dd)}-${yyyy}`; // MM-DD-YYYY
-  const todayLabelEN = `${pad2(mm)}/${pad2(dd)}/${yyyy}`; // MM/DD/YYYY
+  const { todaySlug, todayLabelEN } = getTodaySlugLabelUS();
 
   return (
     <>
@@ -439,8 +464,8 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
 
             <LiturgiaHubPerfectEN
               siteUrl={SITE_URL}
-              hubCanonicalPath={`${HUB_CANONICAL_PATH}/${slug}`}
-              dateSlug={slug}
+              hubCanonicalPath={HUB_CANONICAL_PATH} // IMPORTANT: hub root only
+              dateSlug={normalizedSlug}
               data={dataEN}
               prevSlug={prevSlug}
               nextSlug={nextSlug}
@@ -515,9 +540,9 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Do NOT add a manual canonical here; Next metadata already emits it.
-            If you still see duplicated canonicals, the other one is coming from a parent layout/head. */}
-        {/* <link rel="canonical" href={canonical} /> */}
+        {/* Do NOT add manual canonical tag here.
+            Next metadata already emits it.
+            If you still see duplicated canonicals, the second one is coming from a parent layout/head or an HTTP header. */}
       </article>
     </>
   );

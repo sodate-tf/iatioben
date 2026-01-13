@@ -1,40 +1,61 @@
 // app/en/daily-mass-readings/layout.tsx
 import type { Metadata } from "next";
-import React from "react";
 
-const SITE_URL = "https://www.iatioben.com.br";
-const HUB_PATH = "/en/daily-mass-readings";
-
+/**
+ * EN Daily Mass Readings section layout.
+ *
+ * Key rules applied here:
+ * - DO NOT set canonical here (canonical is date-specific and must live in the [data]/page.tsx).
+ * - DO NOT set openGraph.url here (page.tsx should set og:url per date).
+ * - Provide stable section-level metadata only (title/description/images).
+ */
 export const metadata: Metadata = {
-  // This is a *default* (hub-level) title/description.
-  // The day page (/[data]/page.tsx) will override title/description/openGraph as needed.
   title: {
-    default: "Daily Mass Readings Today | Readings, Psalm and Gospel",
+    default: "Daily Mass Readings | Readings, Psalm and Gospel",
     template: "%s | IA Tio Ben",
   },
   description:
-    "Follow today’s Daily Mass Readings with the First Reading, Psalm and Gospel. Pray, reflect and live God’s Word every day.",
-
-  // Canonical for the hub page. The day page sets its own canonical in generateMetadata.
+    "Daily Mass Readings with the First Reading, Responsorial Psalm, and Gospel. Browse by date, month, and year to pray with the Church.",
   alternates: {
-    canonical: `${SITE_URL}${HUB_PATH}`,
+    // IMPORTANT: This is the section root; per-day pages must override in page.tsx.
+    canonical: "https://www.iatioben.com.br/en/daily-mass-readings",
   },
-
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
   openGraph: {
-    title: "Daily Mass Readings Today | Readings, Psalm and Gospel",
+    title: "Daily Mass Readings | Readings, Psalm and Gospel",
     description:
-      "Follow today’s Daily Mass Readings with the First Reading, Psalm and Gospel. Pray, reflect and live God’s Word every day.",
-    url: `${SITE_URL}${HUB_PATH}`,
+      "Daily Mass Readings with the First Reading, Responsorial Psalm, and Gospel. Browse by date, month, and year to pray with the Church.",
     siteName: "IA Tio Ben",
     type: "website",
     locale: "en_US",
+    // IMPORTANT: do not set url here (page.tsx sets og:url per date)
+    images: [
+      {
+        url: "/og?title=Daily%20Mass%20Readings&description=Readings%2C%20Psalm%20and%20Gospel%20to%20pray%20with%20the%20Church",
+        width: 1200,
+        height: 630,
+        alt: "Daily Mass Readings on IA Tio Ben",
+      },
+    ],
   },
-
   twitter: {
     card: "summary_large_image",
-    title: "Daily Mass Readings Today | Readings, Psalm and Gospel",
+    title: "Daily Mass Readings | Readings, Psalm and Gospel",
     description:
-      "Follow today’s Daily Mass Readings with the First Reading, Psalm and Gospel. Pray, reflect and live God’s Word every day.",
+      "Daily Mass Readings with the First Reading, Responsorial Psalm, and Gospel. Browse by date, month, and year.",
+    images: [
+      "/og?title=Daily%20Mass%20Readings&description=Readings%2C%20Psalm%20and%20Gospel%20to%20pray%20with%20the%20Church",
+    ],
   },
 };
 
@@ -43,9 +64,9 @@ export default function DailyMassReadingsLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // IMPORTANT:
-  // Do not wrap with another max-w/padding container here,
-  // because your day page already controls layout spacing and widths.
-  // Nested containers commonly cause “double padding” and layout drift.
-  return <main className="min-h-screen bg-[#fbfbfb]">{children}</main>;
+  return (
+    <main className="min-h-screen bg-[#fbfbfb]">
+      <div className="mx-auto w-full max-w-7xl px-4 py-6">{children}</div>
+    </main>
+  );
 }
