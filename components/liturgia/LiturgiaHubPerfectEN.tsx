@@ -4,32 +4,18 @@
 import Link from "next/link";
 import React, { useMemo, useState } from "react";
 import type { LiturgiaNormalized } from "@/lib/liturgia/api";
-import DailyParagraph from "./DailyParagraph";
 
 type Props = {
   siteUrl: string;
-
-  /**
-   * Canonical base path for the English hub (no trailing date).
-   * Example: /en/daily-mass-readings
-   */
-  hubCanonicalPath: string;
-
-  /**
-   * Current page slug for EN routes.
-   * IMPORTANT: EN uses MM-DD-YYYY (e.g., 01-13-2026)
-   */
-  dateSlug: string; // mm-dd-yyyy
-
+  hubCanonicalPath: string; // ex: /en/daily-mass-readings
+  dateSlug: string; // MM-DD-YYYY (ex: 01-13-2026)
   data: LiturgiaNormalized;
 
-  /** Adjacent day slugs for EN routes (MM-DD-YYYY) */
-  prevSlug: string;
-  nextSlug: string;
+  prevSlug: string; // MM-DD-YYYY
+  nextSlug: string; // MM-DD-YYYY
 
-  /** Today slug/label (EN) */
-  todaySlug: string; // mm-dd-yyyy
-  todayLabel: string; // e.g., 01/13/2026 or “January 13, 2026”
+  todaySlug: string; // MM-DD-YYYY
+  todayLabel: string; // ex: 01/13/2026 ou “January 13, 2026”
 
   className?: string;
 };
@@ -49,6 +35,7 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={[
         "rounded-xl px-3 py-2 text-sm font-semibold border transition",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2",
@@ -56,133 +43,122 @@ function TabButton({
           ? "bg-amber-600 text-white border-amber-600"
           : "bg-white text-slate-800 border-slate-200 hover:bg-slate-50",
       ].join(" ")}
-      aria-pressed={active}
     >
       {children}
     </button>
   );
 }
 
-function HtmlBody({
-  html,
-  fallbackText,
-}: {
-  html?: string;
-  fallbackText?: string;
-}) {
-  const hasHtml = Boolean(html && html.trim());
-  const hasText = Boolean(fallbackText && fallbackText.trim());
+/** Heurística simples para identificar texto PT (evita renderizar antífonas PT na página EN). */
+function looksPortuguese(text?: string) {
+  if (!text) return false;
+  const t = text.trim();
+  if (!t) return false;
 
-  if (hasHtml) {
-    const safeHtml: string = html ?? "";
-    return (
-      <div
-        className={[
-          "text-[15px] sm:text-[16px] leading-7 text-slate-800",
-          "[&>p]:mt-3 [&>p:first-child]:mt-0",
-          "break-words",
-          "[&_a]:text-amber-700 [&_a]:font-semibold [&_a]:underline [&_a]:decoration-amber-300 hover:[&_a]:decoration-amber-500",
-          "[&_sub]:align-baseline",
-        ].join(" ")}
-        // NOTE: ensure upstream sanitizer/normalizer produces safe HTML
-        dangerouslySetInnerHTML={{ __html: safeHtml }}
-      />
-    );
+  // palavras bem comuns em antífonas PT e sinais diacríticos
+  const ptMarkers = [
+    "Senhor",
+    "vós",
+    "vosso",
+    "vossa",
+    "misericórdia",
+    "coração",
+    "anjos",
+    "trono",
+    "alegr",
+    "salvação",
+    "ó",
+    "à",
+    "é",
+    "ç",
+  ];
+  const hasDiacritics = /[áàâãéêíóôõúç]/i.test(t);
+  const hasMarker = ptMarkers.some((m) => t.toLowerCase().includes(m.toLowerCase()));
+  return hasDiacritics || hasMarker;
+}
+
+function ptWeekdayToEn(pt?: string) {
+  if (!pt) return "";
+  const s = pt.toLowerCase().trim();
+  const map: Record<string, string> = {
+    "segunda-feira": "Monday",
+    "terça-feira": "Tuesday",
+    "terca-feira": "Tuesday",
+    "quarta-feira": "Wednesday",
+    "quinta-feira": "Thursday",
+    "sexta-feira": "Friday",
+    "sábado": "Saturday",
+    "sabado": "Saturday",
+    "domingo": "Sunday",
+  };
+  return map[s] ?? "";
+}
+
+function ptColorToEn(pt?: string) {
+  if (!pt) return "";
+  const s = pt.toLowerCase().trim();
+  const map: Record<string, string> = {
+    "verde": "Green",
+    "roxo": "Violet",
+    "violeta": "Violet",
+    "branco": "White",
+    "vermelho": "Red",
+    "rosa": "Rose",
+    "preto": "Black",
+    "dourado": "Gold",
+  };
+  return map[s] ?? "";
+}
+
+/**
+ * Tentativa pragmática de traduzir o padrão mais frequente:
+ * "3ª feira da 1ª Semana do Tempo Comum" -> "Tuesday of the 1st Week in Ordinary Time"
+ * Se não casar, retorna vazio (e a UI não imprime o texto PT).
+ */
+function ptCelebrationToEn(pt?: string) {
+  if (!pt) return "";
+
+  const raw = pt.trim();
+
+  // Normaliza "3ª feira" / "3a feira"
+  const norm = raw
+    .replace(/\s+/g, " ")
+    .replace(/3ª\s*feira/i, "terça-feira")
+    .replace(/3a\s*feira/i, "terça-feira")
+    .replace(/2ª\s*feira/i, "segunda-feira")
+    .replace(/2a\s*feira/i, "segunda-feira")
+    .replace(/4ª\s*feira/i, "quarta-feira")
+    .replace(/4a\s*feira/i, "quarta-feira")
+    .replace(/5ª\s*feira/i, "quinta-feira")
+    .replace(/5a\s*feira/i, "quinta-feira")
+    .replace(/6ª\s*feira/i, "sexta-feira")
+    .replace(/6a\s*feira/i, "sexta-feira");
+
+  // "Xª feira da Yª Semana do Tempo Comum"
+  const m = norm.match(
+    /^(segunda-feira|terça-feira|terca-feira|quarta-feira|quinta-feira|sexta-feira|sábado|sabado|domingo)\s+da\s+(\d+)ª?\s+Semana\s+do\s+Tempo\s+Comum/i
+  );
+  if (m) {
+    const weekday = ptWeekdayToEn(m[1]);
+    const week = Number(m[2]);
+    const suffix =
+      week === 1 ? "st" : week === 2 ? "nd" : week === 3 ? "rd" : "th";
+    return `${weekday} of the ${week}${suffix} Week in Ordinary Time`;
   }
 
-  return (
-    <div className="whitespace-pre-line text-[15px] sm:text-[16px] leading-7 text-slate-800 break-words">
-      {hasText ? fallbackText : "—"}
-    </div>
-  );
+  // Se for "Tempo Comum" em outras formas, ao menos não imprime PT.
+  return "";
 }
 
-function ReadingBlock({
-  title,
-  refText,
-  html,
-  text,
-}: {
-  title: string;
-  refText?: string;
-  html?: string;
-  text?: string;
-}) {
-  return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
-      <div className="flex flex-col gap-1">
-        <p className="text-[11px] font-semibold text-amber-700 uppercase tracking-wide">
-          {title}
-        </p>
-        {refText ? (
-          <p className="text-sm sm:text-base font-bold text-slate-900">
-            {refText}
-          </p>
-        ) : null}
-      </div>
-
-      <div className="mt-3">
-        <HtmlBody html={html} fallbackText={text} />
-      </div>
-    </section>
-  );
-}
-
-function Chip({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-      <p className="text-[11px] font-semibold text-slate-500 uppercase">
-        {label}
-      </p>
-      <p className="mt-1 text-sm font-bold text-slate-900 break-words">
-        {value || "—"}
-      </p>
-    </div>
-  );
-}
-
-function isValidEnSlugMMDDYYYY(slug: string): boolean {
-  // MM-DD-YYYY (with leading zeros)
-  if (!slug) return false;
-  if (!/^\d{2}-\d{2}-\d{4}$/.test(slug)) return false;
-
-  const [mmS, ddS, yyyyS] = slug.split("-");
-  const mm = Number(mmS);
-  const dd = Number(ddS);
-  const yyyy = Number(yyyyS);
-  if (!mm || !dd || !yyyy) return false;
-  if (mm < 1 || mm > 12) return false;
-  if (dd < 1 || dd > 31) return false;
-
-  // Validate real date
-  const dt = new Date(Date.UTC(yyyy, mm - 1, dd, 12, 0, 0));
-  return (
-    dt.getUTCFullYear() === yyyy &&
-    dt.getUTCMonth() === mm - 1 &&
-    dt.getUTCDate() === dd
-  );
-}
-
-function enUSLabelFromISO(dateISO?: string): string {
-  // dateISO: YYYY-MM-DD
-  if (!dateISO) return "";
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) return "";
-
-  // Use midday UTC to avoid timezone edge cases
-  const dt = new Date(`${dateISO}T12:00:00Z`);
-  if (Number.isNaN(dt.getTime())) return "";
-  return dt.toLocaleDateString("en-US", {
-    month: "2-digit",
-    day: "2-digit",
-    year: "numeric",
-  });
+function safeHtml(html?: string) {
+  if (!html) return "";
+  // aqui você já vem com HTML normalizado no seu pipeline; só devolvemos.
+  return html;
 }
 
 export default function LiturgiaHubPerfectEN({
-  // siteUrl and hubCanonicalPath are intentionally not used inside the client component:
-  // canonical/metadata must be handled in generateMetadata (server side).
-  siteUrl: _siteUrl,
-  hubCanonicalPath: _hubCanonicalPath,
+  siteUrl,
+  hubCanonicalPath,
   dateSlug,
   data,
   prevSlug,
@@ -193,51 +169,51 @@ export default function LiturgiaHubPerfectEN({
 }: Props) {
   const [tab, setTab] = useState<TabKey>("readings");
 
-  // Prefer normalized HTML when present
-  const firstHtml = (data as any).primeiraHtml as string | undefined;
-  const psalmHtml = (data as any).salmoHtml as string | undefined;
-  const secondHtml = (data as any).segundaHtml as string | undefined;
-  const gospelHtml = (data as any).evangelhoHtml as string | undefined;
+  const weekdayEN = useMemo(() => {
+    // se o seu normalizador já trouxer weekday EN no futuro, você pode priorizar aqui.
+    const byPt = ptWeekdayToEn(data.weekday);
+    return byPt || ""; // não imprime PT
+  }, [data.weekday]);
 
-  const antEntranceHtml = (data as any).antEntradaHtml as string | undefined;
-  const antCommunionHtml = (data as any).antComunhaoHtml as string | undefined;
+  const colorEN = useMemo(() => {
+    const byPt = ptColorToEn(data.color);
+    return byPt || ""; // não imprime PT
+  }, [data.color]);
 
-  const hasSecond = useMemo(() => {
-    return Boolean(
-      (data.segundaRef && data.segundaRef.trim()) ||
-        (data.segundaTexto && data.segundaTexto.trim()) ||
-        (secondHtml && secondHtml.trim())
-    );
-  }, [data.segundaRef, data.segundaTexto, secondHtml]);
+  const celebrationEN = useMemo(() => {
+    const byPt = ptCelebrationToEn(data.celebration);
+    return byPt || ""; // não imprime PT
+  }, [data.celebration]);
 
-  const dayHref = (slug: string) => `/en/daily-mass-readings/${slug}`;
+  const ptDayPath = useMemo(() => {
+    // Seu `data.dateSlug` (no HTML) estava vindo como "13-01-2026" (DD-MM-YYYY).
+    // Se existir, usamos para linkar corretamente para PT.
+    const ddmmyyyy = data.dateSlug || "";
+    return ddmmyyyy ? `/liturgia-diaria/${ddmmyyyy}` : "/liturgia-diaria";
+  }, [data.dateSlug]);
 
-  // Robust title label derived from ISO (not from PT dateLabel)
-  const dateLabelUS = useMemo(() => enUSLabelFromISO(data?.dateISO), [data?.dateISO]);
+  const hasAntiphonsEN = useMemo(() => {
+    const a1 = data.antEntradaHtml || data.antEntrada;
+    const a2 = data.antComunhaoHtml || data.antComunhao;
+    if (!a1 && !a2) return false;
 
-  // Defensive: if caller passes an invalid slug, still render but avoid generating broken self-link
-  const safeDateSlug = useMemo(() => {
-    return isValidEnSlugMMDDYYYY(dateSlug) ? dateSlug : todaySlug;
-  }, [dateSlug, todaySlug]);
+    // Se parece PT, não considera disponível em EN
+    const ptLike = looksPortuguese(a1) || looksPortuguese(a2);
+    return !ptLike;
+  }, [data.antEntradaHtml, data.antEntrada, data.antComunhaoHtml, data.antComunhao]);
 
-  const safePrevSlug = useMemo(() => {
-    return isValidEnSlugMMDDYYYY(prevSlug) ? prevSlug : todaySlug;
-  }, [prevSlug, todaySlug]);
+  const readingsHtml = useMemo(() => safeHtml(data.primeiraHtml), [data.primeiraHtml]);
+  const psalmHtml = useMemo(() => safeHtml(data.salmoHtml), [data.salmoHtml]);
+  const gospelHtml = useMemo(() => safeHtml(data.evangelhoHtml), [data.evangelhoHtml]);
 
-  const safeNextSlug = useMemo(() => {
-    return isValidEnSlugMMDDYYYY(nextSlug) ? nextSlug : todaySlug;
-  }, [nextSlug, todaySlug]);
-
-  const safeTodaySlug = useMemo(() => {
-    return isValidEnSlugMMDDYYYY(todaySlug) ? todaySlug : safeDateSlug;
-  }, [todaySlug, safeDateSlug]);
+  const showSecondReading = Boolean(data.segundaRef?.trim());
 
   return (
     <article
       className={[
-        "mx-auto w-full max-w-5xl px-3 sm:px-4 lg:px-6 py-6 bg-white text-slate-900 leading-relaxed",
-        "overflow-x-hidden",
-        className || "",
+        "mx-auto w-full max-w-5xl px-3 sm:px-4 lg:px-6 py-6",
+        "bg-white text-slate-900 leading-relaxed overflow-x-hidden",
+        className ?? "",
       ].join(" ")}
       itemScope
       itemType="https://schema.org/Article"
@@ -248,65 +224,95 @@ export default function LiturgiaHubPerfectEN({
         </p>
 
         <h1 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight">
-          Daily Mass Readings for {dateLabelUS || todayLabel}: Gospel &amp; Readings
+          Daily Mass Readings for {todayLabel}: Gospel &amp; Readings
         </h1>
 
-        <p className="mt-2 text-sm text-slate-600">
-          {data.celebration ? data.celebration : ""}
-          {data.color ? ` • Liturgical color: ${data.color}` : ""}
-        </p>
-
-        {/* Editorial paragraph of the day (Liturgical season / special dates) */}
-        <div className="mt-3">
-          <DailyParagraph date={safeDateSlug} locale="en" />
-        </div>
+        {(celebrationEN || colorEN) && (
+          <p className="mt-2 text-sm text-slate-600">
+            {celebrationEN ? celebrationEN : null}
+            {celebrationEN && colorEN ? " • " : null}
+            {colorEN ? `Liturgical color: ${colorEN}` : null}
+            {/* weekdayEN é redundante aqui porque o celebration já carrega “Tuesday…”, então não forço */}
+          </p>
+        )}
 
         <div className="mt-4 flex flex-wrap gap-2">
           <Link
-            href="/en/daily-mass-readings"
             className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
+            href={hubCanonicalPath}
           >
             Readings calendar
           </Link>
 
           <Link
-            href={dayHref(safeTodaySlug)}
             className="rounded-xl bg-amber-600 text-white px-4 py-2 text-sm font-semibold hover:bg-amber-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
+            href={`${hubCanonicalPath}/${todaySlug}`}
           >
             Today • {todayLabel}
           </Link>
 
           <Link
-            href={dayHref(safePrevSlug)}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
+            href={`${hubCanonicalPath}/${prevSlug}`}
           >
             Yesterday
           </Link>
 
           <Link
-            href={dayHref(safeNextSlug)}
             className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2"
+            href={`${hubCanonicalPath}/${nextSlug}`}
           >
             Tomorrow
           </Link>
         </div>
       </header>
 
-      {/* Quick view (references) */}
+      {/* Cards de referência */}
       <section className="rounded-2xl border border-amber-100 bg-white p-5 shadow-sm">
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Chip label="First Reading" value={data.primeiraRef || "—"} />
-          <Chip label="Responsorial Psalm" value={data.salmoRef || "—"} />
-          {hasSecond ? (
-            <Chip label="Second Reading" value={data.segundaRef || "—"} />
-          ) : null}
-          <Chip label="Gospel" value={data.evangelhoRef || "—"} />
+        <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase">
+              First Reading
+            </p>
+            <p className="mt-1 text-sm font-bold text-slate-900 break-words">
+              {data.primeiraRef || "—"}
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase">
+              Responsorial Psalm
+            </p>
+            <p className="mt-1 text-sm font-bold text-slate-900 break-words">
+              {data.salmoRef || "—"}
+            </p>
+          </div>
+
+          {showSecondReading && (
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase">
+                Second Reading
+              </p>
+              <p className="mt-1 text-sm font-bold text-slate-900 break-words">
+                {data.segundaRef}
+              </p>
+            </div>
+          )}
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-[11px] font-semibold text-slate-500 uppercase">
+              Gospel
+            </p>
+            <p className="mt-1 text-sm font-bold text-slate-900 break-words">
+              {data.evangelhoRef || "—"}
+            </p>
+          </div>
         </div>
       </section>
 
       {/* Tabs */}
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-1 flex flex-wrap gap-2">
           <TabButton active={tab === "readings"} onClick={() => setTab("readings")}>
             Readings
           </TabButton>
@@ -318,87 +324,157 @@ export default function LiturgiaHubPerfectEN({
           </TabButton>
         </div>
 
-        <div className="mt-4">
-          {tab === "readings" ? (
-            <div className="space-y-4">
-              <ReadingBlock
-                title="First Reading"
-                refText={data.primeiraRef}
-                html={firstHtml}
-                text={data.primeiraTexto}
-              />
+        <div className="mt-4 space-y-4">
+          {tab === "readings" && (
+            <>
+              <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
+                <div className="flex flex-col gap-1">
+                  <p className="text-[11px] font-semibold text-amber-700 uppercase tracking-wide">
+                    First Reading
+                  </p>
+                  <p className="text-sm sm:text-base font-bold text-slate-900">
+                    {data.primeiraRef || "—"}
+                  </p>
+                </div>
 
-              {hasSecond ? (
-                <ReadingBlock
-                  title="Second Reading"
-                  refText={data.segundaRef}
-                  html={secondHtml}
-                  text={data.segundaTexto}
+                <div className="mt-3">
+                  <div
+                    className="text-[15px] sm:text-[16px] leading-7 text-slate-800 [&>p]:mt-3 [&>p:first-child]:mt-0 break-words [&_a]:text-amber-700 [&_a]:font-semibold [&_a]:underline [&_a]:decoration-amber-300 hover:[&_a]:decoration-amber-500 [&_sub]:align-baseline"
+                    dangerouslySetInnerHTML={{ __html: readingsHtml || "<p>—</p>" }}
+                  />
+                </div>
+              </section>
+
+              {showSecondReading && (
+                <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
+                  <div className="flex flex-col gap-1">
+                    <p className="text-[11px] font-semibold text-amber-700 uppercase tracking-wide">
+                      Second Reading
+                    </p>
+                    <p className="text-sm sm:text-base font-bold text-slate-900">
+                      {data.segundaRef}
+                    </p>
+                  </div>
+
+                  <div className="mt-3">
+                    <div
+                      className="text-[15px] sm:text-[16px] leading-7 text-slate-800 [&>p]:mt-3 [&>p:first-child]:mt-0 break-words [&_a]:text-amber-700 [&_a]:font-semibold [&_a]:underline [&_a]:decoration-amber-300 hover:[&_a]:decoration-amber-500 [&_sub]:align-baseline"
+                      dangerouslySetInnerHTML={{
+                        __html: safeHtml(data.segundaHtml) || "<p>—</p>",
+                      }}
+                    />
+                  </div>
+                </section>
+              )}
+            </>
+          )}
+
+          {tab === "psalm" && (
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
+              <div className="flex flex-col gap-1">
+                <p className="text-[11px] font-semibold text-amber-700 uppercase tracking-wide">
+                  Responsorial Psalm
+                </p>
+                <p className="text-sm sm:text-base font-bold text-slate-900">
+                  {data.salmoRef || "—"}
+                </p>
+              </div>
+
+              <div className="mt-3">
+                <div
+                  className="text-[15px] sm:text-[16px] leading-7 text-slate-800 [&>p]:mt-3 [&>p:first-child]:mt-0 break-words [&_a]:text-amber-700 [&_a]:font-semibold [&_a]:underline [&_a]:decoration-amber-300 hover:[&_a]:decoration-amber-500 [&_sub]:align-baseline"
+                  dangerouslySetInnerHTML={{ __html: psalmHtml || "<p>—</p>" }}
                 />
-              ) : null}
-            </div>
-          ) : null}
+              </div>
+            </section>
+          )}
 
-          {tab === "psalm" ? (
-            <ReadingBlock
-              title="Responsorial Psalm"
-              refText={data.salmoRef}
-              html={psalmHtml}
-              text={data.salmoTexto}
-            />
-          ) : null}
+          {tab === "gospel" && (
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
+              <div className="flex flex-col gap-1">
+                <p className="text-[11px] font-semibold text-amber-700 uppercase tracking-wide">
+                  Gospel
+                </p>
+                <p className="text-sm sm:text-base font-bold text-slate-900">
+                  {data.evangelhoRef || "—"}
+                </p>
+              </div>
 
-          {tab === "gospel" ? (
-            <ReadingBlock
-              title="Gospel"
-              refText={data.evangelhoRef}
-              html={gospelHtml}
-              text={data.evangelhoTexto}
-            />
-          ) : null}
+              <div className="mt-3">
+                <div
+                  className="text-[15px] sm:text-[16px] leading-7 text-slate-800 [&>p]:mt-3 [&>p:first-child]:mt-0 break-words [&_a]:text-amber-700 [&_a]:font-semibold [&_a]:underline [&_a]:decoration-amber-300 hover:[&_a]:decoration-amber-500 [&_sub]:align-baseline"
+                  dangerouslySetInnerHTML={{ __html: gospelHtml || "<p>—</p>" }}
+                />
+              </div>
+            </section>
+          )}
         </div>
       </section>
 
-      {data.antEntrada || data.antComunhao ? (
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg sm:text-xl font-bold tracking-tight">Antiphons</h2>
+      {/* Antiphons */}
+      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg sm:text-xl font-bold tracking-tight">Antiphons</h2>
 
+        {hasAntiphonsEN ? (
           <div className="mt-4 space-y-4">
-            {data.antEntrada ? (
+            {!!(data.antEntradaHtml || data.antEntrada) && (
               <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
                 <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
                   Entrance
                 </p>
                 <div className="mt-3">
-                  <HtmlBody html={antEntranceHtml} fallbackText={data.antEntrada} />
+                  <div
+                    className="text-[15px] sm:text-[16px] leading-7 text-slate-800 [&>p]:mt-3 [&>p:first-child]:mt-0 break-words"
+                    dangerouslySetInnerHTML={{
+                      __html:
+                        data.antEntradaHtml ||
+                        (data.antEntrada ? `<p>${data.antEntrada}</p>` : "<p>—</p>"),
+                    }}
+                  />
                 </div>
               </section>
-            ) : null}
+            )}
 
-            {data.antComunhao ? (
+            {!!(data.antComunhaoHtml || data.antComunhao) && (
               <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
                 <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
                   Communion
                 </p>
                 <div className="mt-3">
-                  <HtmlBody html={antCommunionHtml} fallbackText={data.antComunhao} />
+                  <div
+                    className="text-[15px] sm:text-[16px] leading-7 text-slate-800 [&>p]:mt-3 [&>p:first-child]:mt-0 break-words"
+                    dangerouslySetInnerHTML={{
+                      __html:
+                        data.antComunhaoHtml ||
+                        (data.antComunhao ? `<p>${data.antComunhao}</p>` : "<p>—</p>"),
+                    }}
+                  />
                 </div>
               </section>
-            ) : null}
+            )}
           </div>
-        </section>
-      ) : null}
+        ) : (
+          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/60 p-4 text-sm text-slate-800">
+            <p className="font-semibold">Antiphons are not available in English yet.</p>
+            <p className="mt-1">
+              You can view the antiphons on the Portuguese page for this day:
+              <Link className="ml-1 font-semibold text-amber-800 underline" href={ptDayPath}>
+                open PT liturgy
+              </Link>
+              .
+            </p>
+          </div>
+        )}
+      </section>
 
       <footer className="mt-8 border-t border-slate-200 pt-6">
         <p className="text-xs text-slate-500 break-words">
-          This page:{" "}
-          <span className="font-semibold">{dayHref(safeDateSlug)}</span>
+          This page: <span className="font-semibold">{hubCanonicalPath}/{dateSlug}</span>
         </p>
       </footer>
 
-      {/* Use ISO (stable) for structured data timestamps */}
-      <meta itemProp="datePublished" content={`${data.dateISO}T06:00:00-03:00`} />
-      <meta itemProp="dateModified" content={`${data.dateISO}T06:00:00-03:00`} />
+      {/* Schema.org metas já vão no page.tsx; aqui mantemos datas apenas se você quiser */}
+      {/* <meta itemProp="datePublished" content="..." /> */}
     </article>
   );
 }
