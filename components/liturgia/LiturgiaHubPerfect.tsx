@@ -170,8 +170,7 @@ export default function LiturgiaHubPerfect({
       itemScope
       itemType="https://schema.org/Article"
     >
-      <link rel="canonical" href={canonical} />
-
+      
       <header className="mb-6">
         <p className="text-xs font-semibold tracking-wide text-amber-700 uppercase">
           IA Tio Ben • Liturgia

@@ -1,7 +1,5 @@
 // app/en/layout.tsx
 import type { Metadata } from "next";
-import Cabecalho from "@/components/cabecalho";
-import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: {
