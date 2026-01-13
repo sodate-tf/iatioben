@@ -4,10 +4,10 @@ import type { Metadata } from "next";
 /**
  * EN Daily Mass Readings section layout.
  *
- * Key rules applied here:
- * - DO NOT set canonical here (canonical is date-specific and must live in the [data]/page.tsx).
- * - DO NOT set openGraph.url here (page.tsx should set og:url per date).
- * - Provide stable section-level metadata only (title/description/images).
+ * Rules:
+ * - DO NOT set canonical here (leaf pages must define canonical).
+ * - DO NOT set openGraph.url here (leaf pages set og:url).
+ * - Provide only stable section-level metadata.
  */
 export const metadata: Metadata = {
   title: {
@@ -16,10 +16,7 @@ export const metadata: Metadata = {
   },
   description:
     "Daily Mass Readings with the First Reading, Responsorial Psalm, and Gospel. Browse by date, month, and year to pray with the Church.",
-  alternates: {
-    // IMPORTANT: This is the section root; per-day pages must override in page.tsx.
-    canonical: "https://www.iatioben.com.br/en/daily-mass-readings",
-  },
+  // IMPORTANT: no alternates.canonical at layout level (avoids duplicate canonicals)
   robots: {
     index: true,
     follow: true,
@@ -38,10 +35,11 @@ export const metadata: Metadata = {
     siteName: "IA Tio Ben",
     type: "website",
     locale: "en_US",
-    // IMPORTANT: do not set url here (page.tsx sets og:url per date)
+    // IMPORTANT: do not set url here (leaf page sets og:url)
     images: [
       {
-        url: "/og?title=Daily%20Mass%20Readings&description=Readings%2C%20Psalm%20and%20Gospel%20to%20pray%20with%20the%20Church",
+        // Use absolute URL to avoid inconsistencies across crawlers
+        url: "https://www.iatioben.com.br/og?title=Daily%20Mass%20Readings&description=Readings%2C%20Psalm%20and%20Gospel%20to%20pray%20with%20the%20Church",
         width: 1200,
         height: 630,
         alt: "Daily Mass Readings on IA Tio Ben",
@@ -54,7 +52,7 @@ export const metadata: Metadata = {
     description:
       "Daily Mass Readings with the First Reading, Responsorial Psalm, and Gospel. Browse by date, month, and year.",
     images: [
-      "/og?title=Daily%20Mass%20Readings&description=Readings%2C%20Psalm%20and%20Gospel%20to%20pray%20with%20the%20Church",
+      "https://www.iatioben.com.br/og?title=Daily%20Mass%20Readings&description=Readings%2C%20Psalm%20and%20Gospel%20to%20pray%20with%20the%20Church",
     ],
   },
 };
