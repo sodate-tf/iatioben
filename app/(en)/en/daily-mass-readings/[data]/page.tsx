@@ -342,8 +342,8 @@ export default async function DailyMassReadingsDayPage({ params }: PageProps) {
   const next = new Date(year, month - 1, day + 1);
 
   // IMPORTANT: prev/next must be US slug (MM-DD-YYYY)
-  const prevSlug = slugFromDateEN(prev);
-  const nextSlug = slugFromDateEN(next);
+  const prevSlug = slugFromDateUS(prev);
+  const nextSlug = slugFromDateUS(next);
 
   const canonical = `${SITE_URL}${HUB_CANONICAL_PATH}/${slug}`;
 
