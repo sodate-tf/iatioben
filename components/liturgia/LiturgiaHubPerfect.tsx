@@ -129,6 +129,72 @@ function Chip({ label, value }: { label: string; value: string }) {
   );
 }
 
+// PT — Botão “Compartilhar” com destaque + ícone
+function ShareButton({
+  url,
+  title,
+  text,
+}: {
+  url: string;
+  title: string;
+  text: string;
+}) {
+  const [copied, setCopied] = React.useState(false);
+
+  async function onShare() {
+    try {
+      if (typeof navigator !== "undefined" && (navigator as any).share) {
+        await (navigator as any).share({ title, text, url });
+        return;
+      }
+
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1600);
+        return;
+      }
+
+      window.prompt("Copie o link:", url);
+    } catch {
+      // usuário cancelou / bloqueio do navegador
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onShare}
+      className={[
+        "inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold",
+        "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2",
+        "active:translate-y-[1px] transition",
+      ].join(" ")}
+      aria-label="Compartilhar esta liturgia"
+    >
+      {/* ícone share */}
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        className="h-4 w-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
+        <path d="M12 16V4" />
+        <path d="M7 9l5-5 5 5" />
+      </svg>
+
+      <span>{copied ? "Link copiado" : "Compartilhar"}</span>
+    </button>
+  );
+}
+
+
 export default function LiturgiaHubPerfect({
   siteUrl,
   hubCanonicalPath,
@@ -141,6 +207,20 @@ export default function LiturgiaHubPerfect({
   className,
 }: Props) {
   const canonical = `${siteUrl}${hubCanonicalPath}`;
+
+  const shareTitle = `Liturgia diária de ${data.dateLabel}: ${
+    data.evangelhoRef || "Evangelho e leituras da Missa"
+  }`;
+
+  const shareText = [
+    data.celebration ? data.celebration : null,
+    data.primeiraRef ? `1ª Leitura: ${data.primeiraRef}` : null,
+    data.salmoRef ? `Salmo: ${data.salmoRef}` : null,
+    data.evangelhoRef ? `Evangelho: ${data.evangelhoRef}` : null,
+    "Reze e acompanhe a liturgia do dia com o Tio Ben IA.",
+  ]
+    .filter(Boolean)
+    .join(" • ");
 
   const hasSecond = useMemo(() => {
     return Boolean(
@@ -170,7 +250,6 @@ export default function LiturgiaHubPerfect({
       itemScope
       itemType="https://schema.org/Article"
     >
-      
       <header className="mb-6">
         <p className="text-xs font-semibold tracking-wide text-amber-700 uppercase">
           IA Tio Ben • Liturgia
@@ -218,6 +297,8 @@ export default function LiturgiaHubPerfect({
           >
             Amanhã
           </Link>
+
+          <ShareButton url={canonical} title={shareTitle} text={shareText} />
         </div>
       </header>
 
@@ -236,13 +317,19 @@ export default function LiturgiaHubPerfect({
       {/* Tabs */}
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="mt-4 flex flex-wrap gap-2">
-          <TabButton active={tab === "leituras"} onClick={() => setTab("leituras")}>
+          <TabButton
+            active={tab === "leituras"}
+            onClick={() => setTab("leituras")}
+          >
             Leituras
           </TabButton>
           <TabButton active={tab === "salmo"} onClick={() => setTab("salmo")}>
             Salmo
           </TabButton>
-          <TabButton active={tab === "evangelho"} onClick={() => setTab("evangelho")}>
+          <TabButton
+            active={tab === "evangelho"}
+            onClick={() => setTab("evangelho")}
+          >
             Evangelho
           </TabButton>
         </div>
@@ -287,9 +374,11 @@ export default function LiturgiaHubPerfect({
         </div>
       </section>
 
-      {(data.antEntrada || data.antComunhao) ? (
+      {data.antEntrada || data.antComunhao ? (
         <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg sm:text-xl font-bold tracking-tight">Antífonas</h2>
+          <h2 className="text-lg sm:text-xl font-bold tracking-tight">
+            Antífonas
+          </h2>
 
           <div className="mt-4 space-y-4">
             {data.antEntrada ? (
@@ -309,7 +398,10 @@ export default function LiturgiaHubPerfect({
                   Comunhão
                 </p>
                 <div className="mt-3">
-                  <HtmlBody html={antComunhaoHtml} fallbackText={data.antComunhao} />
+                  <HtmlBody
+                    html={antComunhaoHtml}
+                    fallbackText={data.antComunhao}
+                  />
                 </div>
               </section>
             ) : null}

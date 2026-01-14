@@ -55,7 +55,6 @@ function looksPortuguese(text?: string) {
   const t = text.trim();
   if (!t) return false;
 
-  // palavras bem comuns em antífonas PT e sinais diacríticos
   const ptMarkers = [
     "Senhor",
     "vós",
@@ -73,7 +72,9 @@ function looksPortuguese(text?: string) {
     "ç",
   ];
   const hasDiacritics = /[áàâãéêíóôõúç]/i.test(t);
-  const hasMarker = ptMarkers.some((m) => t.toLowerCase().includes(m.toLowerCase()));
+  const hasMarker = ptMarkers.some((m) =>
+    t.toLowerCase().includes(m.toLowerCase())
+  );
   return hasDiacritics || hasMarker;
 }
 
@@ -98,14 +99,14 @@ function ptColorToEn(pt?: string) {
   if (!pt) return "";
   const s = pt.toLowerCase().trim();
   const map: Record<string, string> = {
-    "verde": "Green",
-    "roxo": "Violet",
-    "violeta": "Violet",
-    "branco": "White",
-    "vermelho": "Red",
-    "rosa": "Rose",
-    "preto": "Black",
-    "dourado": "Gold",
+    verde: "Green",
+    roxo: "Violet",
+    violeta: "Violet",
+    branco: "White",
+    vermelho: "Red",
+    rosa: "Rose",
+    preto: "Black",
+    dourado: "Gold",
   };
   return map[s] ?? "";
 }
@@ -120,7 +121,6 @@ function ptCelebrationToEn(pt?: string) {
 
   const raw = pt.trim();
 
-  // Normaliza "3ª feira" / "3a feira"
   const norm = raw
     .replace(/\s+/g, " ")
     .replace(/3ª\s*feira/i, "terça-feira")
@@ -134,7 +134,6 @@ function ptCelebrationToEn(pt?: string) {
     .replace(/6ª\s*feira/i, "sexta-feira")
     .replace(/6a\s*feira/i, "sexta-feira");
 
-  // "Xª feira da Yª Semana do Tempo Comum"
   const m = norm.match(
     /^(segunda-feira|terça-feira|terca-feira|quarta-feira|quinta-feira|sexta-feira|sábado|sabado|domingo)\s+da\s+(\d+)ª?\s+Semana\s+do\s+Tempo\s+Comum/i
   );
@@ -146,15 +145,79 @@ function ptCelebrationToEn(pt?: string) {
     return `${weekday} of the ${week}${suffix} Week in Ordinary Time`;
   }
 
-  // Se for "Tempo Comum" em outras formas, ao menos não imprime PT.
   return "";
 }
 
 function safeHtml(html?: string) {
   if (!html) return "";
-  // aqui você já vem com HTML normalizado no seu pipeline; só devolvemos.
   return html;
 }
+
+// EN — “Share” button with accent color + share icon
+function ShareButton({
+  url,
+  title,
+  text,
+}: {
+  url: string;
+  title: string;
+  text: string;
+}) {
+  const [copied, setCopied] = React.useState(false);
+
+  async function onShare() {
+    try {
+      if (typeof navigator !== "undefined" && (navigator as any).share) {
+        await (navigator as any).share({ title, text, url });
+        return;
+      }
+
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1600);
+        return;
+      }
+
+      window.prompt("Copy this link:", url);
+    } catch {
+      // user canceled / blocked
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onShare}
+      className={[
+        "inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold",
+        "bg-emerald-600 text-white shadow-sm hover:bg-emerald-700",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 focus-visible:ring-offset-2",
+        "active:translate-y-[1px] transition",
+      ].join(" ")}
+      aria-label="Share this page"
+    >
+      {/* share icon */}
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        className="h-4 w-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
+        <path d="M12 16V4" />
+        <path d="M7 9l5-5 5 5" />
+      </svg>
+
+      <span>{copied ? "Link copied" : "Share"}</span>
+    </button>
+  );
+}
+
 
 export default function LiturgiaHubPerfectEN({
   siteUrl,
@@ -169,25 +232,39 @@ export default function LiturgiaHubPerfectEN({
 }: Props) {
   const [tab, setTab] = useState<TabKey>("readings");
 
+  const canonical = `${siteUrl}${hubCanonicalPath}/${dateSlug}`;
+
+  const shareTitle = `Daily Mass Readings for ${todayLabel}: ${
+    data.evangelhoRef || "Gospel & Readings"
+  }`;
+
+  const shareText = [
+    // celebrationEN preferível, mas como é memo abaixo, fazemos aqui de forma robusta:
+    data.celebration ? ptCelebrationToEn(data.celebration) || null : null,
+    data.primeiraRef ? `First Reading: ${data.primeiraRef}` : null,
+    data.salmoRef ? `Psalm: ${data.salmoRef}` : null,
+    data.evangelhoRef ? `Gospel: ${data.evangelhoRef}` : null,
+    "Pray and prepare for Mass with IA Tio Ben.",
+  ]
+    .filter(Boolean)
+    .join(" • ");
+
   const weekdayEN = useMemo(() => {
-    // se o seu normalizador já trouxer weekday EN no futuro, você pode priorizar aqui.
     const byPt = ptWeekdayToEn(data.weekday);
-    return byPt || ""; // não imprime PT
+    return byPt || "";
   }, [data.weekday]);
 
   const colorEN = useMemo(() => {
     const byPt = ptColorToEn(data.color);
-    return byPt || ""; // não imprime PT
+    return byPt || "";
   }, [data.color]);
 
   const celebrationEN = useMemo(() => {
     const byPt = ptCelebrationToEn(data.celebration);
-    return byPt || ""; // não imprime PT
+    return byPt || "";
   }, [data.celebration]);
 
   const ptDayPath = useMemo(() => {
-    // Seu `data.dateSlug` (no HTML) estava vindo como "13-01-2026" (DD-MM-YYYY).
-    // Se existir, usamos para linkar corretamente para PT.
     const ddmmyyyy = data.dateSlug || "";
     return ddmmyyyy ? `/liturgia-diaria/${ddmmyyyy}` : "/liturgia-diaria";
   }, [data.dateSlug]);
@@ -197,7 +274,6 @@ export default function LiturgiaHubPerfectEN({
     const a2 = data.antComunhaoHtml || data.antComunhao;
     if (!a1 && !a2) return false;
 
-    // Se parece PT, não considera disponível em EN
     const ptLike = looksPortuguese(a1) || looksPortuguese(a2);
     return !ptLike;
   }, [data.antEntradaHtml, data.antEntrada, data.antComunhaoHtml, data.antComunhao]);
@@ -227,12 +303,13 @@ export default function LiturgiaHubPerfectEN({
           Daily Mass Readings for {todayLabel}: Gospel &amp; Readings
         </h1>
 
-        {(celebrationEN || colorEN) && (
+        {(celebrationEN || colorEN || weekdayEN) && (
           <p className="mt-2 text-sm text-slate-600">
             {celebrationEN ? celebrationEN : null}
-            {celebrationEN && colorEN ? " • " : null}
+            {celebrationEN && (colorEN || weekdayEN) ? " • " : null}
             {colorEN ? `Liturgical color: ${colorEN}` : null}
-            {/* weekdayEN é redundante aqui porque o celebration já carrega “Tuesday…”, então não forço */}
+            {colorEN && weekdayEN ? " • " : null}
+            {weekdayEN ? weekdayEN : null}
           </p>
         )}
 
@@ -264,10 +341,12 @@ export default function LiturgiaHubPerfectEN({
           >
             Tomorrow
           </Link>
+
+          <ShareButton url={canonical} title={shareTitle} text={shareText} />
         </div>
       </header>
 
-      {/* Cards de referência */}
+      {/* Reference cards */}
       <section className="rounded-2xl border border-amber-100 bg-white p-5 shadow-sm">
         <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -469,12 +548,12 @@ export default function LiturgiaHubPerfectEN({
 
       <footer className="mt-8 border-t border-slate-200 pt-6">
         <p className="text-xs text-slate-500 break-words">
-          This page: <span className="font-semibold">{hubCanonicalPath}/{dateSlug}</span>
+          This page:{" "}
+          <span className="font-semibold">
+            {hubCanonicalPath}/{dateSlug}
+          </span>
         </p>
       </footer>
-
-      {/* Schema.org metas já vão no page.tsx; aqui mantemos datas apenas se você quiser */}
-      {/* <meta itemProp="datePublished" content="..." /> */}
     </article>
   );
 }
