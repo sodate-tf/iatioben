@@ -90,7 +90,7 @@ function ptWeekdayToEn(pt?: string) {
     "sexta-feira": "Friday",
     "sábado": "Saturday",
     "sabado": "Saturday",
-    "domingo": "Sunday",
+    domingo: "Sunday",
   };
   return map[s] ?? "";
 }
@@ -153,6 +153,53 @@ function safeHtml(html?: string) {
   return html;
 }
 
+// Date helpers (EN) — slug MM-DD-YYYY
+function parseEnSlugDate_MMDDYYYY(slug?: string) {
+  if (!slug) return null;
+  const m = slug.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (!m) return null;
+
+  const mm = Number(m[1]);
+  const dd = Number(m[2]);
+  const yyyy = Number(m[3]);
+
+  if (!mm || !dd || !yyyy) return null;
+
+  // Use UTC to avoid timezone shifting the day
+  const dt = new Date(Date.UTC(yyyy, mm - 1, dd));
+  if (Number.isNaN(dt.getTime())) return null;
+
+  // Basic validation (month/day)
+  // If date rolls over (e.g., 02-31), JS will normalize; we guard against that.
+  if (
+    dt.getUTCFullYear() !== yyyy ||
+    dt.getUTCMonth() !== mm - 1 ||
+    dt.getUTCDate() !== dd
+  ) {
+    return null;
+  }
+
+  return dt;
+}
+
+function formatEnLongDate(dt: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "2-digit",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(dt);
+}
+
+function formatEnShortDate(dt: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(dt);
+}
+
 // EN — “Share” button with accent color + share icon
 function ShareButton({
   url,
@@ -197,7 +244,6 @@ function ShareButton({
       ].join(" ")}
       aria-label="Share this page"
     >
-      {/* share icon */}
       <svg
         aria-hidden="true"
         viewBox="0 0 24 24"
@@ -218,7 +264,6 @@ function ShareButton({
   );
 }
 
-
 export default function LiturgiaHubPerfectEN({
   siteUrl,
   hubCanonicalPath,
@@ -234,12 +279,24 @@ export default function LiturgiaHubPerfectEN({
 
   const canonical = `${siteUrl}${hubCanonicalPath}/${dateSlug}`;
 
-  const shareTitle = `Daily Mass Readings for ${todayLabel}: ${
-    data.evangelhoRef || "Gospel & Readings"
+  // Page date label MUST be based on the page slug (dateSlug), not "todayLabel"
+  const pageDate = useMemo(() => parseEnSlugDate_MMDDYYYY(dateSlug), [dateSlug]);
+
+  const pageLabel = useMemo(() => {
+    if (pageDate) return formatEnLongDate(pageDate);
+    return dateSlug; // fallback if malformed
+  }, [pageDate, dateSlug]);
+
+  const pageLabelShort = useMemo(() => {
+    if (pageDate) return formatEnShortDate(pageDate);
+    return dateSlug;
+  }, [pageDate, dateSlug]);
+
+  const shareTitle = `Daily Mass Readings for ${pageLabelShort}: ${
+    data.evangelhoRef ? `Gospel — ${data.evangelhoRef}` : "Gospel & Readings"
   }`;
 
   const shareText = [
-    // celebrationEN preferível, mas como é memo abaixo, fazemos aqui de forma robusta:
     data.celebration ? ptCelebrationToEn(data.celebration) || null : null,
     data.primeiraRef ? `First Reading: ${data.primeiraRef}` : null,
     data.salmoRef ? `Psalm: ${data.salmoRef}` : null,
@@ -276,11 +333,22 @@ export default function LiturgiaHubPerfectEN({
 
     const ptLike = looksPortuguese(a1) || looksPortuguese(a2);
     return !ptLike;
-  }, [data.antEntradaHtml, data.antEntrada, data.antComunhaoHtml, data.antComunhao]);
+  }, [
+    data.antEntradaHtml,
+    data.antEntrada,
+    data.antComunhaoHtml,
+    data.antComunhao,
+  ]);
 
-  const readingsHtml = useMemo(() => safeHtml(data.primeiraHtml), [data.primeiraHtml]);
+  const readingsHtml = useMemo(
+    () => safeHtml(data.primeiraHtml),
+    [data.primeiraHtml]
+  );
   const psalmHtml = useMemo(() => safeHtml(data.salmoHtml), [data.salmoHtml]);
-  const gospelHtml = useMemo(() => safeHtml(data.evangelhoHtml), [data.evangelhoHtml]);
+  const gospelHtml = useMemo(
+    () => safeHtml(data.evangelhoHtml),
+    [data.evangelhoHtml]
+  );
 
   const showSecondReading = Boolean(data.segundaRef?.trim());
 
@@ -300,7 +368,8 @@ export default function LiturgiaHubPerfectEN({
         </p>
 
         <h1 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight">
-          Daily Mass Readings for {todayLabel}: Gospel &amp; Readings
+          Daily Mass Readings for {pageLabel}:{" "}
+          {data.evangelhoRef ? `Gospel — ${data.evangelhoRef}` : "Gospel & Readings"}
         </h1>
 
         {(celebrationEN || colorEN || weekdayEN) && (
@@ -343,6 +412,16 @@ export default function LiturgiaHubPerfectEN({
           </Link>
 
           <ShareButton url={canonical} title={shareTitle} text={shareText} />
+        </div>
+
+        {/* Optional: quick link to PT page */}
+        <div className="mt-3">
+          <Link
+            href={ptDayPath}
+            className="text-sm font-semibold text-amber-700 underline decoration-amber-300 hover:decoration-amber-500"
+          >
+            View in Portuguese
+          </Link>
         </div>
       </header>
 
@@ -534,7 +613,7 @@ export default function LiturgiaHubPerfectEN({
           </div>
         ) : (
           <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/60 p-4 text-sm text-slate-800">
-           
+            Antiphons are not available in English for this date.
           </div>
         )}
       </section>
