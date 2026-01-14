@@ -9,9 +9,10 @@
 import type { Metadata } from "next";
 import BlogGrid from "@/components/BlogGrid";
 import { getPostsAction } from "@/app/adminTioBen/actions/postAction";
-import type { Post } from "../adminTioBen/types";
+
 import AdSensePro from "@/components/adsensePro";
 import BlogAside from "@/components/aside/PostAside";
+import { Post } from "@/app/adminTioBen/types";
 
 const SITE_URL = "https://www.iatioben.com.br";
 const POSTS_PER_PAGE = 10;

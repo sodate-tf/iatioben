@@ -2,12 +2,13 @@
 
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import BlogPostDetail from "../../../components/BlogPostDetail";
+
 
 
 import { getPostBySlug } from "@/app/adminTioBen/actions/postAction";
 import type { Post } from "@/app/adminTioBen/types";
 import BlogAside from "@/components/aside/PostAside";
+import BlogPostDetail from "@/components/BlogPostDetail";
 
 const SITE_URL = "https://www.iatioben.com.br";
 
