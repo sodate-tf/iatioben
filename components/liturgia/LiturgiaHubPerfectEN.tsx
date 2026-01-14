@@ -534,14 +534,7 @@ export default function LiturgiaHubPerfectEN({
           </div>
         ) : (
           <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/60 p-4 text-sm text-slate-800">
-            <p className="font-semibold">Antiphons are not available in English yet.</p>
-            <p className="mt-1">
-              You can view the antiphons on the Portuguese page for this day:
-              <Link className="ml-1 font-semibold text-amber-800 underline" href={ptDayPath}>
-                open PT liturgy
-              </Link>
-              .
-            </p>
+           
           </div>
         )}
       </section>
