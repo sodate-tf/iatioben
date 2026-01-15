@@ -6,6 +6,7 @@ import Script from "next/script";
 import { Inter } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
+import AdsenseScriptLoader from "@/components/adsenseScriptLoader";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -57,7 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           crossOrigin="anonymous"
           strategy="lazyOnload"
         />
-
+        <AdsenseScriptLoader />
         <SpeedInsights />
         <Analytics />
       </body>

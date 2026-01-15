@@ -1,44 +1,80 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Script from "next/script";
 
 interface AdSenseProProps {
   slot: string;
   height?: number;
+  className?: string;
 }
 
-export default function AdSensePro({ slot, height = 120 }: AdSenseProProps) {
-  const adRef = useRef<HTMLModElement | null>(null);
-  const [loaded, setLoaded] = useState(false);
+/**
+ * AdSensePro (Client)
+ * - NÃO carrega script aqui (script deve ser global no layout)
+ * - Só dá push quando:
+ *   (1) o elemento entra em viewport
+ *   (2) o script já está disponível (window.adsbygoogle existe)
+ * - Evita double-push
+ */
+export default function AdSensePro({ slot, height = 120, className }: AdSenseProProps) {
+  // Não use HTMLInsElement: em alguns tsconfigs ele não existe
+  const insRef = useRef<HTMLElement | null>(null);
+  const [pushed, setPushed] = useState(false);
 
   useEffect(() => {
-    if (!adRef.current) return;
+    const el = insRef.current;
+    if (!el || pushed) return;
+
+    let cancelled = false;
+
+    const tryPush = () => {
+      if (cancelled || pushed) return;
+
+      // respeita o tipo já existente no seu global.d.ts (unknown[] | undefined)
+      if (!("adsbygoogle" in window) || !window.adsbygoogle) return;
+
+      try {
+        // cast local (sem redeclarar global) para permitir push
+        (window.adsbygoogle as unknown[]).push({});
+        setPushed(true);
+      } catch {
+        // se falhar por timing, as tentativas abaixo podem resolver
+      }
+    };
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !loaded) {
-          try {
-            (window.adsbygoogle = window.adsbygoogle || []).push({});
-          } catch (err) {
-            console.warn("Erro ao carregar anúncio:", err);
-          }
+        if (!entry.isIntersecting || pushed) return;
 
-          setLoaded(true);
-          observer.disconnect();
-        }
+        tryPush();
+
+        let tries = 0;
+        const maxTries = 12; // ~3s (12 * 250ms)
+        const timer = window.setInterval(() => {
+          tries += 1;
+          tryPush();
+          if (pushed || tries >= maxTries) window.clearInterval(timer);
+        }, 250);
+
+        observer.disconnect();
       },
       { threshold: 0.25 }
     );
 
-    observer.observe(adRef.current);
+    observer.observe(el);
 
-    return () => observer.disconnect();
-  }, [loaded]);
+    return () => {
+      cancelled = true;
+      observer.disconnect();
+    };
+  }, [pushed]);
 
   return (
-    <div style={{ minHeight: height, width: "100%", marginTop: "15px", marginBottom: "15px"  }}>
-      {!loaded && (
+    <div
+      className={className}
+      style={{ minHeight: height, width: "100%", marginTop: 15, marginBottom: 15 }}
+    >
+      {!pushed && (
         <div
           style={{
             height,
@@ -46,19 +82,21 @@ export default function AdSensePro({ slot, height = 120 }: AdSenseProProps) {
             borderRadius: 8,
             background: "linear-gradient(90deg, #f5f5f5, #e2e2e2, #f5f5f5)",
             backgroundSize: "200% 100%",
-            animation: "skeleton 1.6s infinite",
+            animation: "ads-skeleton 1.6s infinite",
           }}
+          aria-hidden="true"
         />
       )}
 
       <ins
-        ref={adRef}
+        // React aceita ref em intrinsic element; o tipo do ref pode ser HTMLElement
+        ref={insRef as any}
         className="adsbygoogle"
         style={{
           display: "block",
-          height,
-          opacity: loaded ? 1 : 0,
-          transition: "opacity .5s ease",
+          minHeight: height,
+          opacity: pushed ? 1 : 0,
+          transition: "opacity .35s ease",
         }}
         data-ad-client="ca-pub-8819996017476509"
         data-ad-slot={slot}
@@ -66,16 +104,8 @@ export default function AdSensePro({ slot, height = 120 }: AdSenseProProps) {
         data-full-width-responsive="true"
       />
 
-      <Script
-        id="adsense-loader"
-        strategy="lazyOnload"
-        async
-        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8819996017476509"
-        crossOrigin="anonymous"
-      />
-
       <style>{`
-        @keyframes skeleton {
+        @keyframes ads-skeleton {
           0% { background-position: -200% 0; }
           100% { background-position: 200% 0; }
         }

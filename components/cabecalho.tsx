@@ -5,7 +5,6 @@ import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import AdsenseScriptLoader from "./AdsenseLoadScript";
 import { motion, AnimatePresence } from "framer-motion";
 
 /* Ícone Share iOS */
@@ -131,7 +130,6 @@ export default function Cabecalho() {
 
   return (
     <>
-      <AdsenseScriptLoader />
 
       {/* =======================
          DESKTOP HEADER

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import AdSense from "./Adsense";
+import AdSensePro from "./adsensePro";
 
 /**
  * Footer (Server Component)
@@ -68,7 +68,7 @@ export default function Footer() {
     <>
       {/* Monetização fora do footer semântico */}
       <div className="mt-8">
-        <AdSense adSlot="9591116531" />
+         <AdSensePro slot="9591116531" height={140} />
       </div>
 
       <footer className="mt-10 border-t border-amber-200 bg-amber-50/80">
