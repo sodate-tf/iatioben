@@ -43,12 +43,15 @@ function formatBRDate(dt: Date) {
 }
 
 /**
- * Monta description com refs (como você pediu) + CTA ao final.
+ * Monta description com refs + CTA ao final.
  * Ajuste defensivo: suporta diferentes nomes de campos.
  */
 function buildRefsDescriptionFromData(data: any) {
   const primeira =
-    data?.primeiraRef || data?.primeiraLeituraRef || data?.primeiraLeitura || null;
+    data?.primeiraRef ||
+    data?.primeiraLeituraRef ||
+    data?.primeiraLeitura ||
+    null;
 
   const salmo =
     data?.salmoRef || data?.salmoResponsorialRef || data?.salmo || null;
@@ -64,19 +67,38 @@ function buildRefsDescriptionFromData(data: any) {
   if (segunda) parts.push(`2ª leitura: ${segunda}`);
   if (evangelho) parts.push(`Evangelho: ${evangelho}`);
 
-  // CTA após o evangelho (como você pediu)
   parts.push("Acesse e reze com a Liturgia Diária no IA Tio Ben.");
 
   return parts.join(" • ");
 }
 
+/**
+ * Parágrafo editorial do dia (server-side) — curto, seguro e indexável.
+ */
+function buildDailyParagraphPT(args: {
+  dateLabel: string;
+  celebration?: string | null;
+  color?: string | null;
+}) {
+  const intro = `Hoje, ${args.dateLabel}${
+    args.celebration ? `, celebramos ${args.celebration}` : ""
+  }.`;
+
+  const middle =
+    "Reserve alguns minutos para ler com atenção, guardar uma frase no coração e transformar isso em uma decisão concreta no seu dia.";
+
+  const outro =
+    "Se desejar, compartilhe esta liturgia com alguém e reze também em família.";
+
+  return [intro, middle, outro].join(" ");
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const resolved = await Promise.resolve(params);
   const slug = safeSlug(resolved.data);
-
   const dt = slug ? parseSlugDate(slug) : null;
 
-  // fallback: rota inválida (não indexar)
+  // Rota inválida: não indexar
   if (!dt) {
     const canonical = `${SITE_URL}/liturgia-diaria`;
 
@@ -84,7 +106,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const description =
       "Evangelho, leituras e salmo do dia. Acesse e reze com a Liturgia Diária no IA Tio Ben.";
 
-    // ✅ OG limpa (WhatsApp-friendly)
     const ogImage = `${SITE_URL}/og/liturgia.png`;
 
     return {
@@ -115,13 +136,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const day = dt.getDate();
   const month = dt.getMonth() + 1;
   const year = dt.getFullYear();
-
   const dateLabel = formatBRDate(dt);
 
-  // ✅ Você pediu: "Liturgia Diária e a data"
-  const title = `Liturgia Diária — ${dateLabel}`;
+  // Title curto, estável e “snippetable”
+  const title = `Liturgia Diária ${dateLabel} | IA Tio Ben`;
 
-  // ✅ Description com refs das leituras + CTA
+
+  // Description com refs + CTA
   let description =
     "Liturgia diária com Evangelho, leituras e salmo. Acesse e reze com a Liturgia Diária no IA Tio Ben.";
 
@@ -133,8 +154,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const canonical = `${SITE_URL}/liturgia-diaria/${slug}`;
-
-  // ✅ OG limpa por data (WhatsApp-friendly)
   const ogImage = `${SITE_URL}/og/liturgia/${slug}.png`;
 
   return {
@@ -206,7 +225,12 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "IA Tio Ben", item: SITE_URL },
-      { "@type": "ListItem", position: 2, name: "Liturgia Diária", item: `${SITE_URL}/liturgia-diaria` },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Liturgia Diária",
+        item: `${SITE_URL}/liturgia-diaria`,
+      },
       { "@type": "ListItem", position: 3, name: data.dateLabel, item: canonical },
     ],
   };
@@ -254,10 +278,17 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
     ],
   };
 
-  // Mantém como está (server time)
+  // Server time (como você já fazia)
   const today = new Date();
   const todaySlug = `${pad2(today.getDate())}-${pad2(today.getMonth() + 1)}-${today.getFullYear()}`;
   const todayLabel = `${pad2(today.getDate())}/${pad2(today.getMonth() + 1)}/${today.getFullYear()}`;
+
+  // Parágrafo editorial (server-side, indexável)
+  const dailyParagraph = buildDailyParagraphPT({
+    dateLabel: data.dateLabel,
+    celebration: data.celebration,
+    color: data.color,
+  });
 
   return (
     <>
@@ -279,40 +310,62 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
 
       <article className="mx-auto w-full max-w-7xl px-3 sm:px-4 lg:px-6 py-6 bg-white text-slate-900 leading-relaxed min-h-screen">
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6">
-          <main className="min-w-0">
-            <main className="min-w-0">
-                {/* Language switcher (PT/EN) */}
-                <div className="mb-4 flex items-center justify-end">
-                  <LanguageSwitcher />
-                </div>
+          {/* Conteúdo principal */}
+          <section className="min-w-0">
+            <div className="mb-4 flex items-center justify-end">
+              <LanguageSwitcher />
+            </div>
 
-                <LiturgiaHubPerfect
-                  siteUrl={SITE_URL}
-                  hubCanonicalPath={`/liturgia-diaria/${slug}`}
-                  dateSlug={slug}
-                  data={data}
-                  prevSlug={prevSlug}
-                  nextSlug={nextSlug}
-                  todaySlug={todaySlug}
-                  todayLabel={todayLabel}
-                  className="max-w-none px-0 py-0"
-                />
+            <LiturgiaHubPerfect
+              siteUrl={SITE_URL}
+              hubCanonicalPath={`/liturgia-diaria/${slug}`}
+              dateSlug={slug}
+              data={data}
+              prevSlug={prevSlug}
+              nextSlug={nextSlug}
+              todaySlug={todaySlug}
+              todayLabel={todayLabel}
+              dailyParagraph={dailyParagraph}
+              className="max-w-none px-0 py-0"
+            />
 
-                {/* Anúncio mobile (somente aqui, para não duplicar com o aside) */}
-                <div className="mt-6 lg:hidden">
-                  <AdsenseSidebarMobile300x250 slot={ADS_SLOT_SIDEBAR_MOBILE} />
-                </div>
-              </main>
-
-
-            {/* Anúncio mobile (somente aqui, para não duplicar com o aside) */}
+            {/* Anúncio mobile: 1 vez apenas */}
             <div className="mt-6 lg:hidden">
               <AdsenseSidebarMobile300x250 slot={ADS_SLOT_SIDEBAR_MOBILE} />
             </div>
-          </main>
 
-          {/* ASIDE: só no desktop */}
-          <div className="hidden lg:block">
+            {/* Aside no mobile (sem anúncio) */}
+            <div className="mt-6 lg:hidden">
+              <LiturgiaAside
+                year={year}
+                month={month}
+                todaySlug={todaySlug}
+                todayLabel={todayLabel}
+                prevSlug={prevSlug}
+                nextSlug={nextSlug}
+                blogLinks={[
+                  {
+                    href: "/liturgia/ano-liturgico",
+                    title: "Ano litúrgico: tempos, cores e calendário",
+                    desc: "Entenda o que muda ao longo do ano e como acompanhar.",
+                  },
+                  {
+                    href: "/liturgia/leituras-da-missa",
+                    title: "Guia das leituras da Missa",
+                    desc: "Primeira leitura, salmo, evangelho e como acompanhar.",
+                  },
+                  {
+                    href: "/liturgia/como-usar-a-liturgia",
+                    title: "Como usar a liturgia no dia a dia",
+                    desc: "Um método simples para rezar e se preparar para a Missa.",
+                  },
+                ]}
+              />
+            </div>
+          </section>
+
+          {/* Aside no desktop (com anúncio) */}
+          <aside className="hidden lg:block">
             <LiturgiaAside
               year={year}
               month={month}
@@ -339,39 +392,8 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
                 },
               ]}
             />
-          </div>
-
-          {/* ASIDE (mobile): sem anúncio */}
-          <div className="mt-6 lg:hidden">
-            <LiturgiaAside
-              year={year}
-              month={month}
-              todaySlug={todaySlug}
-              todayLabel={todayLabel}
-              prevSlug={prevSlug}
-              nextSlug={nextSlug}
-              blogLinks={[
-                {
-                  href: "/liturgia/ano-liturgico",
-                  title: "Ano litúrgico: tempos, cores e calendário",
-                  desc: "Entenda o que muda ao longo do ano e como acompanhar.",
-                },
-                {
-                  href: "/liturgia/leituras-da-missa",
-                  title: "Guia das leituras da Missa",
-                  desc: "Primeira leitura, salmo, evangelho e como acompanhar.",
-                },
-                {
-                  href: "/liturgia/como-usar-a-liturgia",
-                  title: "Como usar a liturgia no dia a dia",
-                  desc: "Um método simples para rezar e se preparar para a Missa.",
-                },
-              ]}
-            />
-          </div>
+          </aside>
         </div>
-
-        <link rel="canonical" href={canonical} />
       </article>
     </>
   );

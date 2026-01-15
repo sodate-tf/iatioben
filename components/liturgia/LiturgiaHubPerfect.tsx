@@ -5,7 +5,6 @@
 import Link from "next/link";
 import React, { useMemo, useState } from "react";
 import type { LiturgiaNormalized } from "@/lib/liturgia/api";
-import DailyParagraph from "@/components/liturgia/DailyParagraph"; // <-- ADD
 
 type Props = {
   siteUrl: string;
@@ -18,6 +17,9 @@ type Props = {
   // para o botão “Hoje” (sem depender de Date.now() no client)
   todaySlug: string;
   todayLabel: string;
+
+  // ✅ novo: parágrafo editorial já pronto (server-side)
+  dailyParagraph?: string;
 
   className?: string;
 };
@@ -129,7 +131,7 @@ function Chip({ label, value }: { label: string; value: string }) {
   );
 }
 
-// PT — Botão “Compartilhar” com destaque + ícone
+// Botão “Compartilhar”
 function ShareButton({
   url,
   title,
@@ -157,7 +159,7 @@ function ShareButton({
 
       window.prompt("Copie o link:", url);
     } catch {
-      // usuário cancelou / bloqueio do navegador
+      // cancelado / bloqueado
     }
   }
 
@@ -173,7 +175,6 @@ function ShareButton({
       ].join(" ")}
       aria-label="Compartilhar esta liturgia"
     >
-      {/* ícone share */}
       <svg
         aria-hidden="true"
         viewBox="0 0 24 24"
@@ -194,7 +195,6 @@ function ShareButton({
   );
 }
 
-
 export default function LiturgiaHubPerfect({
   siteUrl,
   hubCanonicalPath,
@@ -204,6 +204,7 @@ export default function LiturgiaHubPerfect({
   nextSlug,
   todaySlug,
   todayLabel,
+  dailyParagraph,
   className,
 }: Props) {
   const canonical = `${siteUrl}${hubCanonicalPath}`;
@@ -256,7 +257,7 @@ export default function LiturgiaHubPerfect({
         </p>
 
         <h1 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight">
-          Liturgia diária de {data.dateLabel}: Evangelho e leituras da Missa
+          Liturgia diária de {data.dateLabel}: Evangelho e Leituras da Missa
         </h1>
 
         <p className="mt-2 text-sm text-slate-600">
@@ -264,10 +265,12 @@ export default function LiturgiaHubPerfect({
           {data.color ? ` • Cor litúrgica: ${data.color}` : ""}
         </p>
 
-        {/* ADD: parágrafo editorial do dia (Tempo Litúrgico / datas especiais) */}
-        <div className="mt-3">
-          <DailyParagraph date={dateSlug} locale="pt" />
-        </div>
+        {/* ✅ Parágrafo editorial (server-side) */}
+        {dailyParagraph ? (
+          <p className="mt-3 text-sm sm:text-[15px] leading-7 text-slate-700">
+            {dailyParagraph}
+          </p>
+        ) : null}
 
         <div className="mt-4 flex flex-wrap gap-2">
           <Link
@@ -307,9 +310,7 @@ export default function LiturgiaHubPerfect({
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Chip label="Primeira Leitura" value={data.primeiraRef || "—"} />
           <Chip label="Salmo" value={data.salmoRef || "—"} />
-          {hasSecond ? (
-            <Chip label="Segunda Leitura" value={data.segundaRef || "—"} />
-          ) : null}
+          {hasSecond ? <Chip label="Segunda Leitura" value={data.segundaRef || "—"} /> : null}
           <Chip label="Evangelho" value={data.evangelhoRef || "—"} />
         </div>
       </section>
@@ -317,19 +318,13 @@ export default function LiturgiaHubPerfect({
       {/* Tabs */}
       <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="mt-4 flex flex-wrap gap-2">
-          <TabButton
-            active={tab === "leituras"}
-            onClick={() => setTab("leituras")}
-          >
+          <TabButton active={tab === "leituras"} onClick={() => setTab("leituras")}>
             Leituras
           </TabButton>
           <TabButton active={tab === "salmo"} onClick={() => setTab("salmo")}>
             Salmo
           </TabButton>
-          <TabButton
-            active={tab === "evangelho"}
-            onClick={() => setTab("evangelho")}
-          >
+          <TabButton active={tab === "evangelho"} onClick={() => setTab("evangelho")}>
             Evangelho
           </TabButton>
         </div>
@@ -376,9 +371,7 @@ export default function LiturgiaHubPerfect({
 
       {data.antEntrada || data.antComunhao ? (
         <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg sm:text-xl font-bold tracking-tight">
-            Antífonas
-          </h2>
+          <h2 className="text-lg sm:text-xl font-bold tracking-tight">Antífonas</h2>
 
           <div className="mt-4 space-y-4">
             {data.antEntrada ? (
@@ -398,10 +391,7 @@ export default function LiturgiaHubPerfect({
                   Comunhão
                 </p>
                 <div className="mt-3">
-                  <HtmlBody
-                    html={antComunhaoHtml}
-                    fallbackText={data.antComunhao}
-                  />
+                  <HtmlBody html={antComunhaoHtml} fallbackText={data.antComunhao} />
                 </div>
               </section>
             ) : null}
