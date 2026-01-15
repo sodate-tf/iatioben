@@ -8,6 +8,7 @@ interface AdSenseProProps {
   className?: string;
 }
 
+
 /**
  * AdSensePro (Client)
  * - NÃO carrega script aqui (script deve ser global no layout)
