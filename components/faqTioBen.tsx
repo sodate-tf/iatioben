@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import TestBanner from "./testBanner";
 
 type FaqItem = {
   pergunta: string;
@@ -313,7 +312,7 @@ export default function FaqTioBen() {
       </div>
 
       <div className="mt-10">
-        <TestBanner />
+
       </div>
 
       {/* BLOCO EDITORIAL FORTE PARA SEO + ADS */}
