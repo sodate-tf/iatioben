@@ -3,7 +3,6 @@ import React, { useState, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import Spinner from "@/components/SpinnerLoading";
-import VideoAdModal from "@/components/testVideoAd";
 import Link from "next/link";
 import FaqTioBen from "@/components/faqTioBen";
 import Head from "next/head";
@@ -261,16 +260,7 @@ export default function Home() {
             )}
           </AnimatePresence>
 
-          {showInterstitial && (
-            <VideoAdModal
-              onComplete={() => {
-                setShowInterstitial(false);
-                setShowAnswerModal(true);
-              }}
-              skipAfter={7}
-            />
-          )}
-
+          
           
         </div>
 
