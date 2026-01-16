@@ -40,14 +40,19 @@ const nextConfig: NextConfig = {
   },
 
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "lnchkprh92htn3gy.public.blob.vercel-storage.com",
-        pathname: "**",
-      },
-    ],
-  },
+  remotePatterns: [
+    {
+      protocol: "https",
+      hostname: "lnchkprh92htn3gy.public.blob.vercel-storage.com",
+      pathname: "**",
+    },
+    {
+      protocol: "https",
+      hostname: "www.iatioben.com.br",
+      pathname: "/**",
+    },
+  ],
+},
 
   compiler: {
     reactRemoveProperties: false,

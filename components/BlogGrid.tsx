@@ -1,10 +1,13 @@
 // components/BlogGrid.tsx
 //
-// Melhorias aplicadas:
-// - Busca com debounce (não navega a cada tecla)
-// - Paginação com Link (melhor crawl/SEO) + mantém botões se quiser
-// - Corrige URLs: mantém q quando existe
-// - Mantém seu ItemList JSON-LD, com alguns campos extras
+// Refactor aplicado:
+// - ✅ basePath (funciona em /blog e /blog/categoria/[slug])
+// - ✅ busca opcional (desliga na categoria, se quiser)
+// - ✅ debounce sem redirecionar para /blog (usa basePath)
+// - ✅ cards alinhados ao portal: capa por /og quando não há coverImageUrl
+// - ✅ semântica melhor: <section>, <nav>, <ul>/<li>, <article>, <h3>, <time>
+// - ✅ paginação com Link (crawl-friendly) mantendo querystring quando existe
+// - ✅ mantém JSON-LD ItemList
 
 "use client";
 
@@ -17,6 +20,7 @@ import Script from "next/script";
 import type { Post } from "@/app/adminTioBen/types";
 import AdSensePro from "./adsensePro";
 
+const SITE_URL = "https://www.iatioben.com.br";
 const FALLBACK_IMAGE = "/images/santo-do-dia-ia-tio-ben.png";
 
 interface BlogGridProps {
@@ -24,14 +28,48 @@ interface BlogGridProps {
   totalPages: number;
   currentPage: number;
   search: string;
+
+  /** ✅ Base da rota para paginação/busca (ex.: "/blog" ou "/blog/categoria/liturgia") */
+  basePath?: string;
+
+  /** ✅ Liga/desliga a UI de busca (recomendado desligar nas categorias) */
+  enableSearch?: boolean;
+
+  /** Slot opcional para in-feed dentro do grid */
+  adsSlotInFeed?: string;
 }
 
-function buildBlogUrl(page: number, q: string) {
+/** Gera URL preservando basePath, page e q */
+function buildListUrl(opts: { basePath: string; page: number; q: string }) {
+  const { basePath, page, q } = opts;
+
   const qp = new URLSearchParams();
   if (q) qp.set("q", q);
   if (page > 1) qp.set("page", String(page));
+
   const qs = qp.toString();
-  return qs ? `/blog?${qs}` : `/blog`;
+  return qs ? `${basePath}?${qs}` : basePath;
+}
+
+function formatDatePtBr(d: string | Date) {
+  const dt = typeof d === "string" ? new Date(d) : d;
+  return dt.toLocaleDateString("pt-BR");
+}
+function dateTimeIso(d: string | Date) {
+  const dt = typeof d === "string" ? new Date(d) : d;
+  return dt.toISOString();
+}
+
+/** Se você já tem /og com mockups, use isso como “capa automática” */
+function getAutoCover(post: Post) {
+  // Se o post tem imagem, usa ela
+  const cover = post.coverImageUrl?.trim();
+  if (cover) return cover;
+
+  // Senão, usa /og com título (mockup)
+  // Você pode evoluir depois para m=1..6, tint por categoria, etc.
+  const title = encodeURIComponent(post.title || "Post");
+  return `${SITE_URL}/og?type=post&m=1&tint=slate&title=${title}&v=grid`;
 }
 
 export default function BlogGrid({
@@ -39,10 +77,13 @@ export default function BlogGrid({
   totalPages,
   currentPage,
   search,
+  basePath = "/blog",
+  enableSearch = true,
+  adsSlotInFeed = "2887650656",
 }: BlogGridProps) {
   const router = useRouter();
 
-  // input controlado + debounce
+  // input controlado + debounce (somente se enableSearch = true)
   const [query, setQuery] = useState(search);
 
   useEffect(() => {
@@ -50,14 +91,19 @@ export default function BlogGrid({
   }, [search]);
 
   useEffect(() => {
+    if (!enableSearch) return;
+
     const t = setTimeout(() => {
-      // sempre volta pra page 1 quando muda o termo
-      const url = buildBlogUrl(1, query.trim());
+      const url = buildListUrl({
+        basePath,
+        page: 1,
+        q: query.trim(),
+      });
       router.push(url);
     }, 450);
 
     return () => clearTimeout(t);
-  }, [query, router]);
+  }, [query, router, basePath, enableSearch]);
 
   const jsonLd = useMemo(
     () => ({
@@ -68,102 +114,137 @@ export default function BlogGrid({
       itemListElement: posts.map((post, index) => ({
         "@type": "ListItem",
         position: index + 1,
-        url: `https://www.iatioben.com.br/blog/${post.slug}`,
+        url: `${SITE_URL}/blog/${post.slug}`,
         name: post.title,
       })),
     }),
     [posts]
   );
 
-  const prevUrl = buildBlogUrl(Math.max(1, currentPage - 1), search);
-  const nextUrl = buildBlogUrl(Math.min(totalPages, currentPage + 1), search);
+  const prevUrl = buildListUrl({
+    basePath,
+    page: Math.max(1, currentPage - 1),
+    q: enableSearch ? search : "",
+  });
+
+  const nextUrl = buildListUrl({
+    basePath,
+    page: Math.min(totalPages, currentPage + 1),
+    q: enableSearch ? search : "",
+  });
 
   return (
-    <section className="max-w-5xl mx-auto">
+    <section className="max-w-6xl mx-auto" aria-label="Lista de posts">
       <Script
         id="blog-itemlist"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Busca */}
-      <div className="mb-8">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="🔍 Buscar por santo, evangelho ou tema..."
-          className="w-full p-4 rounded-xl border shadow-sm focus:ring-2 bg-amber-50 focus:ring-amber-600 text-gray-800"
-        />
-        <p className="mt-2 text-xs text-slate-600">
-          Dica: use termos como “São José”, “Evangelho”, “Liturgia”, “Terço”.
-        </p>
-      </div>
+      {/* Busca (opcional) */}
+      {enableSearch ? (
+        <div className="mb-8">
+          <label htmlFor="blog-search" className="sr-only">
+            Buscar posts
+          </label>
+          <input
+            id="blog-search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por santo, evangelho ou tema..."
+            className="w-full p-4 rounded-2xl border shadow-sm focus:ring-2 bg-amber-50 focus:ring-amber-600 text-gray-800"
+            inputMode="search"
+          />
+          <p className="mt-2 text-xs text-slate-600">
+            Dica: use termos como “São José”, “Evangelho”, “Liturgia”, “Terço”.
+          </p>
+        </div>
+      ) : null}
 
-      {/* Grid */}
-      <motion.div
+      {/* Grid (semântico) */}
+      <motion.ul
         className="grid grid-cols-1 md:grid-cols-2 gap-6"
+        role="list"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
         {posts.map((post) => {
-          const imageSrc =
-            post.coverImageUrl && post.coverImageUrl.trim() !== ""
-              ? post.coverImageUrl
-              : FALLBACK_IMAGE;
+          const imageSrc = getAutoCover(post) || FALLBACK_IMAGE;
+          const href = `/blog/${post.slug}`;
 
           return (
-            <Link key={post.id} href={`/blog/${post.slug}`} className="block">
-              <article className="bg-white rounded-xl shadow-lg hover:shadow-xl transition overflow-hidden border border-amber-200">
-                <div className="relative w-full aspect-[16/9]">
-                  <Image
-                    src={imageSrc}
-                    alt={post.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    className="object-cover"
-                    loading="lazy"
-                  />
-                </div>
+            <li key={(post as any).id ?? post.slug}>
+              <article className="bg-white rounded-2xl shadow-sm hover:shadow-md transition overflow-hidden border border-slate-200">
+                <Link href={href} className="block" aria-label={post.title}>
+                  <div className="relative w-full aspect-[16/9] bg-slate-100">
+                    {/* Se for URL externa do /og, Image precisa permitir remotePatterns.
+                        Se não quiser mexer nisso agora, substitua por <img>.
+                    */}
+                    <Image
+                      src={imageSrc}
+                      alt={post.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-cover"
+                      loading="lazy"
+                    />
+                  </div>
 
-                <div className="p-4">
-                  <h2 className="text-xl font-bold text-amber-900 mb-2 line-clamp-2">
-                    {post.title}
-                  </h2>
+                  <div className="p-4">
+                    <time
+                      className="text-xs text-slate-500"
+                      dateTime={dateTimeIso(post.publishDate)}
+                    >
+                      {formatDatePtBr(post.publishDate)}
+                    </time>
 
-                  <p className="text-gray-600 text-sm line-clamp-3">
-                    {post.metaDescription}
-                  </p>
-                </div>
+                    <h3 className="mt-2 text-lg font-extrabold text-slate-900 leading-snug line-clamp-2">
+                      {post.title}
+                    </h3>
+
+                    {post.metaDescription ? (
+                      <p className="mt-2 text-slate-700 text-sm leading-relaxed line-clamp-3">
+                        {post.metaDescription}
+                      </p>
+                    ) : null}
+                  </div>
+                </Link>
               </article>
-            </Link>
+            </li>
           );
         })}
-      </motion.div>
+      </motion.ul>
 
-      <div className="mt-8">
-        <AdSensePro slot="2887650656" height={140} />
-      </div>
+      {/* In-feed ad (sem quebrar layout) */}
+      {adsSlotInFeed ? (
+        <div className="mt-8" style={{ minHeight: 140 }}>
+          <AdSensePro slot={adsSlotInFeed} height={140} />
+        </div>
+      ) : null}
 
-      {/* Paginação (Link = melhor para SEO/crawl) */}
-      <nav className="flex justify-center gap-3 mt-10 flex-wrap" aria-label="Paginação do blog">
+      {/* Paginação */}
+      <nav
+        className="flex justify-center gap-3 mt-10 flex-wrap"
+        aria-label="Paginação"
+      >
         <Link
           href={prevUrl}
           aria-disabled={currentPage <= 1}
-          className={`px-4 py-2 bg-white border rounded-lg ${
+          className={`px-4 py-2 bg-white border rounded-xl ${
             currentPage <= 1 ? "pointer-events-none opacity-40" : ""
           }`}
         >
           ◀ Voltar
         </Link>
 
-        <span className="px-4 py-2 bg-amber-200 rounded-lg font-semibold">
+        <span className="px-4 py-2 bg-amber-100 text-amber-900 rounded-xl font-semibold border border-amber-200">
           Página {currentPage} de {totalPages}
         </span>
 
         <Link
           href={nextUrl}
           aria-disabled={currentPage >= totalPages}
-          className={`px-4 py-2 bg-white border rounded-lg ${
+          className={`px-4 py-2 bg-white border rounded-xl ${
             currentPage >= totalPages ? "pointer-events-none opacity-40" : ""
           }`}
         >

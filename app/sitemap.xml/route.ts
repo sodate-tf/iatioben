@@ -1,6 +1,5 @@
 // app/sitemap/route.ts
 import { NextResponse } from "next/server";
-import { getPublishedPostsForSitemapAction } from "@/app/adminTioBen/actions/postAction";
 
 interface SitemapUrl {
   url: string;
@@ -171,28 +170,7 @@ export async function GET(): Promise<NextResponse> {
     });
   }
 
-  // 4) BLOG
-  try {
-    const blogPosts = await getPublishedPostsForSitemapAction();
-
-    for (const post of blogPosts) {
-      const slug = typeof post.slug === "string" ? post.slug.trim() : "";
-      if (!slug) continue;
-
-      const updatedAtRaw = (post as any).updatedAt ?? (post as any).createdAt;
-      const lastDate = updatedAtRaw ? new Date(updatedAtRaw) : todaySP;
-
-      sitemapUrls.push({
-        url: `${BASE_URL}/blog/${slug}`,
-        date: lastDate,
-        changefreq: "weekly",
-        priority: "0.7",
-      });
-    }
-  } catch (error) {
-    console.error("[SITEMAP] Erro ao buscar posts:", error);
-  }
-
+  
   // 5) DEDUPE (mantém lastmod mais recente)
   const unique = new Map<string, SitemapUrl>();
   for (const item of sitemapUrls) {
