@@ -4,8 +4,9 @@
 // 1) Mantém os campos *Texto* originais (plain text) para compatibilidade.
 // 2) Adiciona campos *Html* (primeiraHtml, salmoHtml, etc.) já com:
 //    - quebras de linha normalizadas (parágrafos e <br/> quando necessário)
-//    - números de versículos destacados como <sub class="...">n</sub>
-// 3) Funções utilitárias para você aplicar em outros pontos do site.
+//    - números de versículos destacados como <sup class="...">n</sup>
+// 3) Mantém um payload completo (leiturasFull/oracoesFull/antifonasFull) para datas
+//    com múltiplas leituras/salmos (ex.: Vigília Pascal), sem “perder” dados.
 //
 // Importante: para renderizar os campos *Html* no React/Next, use
 // dangerouslySetInnerHTML, ou um renderer seguro de HTML.
@@ -32,6 +33,7 @@ export type LiturgiaNormalized = {
   segundaTexto: string;
   evangelhoTexto: string;
 
+  // Antífonas (plain)
   antEntrada: string;
   antComunhao: string;
 
@@ -46,6 +48,52 @@ export type LiturgiaNormalized = {
 
   // Texto editorial curto para o hub/preview/snippet (plain)
   evangelhoPreview: string;
+
+  /**
+   * ✅ Payload completo (sem perder leituras extras, múltiplos salmos e variantes).
+   * Cada item já inclui `textoHtml` pronto.
+   */
+  leiturasFull?: {
+    primeiraLeitura?: Array<{ referencia?: string; texto?: string; textoHtml?: string }>;
+    segundaLeitura?: Array<{ referencia?: string; texto?: string; textoHtml?: string }>;
+    salmo?: Array<{ referencia?: string; refrao?: string; texto?: string; textoHtml?: string }>;
+    evangelho?: Array<{ referencia?: string; texto?: string; textoHtml?: string }>;
+    extras?: Array<{
+      tipo?: string;
+      titulo?: string;
+      referencia?: string;
+      texto?: string;
+      textoHtml?: string;
+    }>;
+  };
+
+  /**
+   * ✅ Orações completas (API raw costuma vir como string).
+   */
+  oracoesFull?: {
+    coleta?: string;
+    coletaHtml?: string;
+    oferendas?: string;
+    oferendasHtml?: string;
+    comunhao?: string;
+    comunhaoHtml?: string;
+    extras?: any[];
+  };
+
+  /**
+   * ✅ Antífonas completas (API raw costuma vir como string).
+   */
+  antifonasFull?: {
+    entrada?: string;
+    entradaHtml?: string;
+    comunhao?: string;
+    comunhaoHtml?: string;
+  };
+
+  /**
+   * Opcional: raw original para debug
+   */
+  raw?: any;
 };
 
 function safeStr(v: any) {
@@ -95,28 +143,28 @@ function escapeHtml(s: string) {
  * - Fonte menor
  * - Pequeno destaque em “pill”
  *
- * Observação: são classes Tailwind. Se você não usa Tailwind na renderização do HTML,
- * troque por uma classe estática (ex.: "verse-num") e estilize no CSS.
+ * Observação: são classes Tailwind.
  */
-const VERSE_SUB_CLASS =
+const VERSE_SUP_CLASS =
   "mx-0.5 align-baseline rounded bg-amber-50 px-1 text-[0.75em] font-semibold text-amber-900/90 border border-amber-100";
 
 /**
- * Converte prováveis números de versículos (1–3 dígitos) para <sub>.
+ * Converte prováveis números de versículos (1–3 dígitos) para <sup>.
  * Heurísticas (conservadoras) para não quebrar números comuns:
  * - início de linha: "1 " / "12 " etc.
  * - após pontuação + espaço: ". 2 " / ": 15 " etc.
- * - não mexe se já existir <sub> no texto
+ * - não mexe se já existir <sup> no texto
+ *
+ * Mantive o nome da função para compatibilidade com imports existentes.
  */
 export function formatVersesToSub(text: string): string {
   const raw = safeStr(text);
   if (!raw) return "";
 
   // evita duplicar
-  if (raw.includes("<sub")) return raw;
+  if (raw.includes("<sup")) return raw;
 
   let s = escapeHtml(raw);
-
   s = s.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 
   /**
@@ -127,18 +175,16 @@ export function formatVersesToSub(text: string): string {
    */
   s = s.replace(
     /(^|[\s.;:!?—–-])(\d{1,3})(?=[A-ZÁÉÍÓÚÂÊÔÃÕÀÇ])/g,
-    (_m, before, num) =>
-      `${before}<sup class="${VERSE_SUB_CLASS}">${num}</sup>`
+    (_m, before, num) => `${before}<sup class="${VERSE_SUP_CLASS}">${num}</sup>`
   );
 
   return s;
 }
 
-
 /**
  * Converte texto em HTML agradável:
  * - escapa HTML
- * - aplica <sub> nos versículos
+ * - aplica <sup> nos versículos
  * - cria parágrafos por blocos (linhas vazias)
  * - preserva quebras simples como <br/>
  */
@@ -146,11 +192,10 @@ export function toReadableHtml(text: string): string {
   const raw = safeStr(text);
   if (!raw) return "";
 
-  // Aplica sub de versículos e já escapa HTML dentro
+  // Aplica sup de versículos e já escapa HTML dentro
   let s = formatVersesToSub(raw);
 
-  // Se formatVersesToSub retornou texto já escapado, seguimos
-  // Agora normalizamos blocos
+  // Normaliza blocos
   s = s.replace(/\r\n/g, "\n").replace(/\r/g, "\n").trim();
 
   // Divide em blocos por linha vazia (parágrafos)
@@ -160,9 +205,7 @@ export function toReadableHtml(text: string): string {
     .filter(Boolean);
 
   // Dentro de um bloco, linha simples vira <br/>
-  const html = blocks
-    .map((b) => `<p>${b.replace(/\n/g, "<br/>")}</p>`)
-    .join("");
+  const html = blocks.map((b) => `<p>${b.replace(/\n/g, "<br/>")}</p>`).join("");
 
   return html;
 }
@@ -175,10 +218,51 @@ export function toAntiphonHtml(text: string): string {
 }
 
 /* =========================
-   Normalizer
+   Normalizer (completo)
    ========================= */
 
-export function normalizeLiturgiaApi(raw: any, day: number, month: number, year: number): LiturgiaNormalized {
+function mapTextoHtml(arr: any) {
+  if (!Array.isArray(arr)) return [];
+  return arr.map((it: any) => {
+    const texto = safeStr(it?.texto);
+    return {
+      ...it,
+      texto,
+      textoHtml: texto ? toReadableHtml(texto) : "",
+    };
+  });
+}
+
+function mapSalmoHtml(arr: any) {
+  if (!Array.isArray(arr)) return [];
+  return arr.map((it: any) => {
+    const texto = safeStr(it?.texto);
+    return {
+      ...it,
+      texto,
+      textoHtml: texto ? toReadableHtml(texto) : "",
+    };
+  });
+}
+
+function mapExtrasHtml(arr: any) {
+  if (!Array.isArray(arr)) return [];
+  return arr.map((it: any) => {
+    const texto = safeStr(it?.texto);
+    return {
+      ...it,
+      texto,
+      textoHtml: texto ? toReadableHtml(texto) : "",
+    };
+  });
+}
+
+export function normalizeLiturgiaApi(
+  raw: any,
+  day: number,
+  month: number,
+  year: number
+): LiturgiaNormalized {
   const dd = pad2(day);
   const mm = pad2(month);
 
@@ -191,22 +275,31 @@ export function normalizeLiturgiaApi(raw: any, day: number, month: number, year:
   const celebration = safeStr(raw?.liturgia) || "";
   const color = safeStr(raw?.cor) || "";
 
-  const primeira = pick0<{ referencia?: string; texto?: string }>(raw?.leituras?.primeiraLeitura);
-  const salmo = pick0<{ referencia?: string; texto?: string }>(raw?.leituras?.salmo);
-  const segunda = pick0<{ referencia?: string; texto?: string }>(raw?.leituras?.segundaLeitura);
-  const evangelho = pick0<{ referencia?: string; texto?: string }>(raw?.leituras?.evangelho);
+  // ✅ LISTAS COMPLETAS (não perde dados)
+  const primeiraArr = mapTextoHtml(raw?.leituras?.primeiraLeitura);
+  const segundaArr = mapTextoHtml(raw?.leituras?.segundaLeitura);
+  const salmoArr = mapSalmoHtml(raw?.leituras?.salmo);
+  const evangelhoArr = mapTextoHtml(raw?.leituras?.evangelho);
+  const extrasArr = mapExtrasHtml(raw?.leituras?.extras);
 
-  const primeiraRef = safeStr(primeira?.referencia);
-  const salmoRef = safeStr(salmo?.referencia);
-  const segundaRef = safeStr(segunda?.referencia);
-  const evangelhoRef = safeStr(evangelho?.referencia);
+  // ✅ “Primários” para compatibilidade (mantém seu comportamento atual)
+  const primeira0 = primeiraArr[0] || null;
+  const salmo0 = salmoArr[0] || null;
+  const segunda0 = segundaArr[0] || null;
+  const evangelho0 = evangelhoArr[0] || null;
 
-  // Plain text (mantém compatibilidade)
-  const primeiraTexto = safeStr(primeira?.texto);
-  const salmoTexto = safeStr(salmo?.texto);
-  const segundaTexto = safeStr(segunda?.texto);
-  const evangelhoTexto = safeStr(evangelho?.texto);
+  const primeiraRef = safeStr(primeira0?.referencia);
+  const salmoRef = safeStr(salmo0?.referencia);
+  const segundaRef = safeStr(segunda0?.referencia);
+  const evangelhoRef = safeStr(evangelho0?.referencia);
 
+  // Plain text (compatibilidade)
+  const primeiraTexto = safeStr(primeira0?.texto);
+  const salmoTexto = safeStr(salmo0?.texto);
+  const segundaTexto = safeStr(segunda0?.texto);
+  const evangelhoTexto = safeStr(evangelho0?.texto);
+
+  // Antífonas (API raw vem como string)
   const antEntrada = safeStr(raw?.antifonas?.entrada);
   const antComunhao = safeStr(raw?.antifonas?.comunhao);
 
@@ -220,6 +313,36 @@ export function normalizeLiturgiaApi(raw: any, day: number, month: number, year:
   const antComunhaoHtml = toAntiphonHtml(antComunhao);
 
   const evangelhoPreview = firstSentences(evangelhoTexto || "", 280);
+
+  // Orações (API raw vem como string)
+  const coleta = safeStr(raw?.oracoes?.coleta);
+  const oferendas = safeStr(raw?.oracoes?.oferendas);
+  const comunhao = safeStr(raw?.oracoes?.comunhao);
+
+  const oracoesFull = {
+    coleta: coleta || "",
+    coletaHtml: coleta ? toReadableHtml(coleta) : "",
+    oferendas: oferendas || "",
+    oferendasHtml: oferendas ? toReadableHtml(oferendas) : "",
+    comunhao: comunhao || "",
+    comunhaoHtml: comunhao ? toReadableHtml(comunhao) : "",
+    extras: Array.isArray(raw?.oracoes?.extras) ? raw.oracoes.extras : [],
+  };
+
+  const antifonasFull = {
+    entrada: antEntrada || "",
+    entradaHtml: antEntrada ? toAntiphonHtml(antEntrada) : "",
+    comunhao: antComunhao || "",
+    comunhaoHtml: antComunhao ? toAntiphonHtml(antComunhao) : "",
+  };
+
+  const leiturasFull = {
+    primeiraLeitura: primeiraArr,
+    segundaLeitura: segundaArr,
+    salmo: salmoArr,
+    evangelho: evangelhoArr,
+    extras: extrasArr,
+  };
 
   return {
     dateSlug,
@@ -252,6 +375,14 @@ export function normalizeLiturgiaApi(raw: any, day: number, month: number, year:
     antComunhaoHtml,
 
     evangelhoPreview,
+
+    // ✅ novos campos completos
+    leiturasFull,
+    oracoesFull,
+    antifonasFull,
+
+    // opcional (debug)
+    raw,
   };
 }
 

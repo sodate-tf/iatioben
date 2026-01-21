@@ -218,11 +218,45 @@ function pickText(data: any, keys: string[]) {
 }
 
 /**
+ * Simple concurrency-limited async mapper to avoid hammering remote bible endpoints
+ * on special liturgies with many readings (e.g., Easter Vigil).
+ */
+async function mapWithLimit<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  const out: R[] = new Array(items.length) as any;
+  let i = 0;
+
+  async function worker() {
+    while (i < items.length) {
+      const idx = i++;
+      out[idx] = await fn(items[idx], idx);
+    }
+  }
+
+  const workers = Array.from({ length: Math.max(1, Math.min(limit, items.length)) }, () => worker());
+  await Promise.all(workers);
+  return out;
+}
+
+/**
  * Build EN render fields:
  * - Attempts NET bible html by reference
  * - Falls back to PT text rendered via toReadableHtml
  */
+
+/**
+ * Build EN render fields:
+ * - Attempts NET bible html by reference (when possible)
+ * - Falls back to PT text rendered via toReadableHtml
+ * - Preserves/extends leiturasFull/oracoesFull/antifonasFull
+ */
 async function buildDataEN(dataPT: any) {
+  const t = (v: any) => (typeof v === "string" ? v.trim() : "");
+
+  // Compatibility refs (single)
   const primeiraRef = pickRef(dataPT, [
     "primeiraRef",
     "primeiraLeituraRef",
@@ -233,31 +267,128 @@ async function buildDataEN(dataPT: any) {
   const segundaRef = pickRef(dataPT, ["segundaRef", "segundaLeituraRef", "segundaLeitura"]);
   const evangelhoRef = pickRef(dataPT, ["evangelhoRef", "evangelho"]);
 
-  const [firstHtml, psalmHtml, secondHtml, gospelHtml] = await Promise.all([
-    primeiraRef ? fetchNetBibleHtml(primeiraRef).catch(() => null) : Promise.resolve(null),
-    salmoRef ? fetchNetBibleHtml(salmoRef).catch(() => null) : Promise.resolve(null),
-    segundaRef ? fetchNetBibleHtml(segundaRef).catch(() => null) : Promise.resolve(null),
-    evangelhoRef ? fetchNetBibleHtml(evangelhoRef).catch(() => null) : Promise.resolve(null),
-  ]);
-
+  // Compatibility plain text (single)
   const primeiraTexto = pickText(dataPT, ["primeiraTexto", "primeiraLeituraTexto", "primeiraLeitura"]);
   const salmoTexto = pickText(dataPT, ["salmoTexto", "salmoResponsorialTexto", "salmo"]);
   const segundaTexto = pickText(dataPT, ["segundaTexto", "segundaLeituraTexto", "segundaLeitura"]);
   const evangelhoTexto = pickText(dataPT, ["evangelhoTexto", "evangelho"]);
 
+  const full = dataPT?.leiturasFull ?? null;
+
+  // Build arrays from full payload when present; otherwise fall back to the classic single fields.
+  const primeiraArr: any[] =
+    Array.isArray(full?.primeiraLeitura) && full.primeiraLeitura.length
+      ? full.primeiraLeitura
+      : primeiraRef || primeiraTexto
+        ? [{ referencia: primeiraRef, texto: primeiraTexto, textoHtml: dataPT?.primeiraHtml }]
+        : [];
+
+  const segundaArr: any[] =
+    Array.isArray(full?.segundaLeitura) && full.segundaLeitura.length
+      ? full.segundaLeitura
+      : segundaRef || segundaTexto
+        ? [{ referencia: segundaRef, texto: segundaTexto, textoHtml: dataPT?.segundaHtml }]
+        : [];
+
+  const salmoArr: any[] =
+    Array.isArray(full?.salmo) && full.salmo.length
+      ? full.salmo
+      : salmoRef || salmoTexto
+        ? [{ referencia: salmoRef, refrao: "", texto: salmoTexto, textoHtml: dataPT?.salmoHtml }]
+        : [];
+
+  const evangelhoArr: any[] =
+    Array.isArray(full?.evangelho) && full.evangelho.length
+      ? full.evangelho
+      : evangelhoRef || evangelhoTexto
+        ? [{ referencia: evangelhoRef, texto: evangelhoTexto, textoHtml: dataPT?.evangelhoHtml }]
+        : [];
+
+  const extrasArr: any[] = Array.isArray(full?.extras) ? full.extras : [];
+
+  // For each item, try EN bible HTML by reference; otherwise keep existing textoHtml or render from texto.
+  async function fillItemHtml(it: any) {
+    const referencia = t(it?.referencia);
+    const texto = t(it?.texto);
+    const existingHtml = t(it?.textoHtml);
+
+    let html: string | null = null;
+    if (referencia) {
+      html = await fetchNetBibleHtml(referencia).catch(() => null);
+    }
+
+    const textoHtml = html ?? existingHtml ?? (texto ? toReadableHtml(texto) : "");
+    return { ...it, referencia, texto, textoHtml };
+  }
+
+  async function fillPsalmHtml(it: any) {
+    const referencia = t(it?.referencia);
+    const refrao = t(it?.refrao);
+    const texto = t(it?.texto);
+    const existingHtml = t(it?.textoHtml);
+
+    let html: string | null = null;
+    if (referencia) {
+      html = await fetchNetBibleHtml(referencia).catch(() => null);
+    }
+
+    const textoHtml = html ?? existingHtml ?? (texto ? toReadableHtml(texto) : "");
+    return { ...it, referencia, refrao, texto, textoHtml };
+  }
+
+  const [primeiraFilled, segundaFilled, salmoFilled, evangelhoFilled, extrasFilled] = await Promise.all([
+    mapWithLimit(primeiraArr, 6, fillItemHtml),
+    mapWithLimit(segundaArr, 6, fillItemHtml),
+    mapWithLimit(salmoArr, 6, fillPsalmHtml),
+    mapWithLimit(evangelhoArr, 6, fillItemHtml),
+    mapWithLimit(extrasArr, 6, fillItemHtml),
+  ]);
+
+  // “Primary” compatibility fields from first items
+  const primeira0 = primeiraFilled[0] ?? null;
+  const segunda0 = segundaFilled[0] ?? null;
+  const salmo0 = salmoFilled[0] ?? null;
+  const evangelho0 = evangelhoFilled[0] ?? null;
+
+  const outPrimeiraRef = t(primeira0?.referencia) || primeiraRef;
+  const outSegundaRef = t(segunda0?.referencia) || segundaRef;
+  const outSalmoRef = t(salmo0?.referencia) || salmoRef;
+  const outEvangelhoRef = t(evangelho0?.referencia) || evangelhoRef;
+
+  const outPrimeiraTexto = t(primeira0?.texto) || primeiraTexto;
+  const outSegundaTexto = t(segunda0?.texto) || segundaTexto;
+  const outSalmoTexto = t(salmo0?.texto) || salmoTexto;
+  const outEvangelhoTexto = t(evangelho0?.texto) || evangelhoTexto;
+
   return {
     ...dataPT,
+
     // Keep original text fields for fallback, if your components still expect them:
-    primeiraTexto,
-    salmoTexto,
-    segundaTexto,
-    evangelhoTexto,
+    primeiraTexto: outPrimeiraTexto,
+    salmoTexto: outSalmoTexto,
+    segundaTexto: outSegundaTexto,
+    evangelhoTexto: outEvangelhoTexto,
+
+    // Keep refs updated
+    primeiraRef: outPrimeiraRef,
+    salmoRef: outSalmoRef,
+    segundaRef: outSegundaRef,
+    evangelhoRef: outEvangelhoRef,
 
     // Inject HTML fields used by EN components:
-    primeiraHtml: firstHtml ?? toReadableHtml(primeiraTexto),
-    salmoHtml: psalmHtml ?? toReadableHtml(salmoTexto),
-    segundaHtml: secondHtml ?? toReadableHtml(segundaTexto),
-    evangelhoHtml: gospelHtml ?? toReadableHtml(evangelhoTexto),
+    primeiraHtml: t(primeira0?.textoHtml) || toReadableHtml(outPrimeiraTexto),
+    salmoHtml: t(salmo0?.textoHtml) || toReadableHtml(outSalmoTexto),
+    segundaHtml: t(segunda0?.textoHtml) || (outSegundaTexto ? toReadableHtml(outSegundaTexto) : ""),
+    evangelhoHtml: t(evangelho0?.textoHtml) || toReadableHtml(outEvangelhoTexto),
+
+    // ✅ Full payload with HTML for multi-readings
+    leiturasFull: {
+      primeiraLeitura: primeiraFilled,
+      segundaLeitura: segundaFilled,
+      salmo: salmoFilled,
+      evangelho: evangelhoFilled,
+      extras: extrasFilled,
+    },
   };
 }
 

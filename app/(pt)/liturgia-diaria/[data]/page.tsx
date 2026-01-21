@@ -7,7 +7,6 @@ import { parseSlugDate, slugFromDate, pad2 } from "@/lib/liturgia/date";
 import LiturgiaHubPerfect from "@/components/liturgia/LiturgiaHubPerfect";
 import LiturgiaAside from "@/components/liturgia/LiturgiaAside";
 import { AdsenseSidebarMobile300x250 } from "@/components/ads/AdsenseBlocks";
-import LanguageSwitcher from "@/components/i18n/LanguageSwitcher";
 
 export const dynamic = "force-static";
 export const revalidate = 86400;
@@ -42,24 +41,86 @@ function formatBRDate(dt: Date) {
   return `${dd}/${mm}/${yyyy}`;
 }
 
+function isRawLiturgia(data: any) {
+  return (
+    data &&
+    typeof data === "object" &&
+    (data.leituras || data.liturgia || data.cor || data.data || data.oracoes || data.antifonas)
+  );
+}
+
+function parsePtDateToISO(pt: string): string {
+  const s = String(pt || "").trim();
+  const [dd, mm, yyyy] = s.split("/");
+  if (!dd || !mm || !yyyy) return "";
+  return `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+}
+
+function getDateISOFromAny(args: { data: any; dt: Date; slug: string }) {
+  // Normalizado
+  if (args.data?.dateISO) return String(args.data.dateISO);
+
+  // Raw: { data: "04/04/2026" }
+  if (isRawLiturgia(args.data)) {
+    const iso = parsePtDateToISO(args.data?.data || args.data?.date);
+    if (iso) return iso;
+  }
+
+  // Fallback: pelo Date
+  const yyyy = args.dt.getFullYear();
+  const mm = String(args.dt.getMonth() + 1).padStart(2, "0");
+  const dd = String(args.dt.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function getDateLabelFromAny(data: any, dt: Date) {
+  return data?.dateLabel ? String(data.dateLabel) : formatBRDate(dt);
+}
+
+function getCelebrationFromAny(data: any) {
+  if (data?.celebration) return String(data.celebration);
+  if (isRawLiturgia(data) && data?.liturgia) return String(data.liturgia);
+  return null;
+}
+
+function getColorFromAny(data: any) {
+  if (data?.color) return String(data.color);
+  if (isRawLiturgia(data) && data?.cor) return String(data.cor);
+  return null;
+}
+
 /**
  * Monta description com refs + CTA ao final.
- * Ajuste defensivo: suporta diferentes nomes de campos.
+ * Ajuste defensivo: suporta normalizado e raw.
  */
 function buildRefsDescriptionFromData(data: any) {
-  const primeira =
+  // Normalizado (seu padrão atual)
+  const primeiraNorm =
     data?.primeiraRef ||
     data?.primeiraLeituraRef ||
     data?.primeiraLeitura ||
     null;
 
-  const salmo =
+  const salmoNorm =
     data?.salmoRef || data?.salmoResponsorialRef || data?.salmo || null;
 
-  const segunda =
+  const segundaNorm =
     data?.segundaRef || data?.segundaLeituraRef || data?.segundaLeitura || null;
 
-  const evangelho = data?.evangelhoRef || data?.evangelho || null;
+  const evangelhoNorm = data?.evangelhoRef || data?.evangelho || null;
+
+  // Raw (leituras.json)
+  const L = isRawLiturgia(data) ? data?.leituras : null;
+
+  const primeiraRaw = L?.primeiraLeitura?.[0]?.referencia || null;
+  const salmoRaw = L?.salmo?.[0]?.referencia || null;
+  const segundaRaw = L?.segundaLeitura?.[0]?.referencia || null;
+  const evangelhoRaw = L?.evangelho?.[0]?.referencia || null;
+
+  const primeira = primeiraNorm || primeiraRaw;
+  const salmo = salmoNorm || salmoRaw;
+  const segunda = segundaNorm || segundaRaw;
+  const evangelho = evangelhoNorm || evangelhoRaw;
 
   const parts: string[] = [];
   if (primeira) parts.push(`1ª leitura: ${primeira}`);
@@ -67,8 +128,12 @@ function buildRefsDescriptionFromData(data: any) {
   if (segunda) parts.push(`2ª leitura: ${segunda}`);
   if (evangelho) parts.push(`Evangelho: ${evangelho}`);
 
-  parts.push("Acesse e reze com a Liturgia Diária no IA Tio Ben.");
+  // Se for Vigília/solenidade com múltiplas leituras, fica mais honesto no snippet:
+  if (isRawLiturgia(data) && Array.isArray(L?.extras) && L.extras.length) {
+    parts.push("Inclui leituras adicionais e textos próprios da celebração.");
+  }
 
+  parts.push("Acesse e reze com a Liturgia Diária no IA Tio Ben.");
   return parts.join(" • ");
 }
 
@@ -80,16 +145,11 @@ function buildDailyParagraphPT(args: {
   celebration?: string | null;
   color?: string | null;
 }) {
-  const intro = `Hoje, ${args.dateLabel}${
-    args.celebration ? `, celebramos ${args.celebration}` : ""
-  }.`;
-
+  const intro = `Hoje, ${args.dateLabel}${args.celebration ? `, celebramos ${args.celebration}` : ""}.`;
   const middle =
     "Reserve alguns minutos para ler com atenção, guardar uma frase no coração e transformar isso em uma decisão concreta no seu dia.";
-
   const outro =
     "Se desejar, compartilhe esta liturgia com alguém e reze também em família.";
-
   return [intro, middle, outro].join(" ");
 }
 
@@ -101,11 +161,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   // Rota inválida: não indexar
   if (!dt) {
     const canonical = `${SITE_URL}/liturgia-diaria`;
-
     const title = "Liturgia Diária — IA Tio Ben";
     const description =
       "Evangelho, leituras e salmo do dia. Acesse e reze com a Liturgia Diária no IA Tio Ben.";
-
     const ogImage = `${SITE_URL}/og/liturgia.png`;
 
     return {
@@ -113,7 +171,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       robots: { index: false, follow: false },
       alternates: { canonical },
-
       openGraph: {
         type: "website",
         url: canonical,
@@ -123,7 +180,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         description,
         images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
       },
-
       twitter: {
         card: "summary_large_image",
         title,
@@ -138,11 +194,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const year = dt.getFullYear();
   const dateLabel = formatBRDate(dt);
 
-  // Title curto, estável e “snippetable”
   const title = `Liturgia Diária ${dateLabel} | IA Tio Ben`;
 
-
-  // Description com refs + CTA
   let description =
     "Liturgia diária com Evangelho, leituras e salmo. Acesse e reze com a Liturgia Diária no IA Tio Ben.";
 
@@ -161,7 +214,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description,
     alternates: { canonical },
     robots: { index: true, follow: true },
-
     openGraph: {
       title,
       description,
@@ -171,7 +223,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       locale: "pt_BR",
       images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
     },
-
     twitter: {
       card: "summary_large_image",
       title,
@@ -212,6 +263,12 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
 
   const data = await fetchLiturgiaByDate(day, month, year);
 
+  // ✅ compatível com raw e normalizado
+  const dateLabel = getDateLabelFromAny(data, dt);
+  const dateISO = getDateISOFromAny({ data, dt, slug });
+  const celebration = getCelebrationFromAny(data);
+  const color = getColorFromAny(data);
+
   const prev = new Date(year, month - 1, day - 1);
   const next = new Date(year, month - 1, day + 1);
 
@@ -231,7 +288,7 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
         name: "Liturgia Diária",
         item: `${SITE_URL}/liturgia-diaria`,
       },
-      { "@type": "ListItem", position: 3, name: data.dateLabel, item: canonical },
+      { "@type": "ListItem", position: 3, name: dateLabel, item: canonical },
     ],
   };
 
@@ -241,8 +298,8 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
     headline: buildTitle(day, month, year),
     description: buildDescription(day, month, year),
     mainEntityOfPage: canonical,
-    datePublished: `${data.dateISO}T06:00:00-03:00`,
-    dateModified: `${data.dateISO}T06:00:00-03:00`,
+    datePublished: `${dateISO}T06:00:00-03:00`,
+    dateModified: `${dateISO}T06:00:00-03:00`,
     author: { "@type": "Organization", name: "IA Tio Ben" },
     publisher: { "@type": "Organization", name: "IA Tio Ben" },
   };
@@ -253,10 +310,10 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
     mainEntity: [
       {
         "@type": "Question",
-        name: `Onde encontrar a liturgia diária completa de ${data.dateLabel}?`,
+        name: `Onde encontrar a liturgia diária completa de ${dateLabel}?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `Nesta página você encontra a liturgia diária de ${data.dateLabel} com Primeira Leitura, Salmo, Evangelho e, quando houver, Segunda Leitura.`,
+          text: `Nesta página você encontra a liturgia diária de ${dateLabel} com Primeira Leitura, Salmo, Evangelho e, quando houver, Segunda Leitura e leituras adicionais (por exemplo, na Vigília Pascal).`,
         },
       },
       {
@@ -264,7 +321,7 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
         name: "Quais partes normalmente aparecem na liturgia diária?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Em geral: Primeira Leitura, Salmo Responsorial, Evangelho e, quando houver, Segunda Leitura e antífonas.",
+          text: "Em geral: Primeira Leitura, Salmo Responsorial, Evangelho e, quando houver, Segunda Leitura, antífonas e orações próprias.",
         },
       },
       {
@@ -285,9 +342,9 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
 
   // Parágrafo editorial (server-side, indexável)
   const dailyParagraph = buildDailyParagraphPT({
-    dateLabel: data.dateLabel,
-    celebration: data.celebration,
-    color: data.color,
+    dateLabel,
+    celebration,
+    color,
   });
 
   return (
@@ -312,10 +369,6 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6">
           {/* Conteúdo principal */}
           <section className="min-w-0">
-            <div className="mb-4 flex items-center justify-end">
-              <LanguageSwitcher />
-            </div>
-
             <LiturgiaHubPerfect
               siteUrl={SITE_URL}
               hubCanonicalPath={`/liturgia-diaria/${slug}`}
