@@ -128,7 +128,7 @@ export function buildLiturgiaStoryJson(args: {
     background: bg("Salmo"),
     heading: "Salmo",
     reference: psalm?.referencia ?? "Salmo",
-    refrain: limitChars((psalm as any)?.refrao ?? "Refrão do salmo", 120),
+    refrain: limitChars(psalm?.refrao ?? "Refrão do salmo", 120),
     bullets: bulletize(psalm?.texto ?? psalm?.textoHtml ?? "", 1)
   });
 

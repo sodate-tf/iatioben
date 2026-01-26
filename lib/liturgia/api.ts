@@ -393,3 +393,16 @@ export async function fetchLiturgiaByDate(day: number, month: number, year: numb
   const raw = await res.json();
   return normalizeLiturgiaApi(raw, day, month, year);
 }
+
+export async function fetchLiturgiaByIsoDate(isoDate: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) {
+    throw new Error("isoDate inválido. Use YYYY-MM-DD.");
+  }
+
+  const [yearStr, monthStr, dayStr] = isoDate.split("-");
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  const day = Number(dayStr);
+
+  return fetchLiturgiaByDate(day, month, year);
+}

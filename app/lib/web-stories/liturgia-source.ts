@@ -1,42 +1,27 @@
+// lib/web-stories/liturgia-source.ts
+
 export type LiturgiaSection = {
   referencia?: string | null;
   texto?: string | null;
   textoHtml?: string | null;
+
+  // usado no Salmo (sua normalize pode usar refrao/refraoSalmo/etc.)
+  refrao?: string | null;
+
+  // Permite campos extras sem quebrar tipagem
+  [key: string]: unknown;
 };
 
 export type LiturgiaPayload = {
-  // Ajuste conforme sua estrutura real:
-  leituras?: LiturgiaSection[]; // leituras (exclui salmo/evangelho se você separa)
+  primeiraLeitura?: LiturgiaSection | null;
+  segundaLeitura?: LiturgiaSection | null;
+
+  // se sua normalize retornar leituras em array
+  leituras?: LiturgiaSection[] | null;
+
   salmo?: (LiturgiaSection & { refrao?: string | null }) | null;
   evangelho?: LiturgiaSection | null;
 
-  // se você já tiver campos prontos, melhor ainda:
-  primeiraLeitura?: LiturgiaSection | null;
-  segundaLeitura?: LiturgiaSection | null;
+  // Permite outros campos que a API devolve
+  [key: string]: unknown;
 };
-
-export async function fetchLiturgiaByDate(isoDate: string): Promise<LiturgiaPayload> {
-  /**
-   * OPÇÃO A (recomendado): chamar sua lib interna (sem HTTP)
-   * return await getLiturgiaNormalized(isoDate)
-   *
-   * OPÇÃO B: chamar seu endpoint existente (HTTP)
-   */
-  const base = process.env.LITURGIA_INTERNAL_API_URL;
-  if (!base) {
-    // fallback seguro para você nunca ficar sem retorno em dev
-    return {
-      primeiraLeitura: { referencia: "Leitura", texto: "Conteúdo não configurado." },
-      salmo: { referencia: "Salmo", refrao: "Refrão", texto: "Conteúdo não configurado." },
-      evangelho: { referencia: "Evangelho", texto: "Conteúdo não configurado." }
-    };
-  }
-
-  const url = base.replace("{date}", isoDate);
-  const res = await fetch(url, { headers: { accept: "application/json" } });
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`Falha ao buscar liturgia (${res.status}) em ${url}: ${txt.slice(0, 200)}`);
-  }
-  return (await res.json()) as LiturgiaPayload;
-}
