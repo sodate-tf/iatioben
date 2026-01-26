@@ -27,3 +27,4 @@ Allow: /
 Sitemap: https://www.iatioben.com.br/sitemap.xml
 Sitemap: https://www.iatioben.com.br/sitemap-en.xml
 Sitemap: https://www.iatioben.com.br/sitemap-blog.xml
+Sitemap: https://www.iatioben.com.br/sitemap-webstories.xml
