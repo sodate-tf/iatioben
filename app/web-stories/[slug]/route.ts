@@ -374,6 +374,10 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ slug: stri
     headers: {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+
+      // ✅ permite o player embutir o story
+    "X-Frame-Options": "SAMEORIGIN",
+    "Content-Security-Policy": "frame-ancestors 'self';",
     },
   });
 }
