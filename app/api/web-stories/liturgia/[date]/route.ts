@@ -1,7 +1,6 @@
-import { buildLiturgiaStoryJson } from "@/app/lib/web-stories/liturgia-story-builder";
-import { fetchLiturgiaByDate, fetchLiturgiaByIsoDate } from "@/lib/liturgia/api";
 import { NextRequest, NextResponse } from "next/server";
-
+import { fetchLiturgiaByIsoDate } from "@/lib/liturgia/api"; // ajuste o path se necessário
+import { buildLiturgiaStoryJson } from "@/app/lib/web-stories/liturgia-story-builder";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,15 +17,19 @@ function toSlugBR(isoDate: string) {
 }
 
 /**
- * Next.js 16 (tipagem atual) pode tipar `params` como Promise.
- * Por isso fazemos: const { date } = await params;
+ * IMPORTANTÍSSIMO:
+ * - Next 16 (na sua build) tipa context.params como Promise
+ * - Em alguns ambientes, params pode vir como objeto direto
+ * Aqui tratamos os dois.
  */
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ date: string }> }
-) {
+export async function GET(request: NextRequest, context: { params: any }) {
   try {
-    const { date: isoDate } = await params;
+    const paramsResolved =
+      context?.params && typeof context.params?.then === "function"
+        ? await context.params
+        : context.params;
+
+    const isoDate = String(paramsResolved?.date ?? "");
     assertIsoDate(isoDate);
 
     const siteUrl = process.env.SITE_URL ?? "https://www.iatioben.com.br";
