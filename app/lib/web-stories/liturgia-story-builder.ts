@@ -35,18 +35,18 @@ function formatDatePtBR(iso: string) {
 
 function bg(name: "Capa" | "Claro" | "Escuro"): StoryBackground {
   if (name === "Capa") {
-    return { type: "image", src: "/images/liturgia-default.jpg", alt: "Liturgia" };
+    return { type: "image", src: "/images/stories/liturgia-default.jpg", alt: "Liturgia" };
   }
   if (name === "Claro") {
     return {
       type: "image",
-      src: "/images/Stories Instagram agenda semanal religioso moderno amarelo e preto.jpg",
+      src: "/images/stories/liturgia-bg-light.jpg",
       alt: "Liturgia clara",
     };
   }
   return {
     type: "image",
-    src: "/images/Stories Instagram agenda semanal religioso moderno amarelo e preto (1).jpg",
+    src: "/images/stories/liturgia-bg-dark.jpg",
     alt: "Liturgia escura",
   };
 }
