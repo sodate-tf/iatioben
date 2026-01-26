@@ -1,6 +1,8 @@
+// app/api/web-stories/liturgia/[date]/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { fetchLiturgiaByIsoDate } from "@/lib/liturgia/api"; // ajuste o path se necessário
+import { fetchLiturgiaByIsoDate } from "@/lib/liturgia/api";
 import { buildLiturgiaStoryJson } from "@/app/lib/web-stories/liturgia-story-builder";
+
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,42 +13,39 @@ function assertIsoDate(date: string) {
   }
 }
 
-function toSlugBR(isoDate: string) {
-  const [y, m, d] = isoDate.split("-");
-  return `${d}-${m}-${y}`;
-}
-
-/**
- * IMPORTANTÍSSIMO:
- * - Next 16 (na sua build) tipa context.params como Promise
- * - Em alguns ambientes, params pode vir como objeto direto
- * Aqui tratamos os dois.
- */
-export async function GET(request: NextRequest, context: { params: any }) {
+export async function GET(
+  _req: NextRequest,
+  ctx: { params: Promise<{ date: string }> }
+) {
   try {
-    const paramsResolved =
-      context?.params && typeof context.params?.then === "function"
-        ? await context.params
-        : context.params;
+    const { date } = await ctx.params;
+    assertIsoDate(date);
 
-    const isoDate = String(paramsResolved?.date ?? "");
-    assertIsoDate(isoDate);
+    const isoDate = date;
 
-    const siteUrl = process.env.SITE_URL ?? "https://www.iatioben.com.br";
+    const siteUrl =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      process.env.SITE_URL ||
+      "https://www.iatioben.com.br";
 
-    const posterSrc =
-      process.env.STORY_LITURGIA_POSTER_DEFAULT ??
-      `${siteUrl.replace(/\/$/, "")}/images/stories/liturgia-default.jpg`;
+    const canonicalUrl = `${siteUrl.replace(/\/$/, "")}/liturgia/${isoDate}/`;
 
-    const publisherName = process.env.STORY_PUBLISHER_NAME ?? "Tio Ben IA";
-
+    const publisherName = process.env.STORY_PUBLISHER_NAME || "Tio Ben IA";
     const publisherLogoSrc =
-      process.env.STORY_PUBLISHER_LOGO ??
+      process.env.STORY_PUBLISHER_LOGO ||
       `${siteUrl.replace(/\/$/, "")}/images/logo-amp.png`;
 
-    const canonicalUrl = `${siteUrl.replace(/\/$/, "")}/liturgia-diaria/${toSlugBR(
-      isoDate
-    )}`;
+    const posterSrc =
+      process.env.STORY_LITURGIA_POSTER_DEFAULT ||
+      `${siteUrl.replace(/\/$/, "")}/images/stories/liturgia-default.jpg`;
+
+    const bgDarkSrc =
+      process.env.STORY_LITURGIA_BG_DARK ||
+      `${siteUrl.replace(/\/$/, "")}/images/stories/liturgia-bg-dark.jpg`;
+
+    const bgLightSrc =
+      process.env.STORY_LITURGIA_BG_LIGHT ||
+      `${siteUrl.replace(/\/$/, "")}/images/stories/liturgia-bg-light.jpg`;
 
     const liturgia = await fetchLiturgiaByIsoDate(isoDate);
 
@@ -55,6 +54,8 @@ export async function GET(request: NextRequest, context: { params: any }) {
       siteUrl,
       canonicalUrl,
       posterSrc,
+      bgDarkSrc,
+      bgLightSrc,
       publisherName,
       publisherLogoSrc,
       liturgia,
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest, context: { params: any }) {
 
     return NextResponse.json(storyJson, {
       headers: {
-        "Cache-Control": "public, max-age=60",
+        "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
       },
     });
   } catch (e: unknown) {

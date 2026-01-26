@@ -1,3 +1,7 @@
+// lib/web-stories/story-types.ts
+
+export type StoryTheme = "dark" | "light";
+
 export type StoryBackground = {
   type: "image";
   src: string;
@@ -6,63 +10,36 @@ export type StoryBackground = {
 
 export type StoryCta = {
   label: string;
-  url: string;
+  url: string | null;
 };
 
-export type StoryPage =
-  | {
-      id: "cover";
-      background: StoryBackground;
-      heading: string;
-      subheading?: string;
-      text?: string;
-      cta?: { label: string; url?: string | null };
-    }
-  | {
-      id: "theme";
-      background: StoryBackground;
-      heading: string;
-      text: string;
-      quote?: string;
-      cta?: StoryCta;
-    }
-  | {
-      id: "reading1" | "reading2" | "gospel" | "gospel1";
-      background: StoryBackground;
-      heading: string;
-      reference: string;
-      bullets: string[];
-    }
-  | {
-      id: "psalm";
-      background: StoryBackground;
-      heading: string;
-      reference: string;
-      refrain: string;
-      bullets?: string[];
-    }
-  | {
-      id: "application";
-      background: StoryBackground;
-      heading: string;
-      bullets: string[];
-      prayer?: string;
-    }
-  | {
-      id: "cta";
-      background: StoryBackground;
-      heading: string;
-      text: string;
-      cta: StoryCta;
-    };
+export type StoryPageBase = {
+  id: string;
+  theme?: StoryTheme;
+  background: StoryBackground;
+
+  heading: string;
+  subheading?: string;
+
+  reference?: string;
+  text?: string;
+  quote?: string;
+  refrain?: string;
+  bullets?: string[];
+  prayer?: string;
+
+  cta?: StoryCta;
+};
 
 export type LiturgyStoryJson = {
   type: "liturgy";
-  lang: string; // "pt-BR"
-  date: string; // YYYY-MM-DD
-  slug: string; // liturgia-23-01-2026
+  lang: string; // ex: pt-BR
+  date: string; // ISO: YYYY-MM-DD
+  slug: string;
+
   title: string;
   description: string;
+
   canonicalUrl: string;
   storyUrl: string;
 
@@ -76,5 +53,5 @@ export type LiturgyStoryJson = {
     alt: string;
   };
 
-  pages: StoryPage[];
+  pages: StoryPageBase[];
 };

@@ -1,0 +1,123 @@
+<!doctype html>
+<html ⚡ lang="{{lang}}">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{title}}</title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1" />
+    <link rel="canonical" href="{{canonicalUrl}}" />
+
+    <meta name="description" content="{{description}}" />
+    <meta property="og:title" content="{{title}}" />
+    <meta property="og:description" content="{{description}}" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="{{storyUrl}}" />
+    <meta property="og:image" content="{{posterSrc}}" />
+
+    <script async src="https://cdn.ampproject.org/v0.js"></script>
+    <script async custom-element="amp-story" src="https://cdn.ampproject.org/v0/amp-story-1.0.js"></script>
+
+    <style amp-boilerplate>
+      body{-webkit-animation:-amp-start 8s steps(1,end) 0s 1 normal both;animation:-amp-start 8s steps(1,end) 0s 1 normal both}
+      @keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}
+    </style>
+    <noscript><style amp-boilerplate>body{-webkit-animation:none;animation:none}</style></noscript>
+
+    <style amp-custom>
+      .pad { padding: 72px 30px 44px; }
+      .brand { font-size: 14px; letter-spacing: .2px; opacity: .95; }
+
+      .h1 { font-size: 40px; line-height: 1.05; font-weight: 800; }
+      .h2 { font-size: 26px; line-height: 1.15; font-weight: 800; }
+
+      .meta { font-size: 16px; margin-top: 8px; opacity: .92; }
+      .ref { font-size: 16px; margin-top: 10px; font-weight: 800; opacity: .96; }
+
+      .text { font-size: 18px; line-height: 1.25; margin-top: 14px; }
+      .bullets { margin-top: 14px; font-size: 18px; line-height: 1.25; padding-left: 18px; }
+      .bullets li { margin: 8px 0; }
+
+      .pill {
+        display: inline-block;
+        padding: 8px 12px;
+        border-radius: 999px;
+        margin-top: 12px;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .quote {
+        margin-top: 14px;
+        padding: 12px 14px;
+        border-left: 4px solid rgba(255,255,255,.85);
+        border-radius: 10px;
+        font-size: 18px;
+        line-height: 1.25;
+        font-weight: 650;
+      }
+
+      .prayer {
+        margin-top: 12px;
+        font-size: 18px;
+        line-height: 1.25;
+        font-style: italic;
+        opacity: .95;
+      }
+
+      .btn {
+        display: inline-block;
+        margin-top: 18px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-weight: 900;
+        text-decoration: none;
+        font-size: 16px;
+      }
+
+      /* DARK */
+      .theme-dark .overlay {
+        background: linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.25) 40%, rgba(0,0,0,0.30) 100%);
+      }
+      .theme-dark .brand,
+      .theme-dark .text,
+      .theme-dark .meta,
+      .theme-dark .ref,
+      .theme-dark .prayer { color: #f5f5f5; }
+      .theme-dark .h1,
+      .theme-dark .h2 { color: #f3d48b; text-shadow: 0 2px 8px rgba(0,0,0,0.7); }
+      .theme-dark .quote { background: rgba(0,0,0,.35); color: #f5f5f5; border-left-color: rgba(243,212,139,.9); }
+      .theme-dark .pill { background: rgba(243, 212, 139, 0.18); border: 1px solid rgba(243, 212, 139, 0.45); color: #f3d48b; }
+      .theme-dark .bullets li { background: rgba(0,0,0,0.35); color: #f5f5f5; padding: 6px 10px; border-radius: 10px; list-style: none; }
+      .theme-dark .btn { background: rgba(245,245,245,.92); color: #111; }
+
+      /* LIGHT */
+      .theme-light .overlay {
+        background: linear-gradient(180deg, rgba(255,255,255,0.20) 0%, rgba(0,0,0,0.12) 55%, rgba(0,0,0,0.22) 100%);
+      }
+      .theme-light .brand,
+      .theme-light .text,
+      .theme-light .meta,
+      .theme-light .ref,
+      .theme-light .prayer { color: #1a1a1a; text-shadow: 0 1px 6px rgba(255,255,255,0.35); }
+      .theme-light .h1,
+      .theme-light .h2 { color: #3a2a10; text-shadow: 0 2px 10px rgba(255,255,255,0.45); }
+      .theme-light .quote { background: rgba(255,255,255,.55); color: #1a1a1a; border-left-color: rgba(58,42,16,.55); }
+      .theme-light .pill { background: rgba(58,42,16,.12); border: 1px solid rgba(58,42,16,.22); color: #3a2a10; }
+      .theme-light .bullets li { background: rgba(255,255,255,.55); color: #1a1a1a; padding: 6px 10px; border-radius: 10px; list-style: none; }
+      .theme-light .btn { background: rgba(58,42,16,.92); color: #fff; }
+    </style>
+
+    <script type="application/ld+json">{{jsonLd}}</script>
+  </head>
+
+  <body>
+    <amp-story
+      standalone
+      title="{{title}}"
+      publisher="{{publisherName}}"
+      publisher-logo-src="{{publisherLogoSrc}}"
+      poster-portrait-src="{{posterSrc}}"
+    >
+      {{pagesHtml}}
+    </amp-story>
+  </body>
+</html>
