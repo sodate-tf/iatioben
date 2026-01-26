@@ -1,0 +1,85 @@
+<!doctype html>
+<html ⚡ lang="{{lang}}">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{title}}</title>
+    <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1" />
+    <link rel="canonical" href="{{canonicalUrl}}" />
+
+    <meta name="description" content="{{description}}" />
+    <meta property="og:title" content="{{title}}" />
+    <meta property="og:description" content="{{description}}" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="{{storyUrl}}" />
+    <meta property="og:image" content="{{posterSrc}}" />
+
+    <script async src="https://cdn.ampproject.org/v0.js"></script>
+    <script async custom-element="amp-story" src="https://cdn.ampproject.org/v0/amp-story-1.0.js"></script>
+
+    <style amp-boilerplate>
+      body{-webkit-animation:-amp-start 8s steps(1,end) 0s 1 normal both;animation:-amp-start 8s steps(1,end) 0s 1 normal both}
+      @keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}
+    </style>
+    <noscript><style amp-boilerplate>body{-webkit-animation:none;animation:none}</style></noscript>
+
+    <style amp-custom>
+      .pad { padding: 56px 24px 28px; }
+      .h1 { font-size: 40px; line-height: 1.05; font-weight: 800; }
+      .h2 { font-size: 26px; line-height: 1.15; font-weight: 800; }
+      .meta { font-size: 16px; opacity: .9; margin-top: 8px; }
+      .text { font-size: 18px; line-height: 1.25; margin-top: 14px; }
+      .bullets { margin-top: 14px; font-size: 18px; line-height: 1.25; }
+      .bullets li { margin: 8px 0; }
+      .ref { font-size: 16px; opacity: .95; margin-top: 10px; font-weight: 700; }
+      .pill {
+        display: inline-block; padding: 8px 12px; border-radius: 999px;
+        background: rgba(0,0,0,.55); font-size: 14px; font-weight: 700;
+        margin-top: 12px;
+      }
+      .overlay { background: linear-gradient(180deg, rgba(0,0,0,.30), rgba(0,0,0,.70)); }
+      .brand { font-size: 14px; opacity: .9; letter-spacing: .2px; }
+      .btn {
+        display: inline-block;
+        margin-top: 18px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: rgba(255,255,255,.92);
+        color: #111;
+        font-weight: 800;
+        text-decoration: none;
+        font-size: 16px;
+      }
+      .quote {
+        margin-top: 14px;
+        padding: 12px 14px;
+        border-left: 4px solid rgba(255,255,255,.85);
+        background: rgba(0,0,0,.35);
+        border-radius: 10px;
+        font-size: 18px;
+        line-height: 1.25;
+        font-weight: 600;
+      }
+      .prayer {
+        margin-top: 12px;
+        font-size: 18px;
+        line-height: 1.25;
+        font-style: italic;
+        opacity: .95;
+      }
+    </style>
+
+    <script type="application/ld+json">{{jsonLd}}</script>
+  </head>
+
+  <body>
+    <amp-story
+      standalone
+      title="{{title}}"
+      publisher="{{publisherName}}"
+      publisher-logo-src="{{publisherLogoSrc}}"
+      poster-portrait-src="{{posterSrc}}"
+    >
+      {{pagesHtml}}
+    </amp-story>
+  </body>
+</html>
