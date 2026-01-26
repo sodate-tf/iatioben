@@ -36,6 +36,13 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        source: "/web-stories/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self';" },
+        ],
+      },
     ];
   },
 
@@ -58,5 +65,7 @@ const nextConfig: NextConfig = {
     reactRemoveProperties: false,
   },
 };
+
+
 
 export default nextConfig;
