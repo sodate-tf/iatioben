@@ -1,5 +1,4 @@
-// lib/web-stories/story-types.ts
-
+// app/lib/web-stories/story-types.ts
 export type StoryTheme = "dark" | "light";
 
 export type StoryBackground = {
@@ -10,31 +9,33 @@ export type StoryBackground = {
 
 export type StoryCta = {
   label: string;
-  url: string | null;
+  url: string;
 };
 
-export type StoryPageBase = {
+export type StoryPage = {
   id: string;
   theme?: StoryTheme;
+
   background: StoryBackground;
 
   heading: string;
   subheading?: string;
-
-  reference?: string;
   text?: string;
   quote?: string;
-  refrain?: string;
+
+  reference?: string;
   bullets?: string[];
+  refrain?: string;
+
   prayer?: string;
 
-  cta?: StoryCta;
+  cta?: StoryCta | null;
 };
 
 export type LiturgyStoryJson = {
   type: "liturgy";
-  lang: string; // ex: pt-BR
-  date: string; // ISO: YYYY-MM-DD
+  lang: string; // ex.: pt-BR
+  date: string; // yyyy-mm-dd
   slug: string;
 
   title: string;
@@ -53,5 +54,5 @@ export type LiturgyStoryJson = {
     alt: string;
   };
 
-  pages: StoryPageBase[];
+  pages: StoryPage[];
 };

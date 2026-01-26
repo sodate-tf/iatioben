@@ -1,62 +1,86 @@
-// scripts/lib/render-amp-story.mjs
-import { escapeHtml, limitChars } from "./utils.mjs";
+// app/lib/web-stories/render-amp-story.mjs
+import fs from "node:fs/promises";
+import path from "node:path";
 
-export function renderPagesHtml(story) {
-  return (story.pages || []).map((p, idx) => renderPage(p, idx + 1, story)).join("\n");
+function esc(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
-function renderPage(p, pageNumber, story) {
-  const id = escapeHtml(p.id || `p${pageNumber}`);
-  const theme = p.theme === "light" ? "theme-light" : "theme-dark";
+function renderBullets(bullets = []) {
+  if (!bullets?.length) return "";
+  return `<ul class="bullets">${bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`;
+}
 
-  const heading = escapeHtml(limitChars(p.heading || "", 60));
-  const subheading = p.subheading ? escapeHtml(limitChars(p.subheading, 80)) : "";
-  const text = p.text ? escapeHtml(limitChars(p.text, 280)) : "";
-  const reference = p.reference ? escapeHtml(limitChars(p.reference, 80)) : "";
-  const refrain = p.refrain ? escapeHtml(limitChars(p.refrain, 140)) : "";
-  const quote = p.quote ? escapeHtml(limitChars(p.quote, 140)) : "";
-  const prayer = p.prayer ? escapeHtml(limitChars(p.prayer, 180)) : "";
+function renderPage(p) {
+  const themeClass = p.theme === "light" ? "theme-light" : "theme-dark";
+  const overlayClass = p.theme === "light" ? "overlay-light" : "overlay-dark";
 
-  const bullets = Array.isArray(p.bullets) ? p.bullets.slice(0, 3) : [];
-  const cta = p.cta?.url ? { label: p.cta.label || "Abrir", url: p.cta.url } : null;
+  const id = esc(p.id);
+  const bgSrc = esc(p.background?.src);
+  const bgAlt = esc(p.background?.alt || "Fundo");
 
-  const bgSrc = escapeHtml(p.background?.src || story.poster?.src || "");
-  const bgAlt = escapeHtml(p.background?.alt || story.poster?.alt || story.title || "Background");
+  const heading = esc(p.heading);
+  const subheading = p.subheading ? `<div class="sub">${esc(p.subheading)}</div>` : "";
+  const text = p.text ? `<div class="text">${esc(p.text)}</div>` : "";
+  const quote = p.quote ? `<div class="quote">${esc(p.quote)}</div>` : "";
+
+  const reference = p.reference ? `<div class="ref">${esc(p.reference)}</div>` : "";
+  const refrain = p.refrain ? `<div class="pill">${esc(p.refrain)}</div>` : "";
+
+  const bullets = renderBullets(p.bullets);
+
+  const prayer = p.prayer ? `<div class="prayer">${esc(p.prayer)}</div>` : "";
+
+  const cta =
+    p.cta?.url && p.cta?.label
+      ? `<a class="btn" href="${esc(p.cta.url)}">${esc(p.cta.label)}</a>`
+      : "";
 
   return `
-<amp-story-page id="${id}" class="${theme}">
-  <amp-story-grid-layer template="fill">
+<amp-story-page id="${id}" class="${themeClass}">
+  <amp-story-grid-layer template="fill" class="bg">
     <amp-img src="${bgSrc}" width="1080" height="1920" layout="responsive" alt="${bgAlt}"></amp-img>
   </amp-story-grid-layer>
 
-  <amp-story-grid-layer template="fill" class="overlay"></amp-story-grid-layer>
+  <amp-story-grid-layer template="fill" class="${overlayClass}"></amp-story-grid-layer>
 
-  <amp-story-grid-layer template="vertical" class="pad">
-    <div class="brand">${escapeHtml(story.publisherName || "Tio Ben IA")}</div>
+  <amp-story-grid-layer template="vertical" class="wrap">
+    <div class="brand">Tio Ben IA</div>
 
-    <div class="${pageNumber === 1 ? "h1" : "h2"}">${heading}</div>
-    ${subheading ? `<div class="meta">${subheading}</div>` : ""}
-
-    ${reference ? `<div class="ref">${reference}</div>` : ""}
-
-    ${text ? `<div class="text">${text}</div>` : ""}
-
-    ${quote ? `<div class="quote">${quote}</div>` : ""}
-
-    ${refrain ? `<div class="pill">${refrain}</div>` : ""}
-
-    ${
-      bullets.length
-        ? `<ul class="bullets">${bullets
-            .map((b) => `<li>${escapeHtml(limitChars(String(b), 120))}</li>`)
-            .join("")}</ul>`
-        : ""
-    }
-
-    ${prayer ? `<div class="prayer">${prayer}</div>` : ""}
-
-    ${cta ? `<a class="btn" href="${escapeHtml(cta.url)}">${escapeHtml(cta.label)}</a>` : ""}
+    <div class="card">
+      <div class="heading">${heading}</div>
+      ${subheading}
+      ${reference}
+      ${refrain}
+      ${text}
+      ${quote}
+      ${bullets}
+      ${prayer}
+      ${cta}
+    </div>
   </amp-story-grid-layer>
 </amp-story-page>
 `.trim();
+}
+
+export async function renderAmpStoryHtml(storyJson, templatePath) {
+  const tpl = await fs.readFile(templatePath, "utf-8");
+
+  const pagesHtml = (storyJson.pages || []).map(renderPage).join("\n\n");
+
+  return tpl
+    .replaceAll("{{title}}", esc(storyJson.title))
+    .replaceAll("{{canonicalUrl}}", esc(storyJson.canonicalUrl))
+    .replaceAll("{{publisherName}}", esc(storyJson.publisherName))
+    .replaceAll("{{publisherLogoSrc}}", esc(storyJson.publisherLogoSrc))
+    .replaceAll("{{posterSrc}}", esc(storyJson.poster?.src))
+    .replaceAll("{{pagesHtml}}", pagesHtml);
+}
+
+export function resolveTemplate(defaultDir) {
+  return path.join(defaultDir, "amp-story.template.html");
 }

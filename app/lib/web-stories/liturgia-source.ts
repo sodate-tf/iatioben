@@ -1,27 +1,50 @@
-// lib/web-stories/liturgia-source.ts
+// app/lib/web-stories/liturgia-source.ts
+// Tipos flexíveis: suportam tanto o RAW da API quanto seu normalizado (leiturasFull).
 
 export type LiturgiaSection = {
-  referencia?: string | null;
-  texto?: string | null;
-  textoHtml?: string | null;
-
-  // usado no Salmo (sua normalize pode usar refrao/refraoSalmo/etc.)
-  refrao?: string | null;
-
-  // Permite campos extras sem quebrar tipagem
-  [key: string]: unknown;
+  referencia?: string;
+  titulo?: string;
+  texto?: string;
+  textoHtml?: string;
+  refrao?: string; // salmo
 };
 
-export type LiturgiaPayload = {
-  primeiraLeitura?: LiturgiaSection | null;
-  segundaLeitura?: LiturgiaSection | null;
+export type LiturgiaLike = {
+  // Normalizado (seu tipo LiturgiaNormalized)
+  dateISO?: string;
+  dateLabel?: string;
+  celebration?: string;
+  color?: string;
 
-  // se sua normalize retornar leituras em array
-  leituras?: LiturgiaSection[] | null;
+  primeiraRef?: string;
+  salmoRef?: string;
+  segundaRef?: string;
+  evangelhoRef?: string;
 
-  salmo?: (LiturgiaSection & { refrao?: string | null }) | null;
-  evangelho?: LiturgiaSection | null;
+  leiturasFull?: {
+    primeiraLeitura?: LiturgiaSection[];
+    segundaLeitura?: LiturgiaSection[];
+    salmo?: LiturgiaSection[];
+    evangelho?: LiturgiaSection[];
+    extras?: LiturgiaSection[];
+  };
 
-  // Permite outros campos que a API devolve
+  // RAW (liturgia.up.railway)
+  liturgia?: string;
+  cor?: string;
+  leituras?: {
+    primeiraLeitura?: LiturgiaSection[];
+    segundaLeitura?: LiturgiaSection[];
+    salmo?: LiturgiaSection[];
+    evangelho?: LiturgiaSection[];
+    extras?: LiturgiaSection[];
+  };
+
+  // fallback “solto”
+  primeiraLeitura?: LiturgiaSection[];
+  segundaLeitura?: LiturgiaSection[];
+  salmo?: LiturgiaSection[];
+  evangelho?: LiturgiaSection[];
+
   [key: string]: unknown;
 };
