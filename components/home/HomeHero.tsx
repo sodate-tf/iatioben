@@ -12,7 +12,7 @@ type StoryItem = {
   key: string;
   title: string;
   subtitle?: string;
-  href: string; // URL do web story (AMP)
+  href: string; // ✅ URL ABSOLUTA do web story (AMP)
   thumbSrc: string; // thumbnail circular
   thumbAlt: string;
   ring?: StoryRing;
@@ -62,16 +62,28 @@ function saveSeen(map: Record<string, number>) {
 }
 
 export default function HomeHero() {
-  const { dd, mm, yyyy, iso } = useMemo(getTodayParts, []);
+  const { dd, mm, yyyy } = useMemo(getTodayParts, []);
 
-  // Stories do dia (ajuste livremente depois)
+  // ✅ origin para montar URL absoluta (necessário para amp-story-player não ficar “carregando”)
+  const siteOrigin = useMemo(() => {
+    if (typeof window === "undefined") return "";
+    return window.location.origin; // http://localhost:3000 ou https://www.iatioben.com.br
+  }, []);
+
+  function abs(path: string) {
+    if (!path) return path;
+    if (path.startsWith("http://") || path.startsWith("https://")) return path;
+    if (!siteOrigin) return path; // fallback no primeiro render
+    return `${siteOrigin}${path.startsWith("/") ? "" : "/"}${path}`;
+  }
+
   const stories: StoryItem[] = useMemo(
     () => [
       {
         key: "liturgia-hoje",
         title: "Liturgia",
         subtitle: `${dd}/${mm}`,
-        href: `/web-stories/liturgia-${dd}-${mm}-${yyyy}/`,
+        href: abs(`/web-stories/liturgia-${dd}-${mm}-${yyyy}/`),
         thumbSrc: "/images/stories/liturgia-default.jpg",
         thumbAlt: "Web Story — Liturgia de Hoje",
         ring: "amber",
@@ -80,13 +92,13 @@ export default function HomeHero() {
         key: "terco-do-dia",
         title: "Terço",
         subtitle: "Mistérios",
-        href: `/web-stories/terco-${dd}-${mm}-${yyyy}/`,
-        thumbSrc: "/images/stories/terco-default.jpg", // ✅ seu thumb
+        href: abs(`/web-stories/terco-${dd}-${mm}-${yyyy}/`),
+        thumbSrc: "/images/stories/terco-default.jpg",
         thumbAlt: "Web Story — Terço do Dia",
         ring: "blue",
       },
     ],
-    [dd, mm, yyyy]
+    [dd, mm, yyyy, siteOrigin] // ✅ siteOrigin influencia abs()
   );
 
   const railRef = useRef<HTMLDivElement | null>(null);
@@ -95,12 +107,10 @@ export default function HomeHero() {
   const [playerOpen, setPlayerOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // Carrega seen do localStorage
   useEffect(() => {
     setSeen(loadSeen());
   }, []);
 
-  // Fechar modal com ESC
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") setPlayerOpen(false);
@@ -151,26 +161,16 @@ export default function HomeHero() {
   return (
     <section className="bg-gradient-to-b from-amber-200 to-amber-400">
       {/* AMP Story Player assets */}
-      <link
-        rel="stylesheet"
-        href="https://cdn.ampproject.org/amp-story-player-v0.css"
-      />
-      <Script
-        src="https://cdn.ampproject.org/amp-story-player-v0.js"
-        strategy="afterInteractive"
-      />
+      <link rel="stylesheet" href="https://cdn.ampproject.org/amp-story-player-v0.css" />
+      <Script src="https://cdn.ampproject.org/amp-story-player-v0.js" strategy="afterInteractive" />
 
       <div className="mx-auto w-full max-w-5xl px-5 py-8">
         {/* STORIES TOP BAR */}
         <div className="mb-8">
           <div className="flex items-end justify-between gap-3">
             <div>
-              <p className="text-sm font-extrabold text-amber-950 tracking-tight">
-                Stories de Hoje
-              </p>
-              <p className="text-xs text-amber-950/70">
-                Conteúdos rápidos: Liturgia, Terço e Santo do dia
-              </p>
+              <p className="text-sm font-extrabold text-amber-950 tracking-tight">Stories de Hoje</p>
+              <p className="text-xs text-amber-950/70">Conteúdos rápidos: Liturgia, Terço e Santo do dia</p>
             </div>
 
             <Link
@@ -183,7 +183,7 @@ export default function HomeHero() {
             </Link>
           </div>
 
-          <div className="relative mt-4">           
+          <div className="relative mt-4">
             <div
               ref={railRef}
               className="flex gap-4 overflow-x-auto pb-2 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden scroll-smooth snap-x snap-mandatory"
@@ -201,7 +201,6 @@ export default function HomeHero() {
                     title={s.title}
                   >
                     <div className="flex w-[92px] flex-col items-center">
-                      {/* Ring: se visto, fica mais “apagado” */}
                       <div
                         className={[
                           "rounded-full p-[2px] bg-gradient-to-tr shadow-sm transition",
@@ -223,17 +222,12 @@ export default function HomeHero() {
                       </div>
 
                       <div className="mt-2 w-full text-center">
-                        <p className="truncate text-[12px] font-extrabold text-amber-950">
-                          {s.title}
-                        </p>
+                        <p className="truncate text-[12px] font-extrabold text-amber-950">{s.title}</p>
                         {s.subtitle ? (
-                          <p className="truncate text-[11px] text-amber-950/70">
-                            {s.subtitle}
-                          </p>
+                          <p className="truncate text-[11px] text-amber-950/70">{s.subtitle}</p>
                         ) : null}
                       </div>
 
-                      {/* Pequeno indicador */}
                       <div className="mt-1 h-1 w-10 rounded-full bg-amber-950/10 overflow-hidden">
                         <div
                           className={[
@@ -246,7 +240,7 @@ export default function HomeHero() {
                   </button>
                 );
               })}
-            </div>      
+            </div>
           </div>
         </div>
 
@@ -268,8 +262,8 @@ export default function HomeHero() {
           </h1>
 
           <p className="mt-3 text-gray-800 text-base md:text-lg leading-relaxed">
-            Faça uma pergunta sobre fé, liturgia, Evangelho, oração e vida espiritual.
-            Acompanhe também a Liturgia Diária e conteúdos de formação católica.
+            Faça uma pergunta sobre fé, liturgia, Evangelho, oração e vida espiritual. Acompanhe também a Liturgia
+            Diária e conteúdos de formação católica.
           </p>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
@@ -299,12 +293,11 @@ export default function HomeHero() {
             >
               Ver o Blog
             </Link>
-          </div>         
+          </div>
         </div>
       </div>
 
       {/* MODAL PLAYER */}
-            {/* MODAL PLAYER */}
       {playerOpen && active ? (
         <div
           className="fixed inset-0 z-[9999] bg-black/70"
@@ -315,11 +308,9 @@ export default function HomeHero() {
             if (e.target === e.currentTarget) setPlayerOpen(false);
           }}
         >
-          {/* Container que usa 100% da tela visível */}
-          <div className="mx-auto flex h-[100dvh] w-full max-w-[460px] flex-col px-4 py-4">
-            {/* Header fixo */}
+          {/* ✅ menor proporcionalmente + centralizado + usa a tela visível */}
+          <div className="mx-auto flex h-[100dvh] w-full max-w-[420px] flex-col px-4 py-4">
             <div className="mb-3 flex items-center justify-between">
-              
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -351,22 +342,44 @@ export default function HomeHero() {
               </div>
             </div>
 
-            {/* Player ocupa o espaço restante da tela */}
-            <div className="flex-1 overflow-hidden rounded-[22px] bg-black shadow-2xl ring-1 ring-white/10">
-              <amp-story-player
-                key={active.href}
-                style={{
-                  width: "100%",
-                  height: "100%", // ✅ ocupa 100% do container flex-1
-                }}
+            {/* ✅ “telefone” menor com proporção 9:16 (evita ficar gigante e mantém estética) */}
+            <div className="flex-1 flex items-center justify-center">
+              <div className="w-full max-w-[390px] aspect-[9/16] overflow-hidden rounded-[22px] bg-black shadow-2xl ring-1 ring-white/10">
+                <amp-story-player
+                  key={active.href}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                  }}
+                >
+                  {/* ✅ href ABSOLUTO evita loading infinito */}
+                  <a href={active.href}></a>
+                </amp-story-player>
+              </div>
+            </div>
+
+            {/* CTA opcional para abrir em nova aba/página */}
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <Link
+                href={active.href}
+                className="flex-1 inline-flex items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-extrabold text-black hover:bg-white/90 transition"
+                onClick={() => setPlayerOpen(false)}
+                aria-label="Abrir story em nova página"
+                title="Abrir story"
               >
-                <a href={active.href}></a>
-              </amp-story-player>
-            </div>            
+                Abrir story
+              </Link>
+              <Link
+                href="/web-stories"
+                className="inline-flex items-center justify-center rounded-xl bg-white/15 px-4 py-2 text-sm font-semibold text-white hover:bg-white/25 transition"
+                onClick={() => setPlayerOpen(false)}
+              >
+                Ver lista
+              </Link>
+            </div>
           </div>
         </div>
       ) : null}
-
     </section>
   );
 }
