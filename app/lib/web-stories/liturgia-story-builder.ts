@@ -1,262 +1,223 @@
 // app/lib/web-stories/liturgia-story-builder.ts
-import type { LiturgyStoryJson, StoryTheme } from "./story-types";
-import type { LiturgiaLike, LiturgiaSection } from "./liturgia-source";
 
-function stripHtml(s: string) {
-  return (s || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+import type { LiturgiaPayload, LiturgiaLeiturasBlock, LiturgiaSection } from "./liturgia-source";
+import type { LiturgyStoryJson, StoryPage, StoryBackground } from "./story-types";
+
+function compact(s?: string | null) {
+  return String(s ?? "").replace(/\s+/g, " ").trim();
 }
 
-function compact(s: string) {
-  return (s || "").replace(/\s+/g, " ").trim();
-}
-
-function limitChars(s: string, max: number) {
+function limitChars(s: string, max = 220) {
   const t = compact(s);
+  if (!t) return "";
   if (t.length <= max) return t;
-  return t.slice(0, Math.max(0, max - 1)).trimEnd() + "…";
+  return t.slice(0, max).replace(/[ ,.;:!?]+$/g, "") + "…";
 }
 
-function formatDatePtBR(isoDate: string) {
-  const [y, m, d] = isoDate.split("-");
-  return `${d}/${m}/${y}`;
+function pickQuote(text: string) {
+  const t = compact(text);
+  if (!t) return "";
+  const parts = t.split(/[.?!]\s+/).map((x) => compact(x)).filter(Boolean);
+  const candidate = parts.find((x) => x.length >= 60 && x.length <= 160) || parts[0] || "";
+  return candidate ? `“${candidate}”` : "";
 }
 
-function isoToSlugBR(isoDate: string) {
+function getCelebration(l: LiturgiaPayload): string {
+  const v = (typeof l.liturgia === "string" ? l.liturgia : "") || (typeof l.celebration === "string" ? l.celebration : "");
+  return compact(v);
+}
+
+function formatDatePtBR(iso: string) {
+  const [y, m, d] = iso.split("-").map((x) => Number(x));
+  const dt = new Date(y, (m || 1) - 1, d || 1, 12, 0, 0);
+  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(dt);
+}
+
+function bg(name: "Capa" | "Claro" | "Escuro"): StoryBackground {
+  if (name === "Capa") {
+    return { type: "image", src: "/images/liturgia-default.jpg", alt: "Liturgia" };
+  }
+  if (name === "Claro") {
+    return {
+      type: "image",
+      src: "/images/Stories Instagram agenda semanal religioso moderno amarelo e preto.jpg",
+      alt: "Liturgia clara",
+    };
+  }
+  return {
+    type: "image",
+    src: "/images/Stories Instagram agenda semanal religioso moderno amarelo e preto (1).jpg",
+    alt: "Liturgia escura",
+  };
+}
+
+type LeituraKey = keyof LiturgiaLeiturasBlock;
+
+/**
+ * Normaliza o acesso às leituras em 3 camadas:
+ * 1) leiturasFull (normalizado)
+ * 2) leituras (raw da API)
+ * 3) campos soltos (primeiraLeitura, salmo, etc.)
+ */
+function pickLeiturasBlock(l: LiturgiaPayload): LiturgiaLeiturasBlock {
+  if (l.leiturasFull) return l.leiturasFull;
+  if (l.leituras) return l.leituras;
+
+  // fallback “solto”
+  return {
+    primeiraLeitura: l.primeiraLeitura,
+    segundaLeitura: l.segundaLeitura,
+    salmo: l.salmo,
+    evangelho: l.evangelho,
+  };
+}
+
+function firstOf(block: LiturgiaLeiturasBlock, key: LeituraKey): LiturgiaSection | null {
+  const arr = block[key];
+  return Array.isArray(arr) && arr.length ? arr[0] : null;
+}
+
+function toSlugFromIso(isoDate: string) {
+  // ISO yyyy-mm-dd -> dd-mm-yyyy
   const [y, m, d] = isoDate.split("-");
   return `${d}-${m}-${y}`;
 }
 
-type LeituraKey = keyof NonNullable<LiturgiaLike["leiturasFull"]>;
-type RawLeituras = NonNullable<LiturgiaLike["leituras"]>;
-
-function getArr(l: LiturgiaLike, key: LeituraKey): LiturgiaSection[] {
-  // 1) Normalizado
-  const fromFull = l.leiturasFull?.[key];
-  if (Array.isArray(fromFull) && fromFull.length) return fromFull;
-
-  // 2) RAW (tipado)
-  const raw: RawLeituras | undefined = l.leituras;
-  const fromRaw = raw?.[key];
-  if (Array.isArray(fromRaw) && fromRaw.length) return fromRaw;
-
-  // 3) fallback “solto” (acesso seguro sem any)
-  const direct = (l as Record<string, unknown>)[key];
-  if (Array.isArray(direct) && direct.length) return direct as LiturgiaSection[];
-
-  return [];
-}
-
-function pick0(arr: LiturgiaSection[]) {
-  return arr && arr.length ? arr[0] : null;
-}
-
-function bulletize(text: string, maxBullets: number) {
-  const plain = stripHtml(text);
-  if (!plain) {
-    return ["Toque em “Rezar no site” para ler o conteúdo completo."];
-  }
-
-  // tenta “sentenças” curtas
-  const sentences = plain
-    .split(/(?<=[\.\!\?])\s+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-
-  const bullets: string[] = [];
-  for (const s of sentences) {
-    const short = limitChars(s, 120);
-    if (short.length >= 25) bullets.push(short);
-    if (bullets.length >= maxBullets) break;
-  }
-
-  // fallback: primeira fatia do texto
-  if (!bullets.length) bullets.push(limitChars(plain, 140));
-
-  return bullets;
-}
-
-function summarizeThemeFromGospel(text: string) {
-  const plain = stripHtml(text);
-  if (!plain) return "";
-  const parts = plain.split(/(?<=[\.\!\?])\s+/).filter(Boolean);
-  return parts.slice(0, 2).join(" ");
-}
-
-function pickQuote(text: string) {
-  const plain = stripHtml(text);
-  if (!plain) return "";
-  const parts = plain.split(/(?<=[\.\!\?])\s+/).filter(Boolean);
-  const best = parts.find((p) => p.length >= 40 && p.length <= 140);
-  return best ? limitChars(best, 140) : "";
-}
-
-export function buildLiturgiaStoryJson(args: {
-  isoDate: string;
-  siteUrl: string;
-  canonicalUrl: string;
-
-  publisherName: string;
-  publisherLogoSrc: string;
-
-  // fundos
-  posterSrc: string;        // capa (liturgia-default)
-  bgDarkSrc: string;        // interno escuro
-  bgLightSrc: string;       // interno claro
-
-  liturgia: LiturgiaLike;
-}): LiturgyStoryJson {
-  const {
-    isoDate,
-    siteUrl,
-    canonicalUrl,
-    publisherName,
-    publisherLogoSrc,
-    posterSrc,
-    bgDarkSrc,
-    bgLightSrc,
-    liturgia,
-  } = args;
+export function buildLiturgiaStory(params: {
+  liturgia: LiturgiaPayload;
+  isoDate: string; // YYYY-MM-DD
+  canonicalUrl: string; // URL da liturgia completa no seu site (ou do story landing)
+  storyUrl: string; // URL pública do web story
+  lang?: string; // default pt-BR
+}) {
+  const { liturgia, isoDate, canonicalUrl, storyUrl, lang = "pt-BR" } = params;
 
   const dateLabel = formatDatePtBR(isoDate);
-  const slug = `liturgia-${isoToSlugBR(isoDate)}`;
-  const storyUrl = `${siteUrl.replace(/\/$/, "")}/web-stories/${slug}/`;
+  const slug = `liturgia-${toSlugFromIso(isoDate)}`;
 
-  // seções (suporta normalizado e raw)
-const primeira = pick0(getArr(liturgia, "primeiraLeitura"));
-const segunda = pick0(getArr(liturgia, "segundaLeitura"));
-const salmo = pick0(getArr(liturgia, "salmo"));
-const evangelho = pick0(getArr(liturgia, "evangelho"));
+  const leiturasBlock = pickLeiturasBlock(liturgia);
 
+  const reading1 = firstOf(leiturasBlock, "primeiraLeitura");
+  const reading2 = firstOf(leiturasBlock, "segundaLeitura");
+  const psalm = firstOf(leiturasBlock, "salmo");
+  const gospel = firstOf(leiturasBlock, "evangelho");
 
-  const gospelText = evangelho?.texto ?? evangelho?.textoHtml ?? "";
-  const themeText =
-    summarizeThemeFromGospel(gospelText) ||
-    "A Palavra de hoje nos convida a acolher a graça de Deus e viver com fidelidade.";
+  const gospelText = compact(gospel?.texto || "");
+  const themeText = "A Palavra de hoje nos convida a acolher a graça de Deus e viver com fidelidade.";
 
-  const bg = (src: string, alt: string) => ({ type: "image" as const, src, alt });
+  const pages: StoryPage[] = [];
 
-  const pages: LiturgyStoryJson["pages"] = [];
-
-  // CAPA (poster)
+  // 1) CAPA (escura)
   pages.push({
     id: "cover",
-    theme: "dark",
-    background: bg(posterSrc, `Liturgia do dia ${dateLabel}`),
+    background: bg("Capa"),
     heading: "Liturgia de Hoje",
     subheading: dateLabel,
     text: "Leituras • Salmo • Evangelho",
     cta: { label: "Começar agora", url: canonicalUrl },
   });
 
-  // TEMA (escuro)
+  // 2) HOJE NA IGREJA (escuro) — mostra o campo liturgia/celebration
   pages.push({
     id: "theme",
-    theme: "dark",
-    background: bg(bgDarkSrc, "Reflexão do dia"),
-    heading: "O que Deus nos fala hoje?",
-    text: limitChars(themeText, 240),
+    background: bg("Escuro"),
+    heading: "Hoje na Igreja",
+    subheading: getCelebration(liturgia) || dateLabel,
+    text: limitChars(themeText, 200),
     quote: pickQuote(gospelText) || undefined,
     cta: { label: "Rezar no site (completo)", url: canonicalUrl },
   });
 
-  // 1ª Leitura (escuro)
+  // 3) 1ª Leitura (escuro) — sem trecho, só referência
   pages.push({
     id: "reading1",
-    theme: "dark",
-    background: bg(bgDarkSrc, "Primeira leitura"),
+    background: bg("Escuro"),
     heading: "1ª Leitura",
-    reference: primeira?.referencia ?? "Leitura do dia",
-    bullets: bulletize(primeira?.texto ?? primeira?.textoHtml ?? "", 2),
-    cta: { label: "Ler a 1ª leitura completa", url: canonicalUrl },
+    reference: compact(reading1?.referencia) || "1ª Leitura",
+    text: "Leia a passagem completa e reze com calma no Tio Ben IA.",
+    cta: { label: "Abrir a 1ª leitura no site", url: canonicalUrl },
   });
 
-  // Salmo (escuro)
-  pages.push({
-    id: "psalm",
-    theme: "dark",
-    background: bg(bgDarkSrc, "Salmo do dia"),
-    heading: "Salmo",
-    reference: salmo?.referencia ?? "Salmo",
-    refrain: limitChars(salmo?.refrao ?? "Refrão do salmo", 140),
-    bullets: bulletize(salmo?.texto ?? salmo?.textoHtml ?? "", 1),
-    cta: { label: "Rezar o salmo completo", url: canonicalUrl },
-  });
-
-  // 2ª Leitura (se existir) + Evangelho
-  if (segunda?.texto || segunda?.textoHtml || segunda?.referencia) {
+  // 4) (opcional) 2ª Leitura — sem trecho
+  if (compact(reading2?.referencia)) {
     pages.push({
       id: "reading2",
-      theme: "dark",
-      background: bg(bgDarkSrc, "Segunda leitura"),
+      background: bg("Escuro"),
       heading: "2ª Leitura",
-      reference: segunda?.referencia ?? "2ª Leitura",
-      bullets: bulletize(segunda?.texto ?? segunda?.textoHtml ?? "", 2),
-      cta: { label: "Ler a 2ª leitura completa", url: canonicalUrl },
-    });
-
-    pages.push({
-      id: "gospel",
-      theme: "dark",
-      background: bg(bgDarkSrc, "Evangelho do dia"),
-      heading: "Evangelho",
-      reference: evangelho?.referencia ?? "Evangelho",
-      bullets: bulletize(gospelText, 2),
-      cta: { label: "Ler o Evangelho completo", url: canonicalUrl },
-    });
-  } else {
-    pages.push({
-      id: "gospel1",
-      theme: "dark",
-      background: bg(bgDarkSrc, "Evangelho do dia"),
-      heading: "Evangelho",
-      reference: evangelho?.referencia ?? "Evangelho",
-      bullets: bulletize(gospelText, 2),
-      cta: { label: "Ler o Evangelho completo", url: canonicalUrl },
+      reference: compact(reading2?.referencia) || "2ª Leitura",
+      text: "Leia a passagem completa e reze com calma no Tio Ben IA.",
+      cta: { label: "Abrir a 2ª leitura no site", url: canonicalUrl },
     });
   }
 
-  // Aplicação prática (claro)
+  // 5) Salmo (escuro) — refrão destacado
   pages.push({
-    id: "application",
-    theme: "light",
-    background: bg(bgLightSrc, "Aplicação prática"),
+    id: "psalm",
+    background: bg("Escuro"),
+    heading: "Salmo",
+    reference: compact(psalm?.referencia) || "Salmo",
+    refrain: limitChars(compact(psalm?.refrao || ""), 140) || "Refrão do salmo",
+    text: "Reze o salmo completo no Tio Ben IA.",
+    cta: { label: "Rezar o Salmo no site", url: canonicalUrl },
+  });
+
+  // 6) Evangelho (escuro) — sem trecho, só referência
+  pages.push({
+    id: "gospel",
+    background: bg("Escuro"),
+    heading: "Evangelho",
+    reference: compact(gospel?.referencia) || "Evangelho",
+    text: "Abra o Evangelho completo e medite com calma.",
+    cta: { label: "Ler o Evangelho no site", url: canonicalUrl },
+  });
+
+  // 7) Para viver hoje (claro)
+  pages.push({
+    id: "apply",
+    background: bg("Claro"),
     heading: "Para viver hoje",
     bullets: [
-      "Separe 3 minutos de silêncio antes de começar o dia.",
+      "Reserve 5 minutos de silêncio e oração antes de começar o dia.",
       "Releia o Evangelho e escolha uma atitude concreta para praticar.",
-      "Faça um gesto simples de caridade ou reconciliação ainda hoje.",
+      "Faça um gesto de caridade ou reconciliação ainda hoje.",
     ],
     prayer: "Senhor, ajuda-me a viver tua Palavra hoje.",
-    cta: { label: "Fazer minha oração no site", url: canonicalUrl },
+    cta: { label: "Ver a Liturgia Completa", url: canonicalUrl },
   });
 
-  // CTA final (claro) – mais forte
+  // 8) CTA final (claro)
   pages.push({
     id: "cta",
-    theme: "light",
-    background: bg(bgLightSrc, "Convite à leitura"),
+    background: bg("Claro"),
     heading: "Reze a liturgia completa",
-    text: "Acesse todas as leituras, antífonas e orações no Tio Ben IA.",
-    cta: { label: "Abrir agora (liturgia do dia)", url: canonicalUrl },
+    text: "Leituras, salmo, Evangelho, orações e antífonas — tudo em um só lugar.",
+    cta: { label: "Abrir a Liturgia Completa", url: canonicalUrl },
   });
 
-  return {
+  const json: LiturgyStoryJson = {
     type: "liturgy",
-    lang: "pt-BR",
+    lang,
     date: isoDate,
     slug,
-    title: "Liturgia de Hoje",
-    description: `Liturgia do dia ${dateLabel} — Leituras, Salmo e Evangelho.`,
+
+    title: `Liturgia — ${dateLabel}`,
+    description: `Liturgia do dia ${dateLabel} no Tio Ben IA.`,
+
     canonicalUrl,
     storyUrl,
-    publisherName,
-    publisherLogoSrc,
+
+    publisherName: "Tio Ben IA",
+    publisherLogoSrc: "/images/logo.png",
+
     poster: {
-      src: posterSrc,
-      width: 1080,
-      height: 1920,
-      alt: `Liturgia do dia ${dateLabel}`,
+      src: "/images/liturgia-default.jpg",
+      width: 720,
+      height: 1280,
+      alt: "Liturgia",
     },
+
     pages,
   };
+
+  return json;
 }

@@ -2,8 +2,7 @@
 import { NextRequest } from "next/server";
 import { fetchLiturgiaByIsoDate } from "@/lib/liturgia/api";
 import { LiturgyStoryJson } from "@/app/lib/web-stories/story-types";
-import { buildLiturgiaStoryJson } from "@/app/lib/web-stories/liturgia-story-builder";
-
+import { buildLiturgiaStory } from "@/app/lib/web-stories/liturgia-story-builder";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -69,6 +68,7 @@ function renderPagesHtml(story: LiturgyStoryJson) {
     ${subheading ? `<div class="meta">${subheading}</div>` : ""}
 
     ${reference ? `<div class="ref">${reference}</div>` : ""}
+
     ${text ? `<div class="text">${text}</div>` : ""}
 
     ${quote ? `<div class="quote">${quote}</div>` : ""}
@@ -139,88 +139,108 @@ function renderAmpHtml(story: LiturgyStoryJson) {
     <noscript><style amp-boilerplate>body{-webkit-animation:none;animation:none}</style></noscript>
 
     <style amp-custom>
-      .pad { padding: 72px 30px 44px; }
-      .brand { font-size: 14px; letter-spacing: .2px; opacity: .95; }
+      :root{
+        --pad-top: 92px;
+        --pad-x: 34px;
+        --pad-bottom: 56px;
+      }
 
-      .h1 { font-size: 40px; line-height: 1.05; font-weight: 800; }
-      .h2 { font-size: 26px; line-height: 1.15; font-weight: 800; }
+      /* Fonte moderna sem serifa (AMP-friendly) */
+      body, .pad, .brand, .h1, .h2, .meta, .ref, .text, .quote, .pill, .bullets, .prayer, .btn{
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
 
-      .meta { font-size: 16px; margin-top: 8px; opacity: .92; }
-      .ref { font-size: 16px; margin-top: 10px; font-weight: 800; opacity: .96; }
+      .pad { padding: var(--pad-top) var(--pad-x) var(--pad-bottom); }
+      .brand { font-size: 16px; letter-spacing: .3px; opacity: .95; font-weight: 700; }
 
-      .text { font-size: 18px; line-height: 1.25; margin-top: 14px; }
+      /* CAPA maior e mais “impactante” */
+      .h1 { font-size: 56px; line-height: 1.02; font-weight: 900; letter-spacing: -0.6px; }
 
-      .bullets { margin-top: 14px; font-size: 18px; line-height: 1.25; padding-left: 0; }
-      .bullets li { margin: 8px 0; list-style: none; }
+      /* Páginas internas */
+      .h2 { font-size: 34px; line-height: 1.08; font-weight: 900; letter-spacing: -0.3px; }
+
+      .meta { font-size: 20px; margin-top: 10px; opacity: .95; font-weight: 700; }
+      .ref { font-size: 22px; margin-top: 14px; font-weight: 900; opacity: .98; }
+
+      .text { font-size: 22px; line-height: 1.22; margin-top: 16px; font-weight: 650; }
+
+      .bullets { margin-top: 16px; font-size: 22px; line-height: 1.22; padding-left: 0; }
+      .bullets li { margin: 10px 0; list-style: none; }
 
       .pill {
         display: inline-block;
-        padding: 8px 12px;
+        padding: 10px 14px;
         border-radius: 999px;
-        margin-top: 12px;
-        font-size: 14px;
-        font-weight: 800;
+        margin-top: 14px;
+        font-size: 18px;
+        font-weight: 900;
       }
 
       .quote {
-        margin-top: 14px;
-        padding: 12px 14px;
+        margin-top: 16px;
+        padding: 14px 16px;
         border-left: 4px solid rgba(255,255,255,.85);
-        border-radius: 10px;
-        font-size: 18px;
-        line-height: 1.25;
-        font-weight: 650;
+        border-radius: 14px;
+        font-size: 22px;
+        line-height: 1.22;
+        font-weight: 750;
       }
 
       .prayer {
-        margin-top: 12px;
-        font-size: 18px;
-        line-height: 1.25;
+        margin-top: 14px;
+        font-size: 22px;
+        line-height: 1.22;
         font-style: italic;
-        opacity: .95;
+        opacity: .96;
+        font-weight: 650;
       }
 
       .btn {
         display: inline-block;
-        margin-top: 18px;
-        padding: 12px 16px;
-        border-radius: 12px;
-        font-weight: 900;
+        margin-top: 22px;
+        padding: 14px 18px;
+        border-radius: 14px;
+        font-weight: 950;
         text-decoration: none;
-        font-size: 16px;
+        font-size: 18px;
+        letter-spacing: .2px;
+      }
+
+      /* Overlay mais limpo */
+      .theme-dark .overlay {
+        background: linear-gradient(180deg, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0.30) 45%, rgba(0,0,0,0.40) 100%);
+      }
+      .theme-light .overlay {
+        background: linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(0,0,0,0.10) 55%, rgba(0,0,0,0.20) 100%);
       }
 
       /* DARK */
-      .theme-dark .overlay {
-        background: linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.25) 40%, rgba(0,0,0,0.30) 100%);
-      }
       .theme-dark .brand,
       .theme-dark .text,
       .theme-dark .meta,
       .theme-dark .ref,
-      .theme-dark .prayer { color: #f5f5f5; }
+      .theme-dark .prayer { color: #f6f6f6; }
       .theme-dark .h1,
-      .theme-dark .h2 { color: #f3d48b; text-shadow: 0 2px 8px rgba(0,0,0,0.7); }
-      .theme-dark .quote { background: rgba(0,0,0,.35); color: #f5f5f5; border-left-color: rgba(243,212,139,.9); }
-      .theme-dark .pill { background: rgba(243, 212, 139, 0.18); border: 1px solid rgba(243, 212, 139, 0.45); color: #f3d48b; }
-      .theme-dark .bullets li { background: rgba(0,0,0,0.35); color: #f5f5f5; padding: 6px 10px; border-radius: 10px; }
-      .theme-dark .btn { background: rgba(245,245,245,.92); color: #111; }
+      .theme-dark .h2 { color: #f3d48b; text-shadow: 0 2px 10px rgba(0,0,0,0.75); }
+      .theme-dark .quote { background: rgba(0,0,0,.40); color: #f6f6f6; border-left-color: rgba(243,212,139,.9); }
+      .theme-dark .pill { background: rgba(243, 212, 139, 0.18); border: 1px solid rgba(243, 212, 139, 0.48); color: #f3d48b; }
+      .theme-dark .bullets li { background: rgba(0,0,0,0.38); color: #f6f6f6; padding: 10px 12px; border-radius: 12px; }
+      .theme-dark .btn { background: rgba(245,245,245,.94); color: #111; }
 
       /* LIGHT */
-      .theme-light .overlay {
-        background: linear-gradient(180deg, rgba(255,255,255,0.20) 0%, rgba(0,0,0,0.12) 55%, rgba(0,0,0,0.22) 100%);
-      }
       .theme-light .brand,
       .theme-light .text,
       .theme-light .meta,
       .theme-light .ref,
-      .theme-light .prayer { color: #1a1a1a; text-shadow: 0 1px 6px rgba(255,255,255,0.35); }
+      .theme-light .prayer { color: #171717; text-shadow: 0 1px 6px rgba(255,255,255,0.35); }
       .theme-light .h1,
-      .theme-light .h2 { color: #3a2a10; text-shadow: 0 2px 10px rgba(255,255,255,0.45); }
-      .theme-light .quote { background: rgba(255,255,255,.55); color: #1a1a1a; border-left-color: rgba(58,42,16,.55); }
-      .theme-light .pill { background: rgba(58,42,16,.12); border: 1px solid rgba(58,42,16,.22); color: #3a2a10; }
-      .theme-light .bullets li { background: rgba(255,255,255,.55); color: #1a1a1a; padding: 6px 10px; border-radius: 10px; }
-      .theme-light .btn { background: rgba(58,42,16,.92); color: #fff; }
+      .theme-light .h2 { color: #2b1e0c; text-shadow: 0 2px 12px rgba(255,255,255,0.45); }
+      .theme-light .quote { background: rgba(255,255,255,.60); color: #171717; border-left-color: rgba(43,30,12,.55); }
+      .theme-light .pill { background: rgba(43,30,12,.12); border: 1px solid rgba(43,30,12,.22); color: #2b1e0c; }
+      .theme-light .bullets li { background: rgba(255,255,255,.62); color: #171717; padding: 10px 12px; border-radius: 12px; }
+      .theme-light .btn { background: rgba(43,30,12,.94); color: #fff; }
     </style>
 
     <script type="application/ld+json">${jsonLd}</script>
@@ -253,37 +273,21 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ slug: stri
     process.env.SITE_URL ||
     "https://www.iatioben.com.br";
 
-  const canonicalUrl = `${siteUrl.replace(/\/$/, "")}/liturgia/${isoDate}/`;
+  const site = siteUrl.replace(/\/$/, "");
+  const canonicalUrl = `${site}/liturgia/${isoDate}`;
 
-  const publisherName = process.env.STORY_PUBLISHER_NAME || "Tio Ben IA";
-  const publisherLogoSrc =
-    process.env.STORY_PUBLISHER_LOGO ||
-    `${siteUrl.replace(/\/$/, "")}/images/logo-amp.png`;
-
-  const posterSrc =
-    process.env.STORY_LITURGIA_POSTER_DEFAULT ||
-    `${siteUrl.replace(/\/$/, "")}/images/stories/liturgia-default.jpg`;
-
-  const bgDarkSrc =
-    process.env.STORY_LITURGIA_BG_DARK ||
-    `${siteUrl.replace(/\/$/, "")}/images/stories/liturgia-bg-dark.jpg`;
-
-  const bgLightSrc =
-    process.env.STORY_LITURGIA_BG_LIGHT ||
-    `${siteUrl.replace(/\/$/, "")}/images/stories/liturgia-bg-light.jpg`;
+  // URL “oficial” do story (esta própria página)
+  const storyUrl = `${site}/web-stories/${slug}/`;
 
   const liturgia = await fetchLiturgiaByIsoDate(isoDate);
 
-  const storyJson = buildLiturgiaStoryJson({
-    isoDate,
-    siteUrl,
-    canonicalUrl,
-    posterSrc,
-    bgDarkSrc,
-    bgLightSrc,
-    publisherName,
-    publisherLogoSrc,
+  // ✅ builder correto (sem buildLiturgiaStoryJson)
+  const storyJson = buildLiturgiaStory({
     liturgia,
+    isoDate,
+    canonicalUrl,
+    storyUrl,
+    lang: "pt-BR",
   });
 
   const html = renderAmpHtml(storyJson);

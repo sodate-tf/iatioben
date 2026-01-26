@@ -1,8 +1,14 @@
-// app/lib/web-stories/render-amp-story.mjs
-import fs from "node:fs/promises";
+import fs from "node:fs";
 import path from "node:path";
 
-function esc(s) {
+function isLightBg(bgSrc){
+  const s = String(bgSrc||"").toLowerCase();
+  return s.includes("amarelo e preto") && !s.includes("(1)");
+}
+
+const TEMPLATE_PATH = path.join(process.cwd(), "amp-story.template.html");
+
+function escapeHtml(s) {
   return String(s ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -10,77 +16,101 @@ function esc(s) {
     .replace(/"/g, "&quot;");
 }
 
-function renderBullets(bullets = []) {
-  if (!bullets?.length) return "";
-  return `<ul class="bullets">${bullets.map((b) => `<li>${esc(b)}</li>`).join("")}</ul>`;
-}
-
-function renderPage(p) {
-  const themeClass = p.theme === "light" ? "theme-light" : "theme-dark";
-  const overlayClass = p.theme === "light" ? "overlay-light" : "overlay-dark";
-
-  const id = esc(p.id);
-  const bgSrc = esc(p.background?.src);
-  const bgAlt = esc(p.background?.alt || "Fundo");
-
-  const heading = esc(p.heading);
-  const subheading = p.subheading ? `<div class="sub">${esc(p.subheading)}</div>` : "";
-  const text = p.text ? `<div class="text">${esc(p.text)}</div>` : "";
-  const quote = p.quote ? `<div class="quote">${esc(p.quote)}</div>` : "";
-
-  const reference = p.reference ? `<div class="ref">${esc(p.reference)}</div>` : "";
-  const refrain = p.refrain ? `<div class="pill">${esc(p.refrain)}</div>` : "";
-
-  const bullets = renderBullets(p.bullets);
-
-  const prayer = p.prayer ? `<div class="prayer">${esc(p.prayer)}</div>` : "";
-
-  const cta =
-    p.cta?.url && p.cta?.label
-      ? `<a class="btn" href="${esc(p.cta.url)}">${esc(p.cta.label)}</a>`
-      : "";
+function renderCover(p, story) {
+  const bgSrcRaw = p.background?.src || story.poster?.src || "";
+  const theme = isLightBg(bgSrcRaw) ? "light" : "dark";
+  const bgSrc = escapeHtml(bgSrcRaw);
 
   return `
-<amp-story-page id="${id}" class="${themeClass}">
-  <amp-story-grid-layer template="fill" class="bg">
-    <amp-img src="${bgSrc}" width="1080" height="1920" layout="responsive" alt="${bgAlt}"></amp-img>
+<amp-story-page id="${escapeHtml(p.id || "cover")}" auto-advance-after="7s">
+  <amp-story-grid-layer template="fill">
+    <amp-img src="${bgSrc}" width="720" height="1280" layout="responsive" alt=""></amp-img>
   </amp-story-grid-layer>
 
-  <amp-story-grid-layer template="fill" class="${overlayClass}"></amp-story-grid-layer>
+  <amp-story-grid-layer template="vertical" class="pad theme-${theme}">
+    <div class="brand">${escapeHtml(story.publisherName || "Tio Ben IA")}</div>
+    <h1 class="h1">${escapeHtml(p.heading || story.title || "Liturgia de Hoje")}</h1>
+    ${p.subheading ? `<div class="subheading">${escapeHtml(p.subheading)}</div>` : ""}
+    ${p.date ? `<div class="meta">${escapeHtml(p.date)}</div>` : ""}
+    ${p.text ? `<div class="text">${escapeHtml(p.text)}</div>` : ""}
 
-  <amp-story-grid-layer template="vertical" class="wrap">
-    <div class="brand">Tio Ben IA</div>
+    ${
+      p.cta?.url
+        ? `<a class="btn" href="${escapeHtml(p.cta.url)}">${escapeHtml(p.cta.label || "Abrir no site")}</a>`
+        : ""
+    }
+  </amp-story-grid-layer>
+</amp-story-page>
+  `.trim();
+}
 
-    <div class="card">
-      <div class="heading">${heading}</div>
-      ${subheading}
-      ${reference}
-      ${refrain}
-      ${text}
-      ${quote}
-      ${bullets}
-      ${prayer}
-      ${cta}
+function renderPage(pageNumber, p, story) {
+  if ((p.id || "") === "cover") return renderCover(p, story);
+
+  const bgSrcRaw = p.background?.src || story.poster?.src || "";
+  const theme = isLightBg(bgSrcRaw) ? "light" : "dark";
+  const bgSrc = escapeHtml(bgSrcRaw);
+
+  const heading = escapeHtml(p.heading || "");
+  const subheading = escapeHtml(p.subheading || "");
+  const meta = escapeHtml(p.meta || "");
+  const ref = escapeHtml(p.reference || "");
+  const refrain = escapeHtml(p.refrain || "");
+  const text = escapeHtml(p.text || "");
+  const quote = escapeHtml(p.quote || "");
+  const prayer = escapeHtml(p.prayer || "");
+
+  const cta = p.cta?.url ? { label: p.cta.label || "Abrir no site", url: p.cta.url } : null;
+
+  const bullets = Array.isArray(p.bullets) ? p.bullets.filter(Boolean).slice(0, 4) : [];
+
+  return `
+<amp-story-page id="${escapeHtml(p.id || `p${pageNumber}`)}">
+  <amp-story-grid-layer template="fill">
+    <amp-img src="${bgSrc}" width="720" height="1280" layout="responsive" alt=""></amp-img>
+  </amp-story-grid-layer>
+
+  <amp-story-grid-layer template="vertical" class="pad theme-${theme}">
+    <div class="brand">${escapeHtml(story.publisherName || "Tio Ben IA")}</div>
+
+    <div class="panel">
+      ${heading ? `<h2 class="h2">${heading}</h2>` : ""}
+      ${subheading ? `<div class="subheading">${subheading}</div>` : ""}
+      ${meta ? `<div class="meta">${meta}</div>` : ""}
+      ${ref ? `<div class="ref">${ref}</div>` : ""}
+      ${refrain ? `<div class="pill">${refrain}</div>` : ""}
+      ${text ? `<div class="text">${text}</div>` : ""}
+      ${quote ? `<div class="quote">${quote}</div>` : ""}
+
+      ${
+        bullets.length
+          ? `<ul class="bullets">${bullets.map((b) => `<li>${escapeHtml(b)}</li>`).join("")}</ul>`
+          : ""
+      }
+
+      ${prayer ? `<div class="prayer">${prayer}</div>` : ""}
+
+      ${cta ? `<a class="btn" href="${escapeHtml(cta.url)}">${escapeHtml(cta.label)}</a>` : ""}
     </div>
   </amp-story-grid-layer>
 </amp-story-page>
-`.trim();
+  `.trim();
 }
 
-export async function renderAmpStoryHtml(storyJson, templatePath) {
-  const tpl = await fs.readFile(templatePath, "utf-8");
+export function renderAmpStory(story) {
+  const template = fs.readFileSync(TEMPLATE_PATH, "utf-8");
 
-  const pagesHtml = (storyJson.pages || []).map(renderPage).join("\n\n");
+  const pagesHtml = (story.pages || [])
+    .map((p, idx) => renderPage(idx + 1, p, story))
+    .join("\n\n");
 
-  return tpl
-    .replaceAll("{{title}}", esc(storyJson.title))
-    .replaceAll("{{canonicalUrl}}", esc(storyJson.canonicalUrl))
-    .replaceAll("{{publisherName}}", esc(storyJson.publisherName))
-    .replaceAll("{{publisherLogoSrc}}", esc(storyJson.publisherLogoSrc))
-    .replaceAll("{{posterSrc}}", esc(storyJson.poster?.src))
-    .replaceAll("{{pagesHtml}}", pagesHtml);
-}
+  const out = template
+    .replaceAll("{{STORY_TITLE}}", escapeHtml(story.title || "Liturgia de Hoje"))
+    .replaceAll("{{PUBLISHER_NAME}}", escapeHtml(story.publisherName || "Tio Ben IA"))
+    .replaceAll("{{PUBLISHER_LOGO}}", escapeHtml(story.publisherLogo || "/images/logo.png"))
+    .replaceAll("{{POSTER_IMAGE}}", escapeHtml(story.poster?.src || story.posterImage || "/images/liturgia-default.jpg"))
+    .replaceAll("{{CANONICAL_URL}}", escapeHtml(story.canonicalUrl || "https://www.iatioben.com.br"))
+    .replaceAll("{{PAGES_HTML}}", pagesHtml);
 
-export function resolveTemplate(defaultDir) {
-  return path.join(defaultDir, "amp-story.template.html");
+  return out;
 }

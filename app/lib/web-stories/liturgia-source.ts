@@ -9,6 +9,14 @@ export type LiturgiaSection = {
   refrao?: string; // salmo
 };
 
+export type LiturgiaLeiturasBlock = {
+  primeiraLeitura?: LiturgiaSection[];
+  segundaLeitura?: LiturgiaSection[];
+  salmo?: LiturgiaSection[];
+  evangelho?: LiturgiaSection[];
+  extras?: LiturgiaSection[];
+};
+
 export type LiturgiaLike = {
   // Normalizado (seu tipo LiturgiaNormalized)
   dateISO?: string;
@@ -21,24 +29,12 @@ export type LiturgiaLike = {
   segundaRef?: string;
   evangelhoRef?: string;
 
-  leiturasFull?: {
-    primeiraLeitura?: LiturgiaSection[];
-    segundaLeitura?: LiturgiaSection[];
-    salmo?: LiturgiaSection[];
-    evangelho?: LiturgiaSection[];
-    extras?: LiturgiaSection[];
-  };
+  leiturasFull?: LiturgiaLeiturasBlock;
 
   // RAW (liturgia.up.railway)
   liturgia?: string;
   cor?: string;
-  leituras?: {
-    primeiraLeitura?: LiturgiaSection[];
-    segundaLeitura?: LiturgiaSection[];
-    salmo?: LiturgiaSection[];
-    evangelho?: LiturgiaSection[];
-    extras?: LiturgiaSection[];
-  };
+  leituras?: LiturgiaLeiturasBlock;
 
   // fallback “solto”
   primeiraLeitura?: LiturgiaSection[];
@@ -48,3 +44,6 @@ export type LiturgiaLike = {
 
   [key: string]: unknown;
 };
+
+// ✅ Para compatibilidade com o builder antigo
+export type LiturgiaPayload = LiturgiaLike;

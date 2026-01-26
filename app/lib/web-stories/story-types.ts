@@ -1,4 +1,5 @@
 // app/lib/web-stories/story-types.ts
+
 export type StoryTheme = "dark" | "light";
 
 export type StoryBackground = {
@@ -32,6 +33,23 @@ export type StoryPage = {
   cta?: StoryCta | null;
 };
 
+// ✅ Tipo base esperado pelo renderer (render-amp-story.mjs)
+export type Story = {
+  title: string;
+  canonicalUrl: string;
+
+  publisherName: string;
+  publisherLogo: string; // caminho no site (/images/logo.png)
+
+  poster: {
+    src: string;
+    alt: string;
+  };
+
+  pages: StoryPage[];
+};
+
+// ✅ JSON que você retorna no endpoint (se você usa esse formato)
 export type LiturgyStoryJson = {
   type: "liturgy";
   lang: string; // ex.: pt-BR

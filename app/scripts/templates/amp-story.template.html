@@ -1,180 +1,91 @@
 <!doctype html>
 <html ⚡ lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <title>{{title}}</title>
-    <link rel="canonical" href="{{canonicalUrl}}" />
-    <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1" />
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
+  <link rel="canonical" href="{{CANONICAL_URL}}">
+  <title>{{STORY_TITLE}}</title>
 
-    <script async src="https://cdn.ampproject.org/v0.js"></script>
-    <script async custom-element="amp-story" src="https://cdn.ampproject.org/v0/amp-story-1.0.js"></script>
+  <script async src="https://cdn.ampproject.org/v0.js"></script>
+  <script async custom-element="amp-story" src="https://cdn.ampproject.org/v0/amp-story-1.0.js"></script>
+  <script async custom-element="amp-img" src="https://cdn.ampproject.org/v0/amp-img-0.1.js"></script>
 
-    <!-- Fonte moderna -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+  <style amp-boilerplate>
+    body{-webkit-animation:-amp-start 8s steps(1,end) 0s 1 normal both;-moz-animation:-amp-start 8s steps(1,end) 0s 1 normal both;-ms-animation:-amp-start 8s steps(1,end) 0s 1 normal both;animation:-amp-start 8s steps(1,end) 0s 1 normal both}
+    @-webkit-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}
+    @-moz-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}
+    @-ms-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}
+    @-o-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}
+    @keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}
+  </style>
+  <noscript><style amp-boilerplate>body{-webkit-animation:none;-moz-animation:none;-ms-animation:none;animation:none}</style></noscript>
 
-    <style amp-custom>
-      :root{
-        --gold: #F2C36B;
-        --gold-2: #E9B24E;
-        --ink: rgba(16,16,16,.95);
-        --paper: rgba(255,255,255,.92);
-        --darkCard: rgba(0,0,0,.55);
-      }
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap">
 
-      amp-story { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
-      amp-story-page { background: #000; }
+  <style amp-custom>
+    /* Base (mantém compatibilidade) */
+    amp-story {
+      color: #fff;
+    }
+    .pad{
+      padding: 72px 56px;
+    }
 
-      /* Background */
-      .bg img { object-fit: cover; }
+    /* === Tio Ben IA Story UI (override) === */
+    :root{
+      --gold:#f5c55a;
+      --textLight:#f6f3ee;
+      --textDark:#1b1309;
+      --panelDark: rgba(25,18,10,0.82);
+      --panelLight: rgba(255,255,255,0.86);
+    }
+    amp-story{
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
 
-      /* Overlay para legibilidade */
-      .overlay-dark { background: linear-gradient(180deg, rgba(0,0,0,.20), rgba(0,0,0,.70)); }
-      .overlay-light { background: linear-gradient(180deg, rgba(255,255,255,.15), rgba(255,255,255,.45)); }
+    .pad{padding: 88px 64px 72px 64px;}
+    .brand{font-size:18px; letter-spacing:.02em; opacity:.92;}
+    .h1{font-size:64px; line-height:1.02; font-weight:900; margin:14px 0 10px;}
+    .h2{font-size:48px; line-height:1.06; font-weight:900; margin:10px 0 10px;}
+    .meta{font-size:22px; opacity:.92; margin-top:10px;}
+    .subheading{font-size:22px; opacity:.92; margin-top:10px;}
+    .ref{font-size:26px; font-weight:900; margin-top:16px; opacity:.95;}
+    .text{font-size:28px; line-height:1.25; margin-top:18px; max-width: 92%;}
+    .quote{margin-top:18px; padding:18px 18px; border-left:6px solid rgba(245,197,90,0.9); border-radius:16px; font-size:24px; line-height:1.25;}
+    .pill{display:inline-block; margin-top:16px; padding:12px 16px; border-radius:999px; font-size:22px; font-weight:900;}
+    .bullets{margin-top:18px; padding-left: 22px; font-size:26px; line-height:1.22; max-width: 92%;}
+    .bullets li{margin: 10px 0;}
+    .prayer{margin-top:18px; font-size:24px; font-style: italic; opacity:.95;}
+    .btn{display:inline-flex; align-items:center; justify-content:center; margin-top: 26px; height: 66px; padding: 0 26px; border-radius: 18px; font-size: 22px; font-weight: 900; text-decoration:none;}
 
-      /* Layout */
-      .wrap {
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        padding: 64px 48px 40px;
-      }
+    .panel{
+      margin-top: 18px;
+      border-radius: 26px;
+      padding: 26px 26px;
+    }
 
-      .brand {
-        font-size: 16px;
-        opacity: .95;
-        letter-spacing: .2px;
-        font-weight: 700;
-      }
+    /* Themes */
+    .theme-dark{color: var(--textLight);}
+    .theme-dark .panel{background: var(--panelDark); border:1px solid rgba(245,197,90,0.14);}
+    .theme-dark .btn{background: rgba(255,255,255,0.92); color: var(--textDark);}
+    .theme-dark .pill{background: rgba(245,197,90,0.14); border:1px solid rgba(245,197,90,0.18); color: var(--textLight);}
 
-      .card {
-        margin-top: 18px;
-        max-width: 860px;
-        border-radius: 22px;
-        padding: 22px 22px;
-        backdrop-filter: blur(6px);
-      }
+    .theme-light{color: var(--textDark);}
+    .theme-light .panel{background: var(--panelLight); border:1px solid rgba(0,0,0,0.07);}
+    .theme-light .btn{background: rgba(35,24,12,0.92); color: #fff;}
+    .theme-light .pill{background: rgba(35,24,12,0.10); border:1px solid rgba(35,24,12,0.14); color: var(--textDark);}
+  </style>
+</head>
 
-      .theme-dark .card { background: var(--darkCard); color: rgba(255,255,255,.95); }
-      .theme-light .card { background: var(--paper); color: var(--ink); }
-
-      h1 {
-        font-size: 62px;
-        line-height: 1.02;
-        margin: 14px 0 0;
-        letter-spacing: -0.5px;
-        font-weight: 800;
-      }
-      h2 {
-        font-size: 52px;
-        line-height: 1.05;
-        margin: 10px 0 0;
-        letter-spacing: -0.4px;
-        font-weight: 800;
-      }
-
-      .sub {
-        font-size: 24px;
-        margin-top: 14px;
-        opacity: .95;
-        font-weight: 600;
-      }
-
-      .text {
-        font-size: 28px;
-        line-height: 1.18;
-        margin-top: 14px;
-        font-weight: 600;
-      }
-
-      .ref {
-        font-size: 22px;
-        margin-top: 12px;
-        font-weight: 800;
-        opacity: .98;
-      }
-
-      .quote {
-        margin-top: 14px;
-        font-size: 22px;
-        line-height: 1.25;
-        opacity: .95;
-        font-weight: 600;
-        padding-left: 14px;
-        border-left: 4px solid var(--gold);
-      }
-
-      .pill {
-        display: inline-block;
-        margin-top: 14px;
-        padding: 10px 14px;
-        border-radius: 999px;
-        font-size: 18px;
-        font-weight: 800;
-      }
-      .theme-dark .pill { background: rgba(255,255,255,.10); color: rgba(255,255,255,.95); }
-      .theme-light .pill { background: rgba(0,0,0,.06); color: var(--ink); }
-
-      .bullets {
-        margin-top: 14px;
-        font-size: 24px;
-        line-height: 1.18;
-        font-weight: 600;
-      }
-      .bullets li { margin: 10px 0; }
-
-      .prayer {
-        margin-top: 14px;
-        font-size: 22px;
-        opacity: .95;
-        font-style: italic;
-        font-weight: 600;
-      }
-
-      /* CTA */
-      .btn {
-        display: inline-block;
-        margin-top: 18px;
-        padding: 16px 18px;
-        border-radius: 16px;
-        font-size: 22px;
-        font-weight: 900;
-        text-decoration: none;
-        letter-spacing: .1px;
-      }
-      .theme-dark .btn {
-        background: linear-gradient(90deg, var(--gold), var(--gold-2));
-        color: #1b1204;
-      }
-      .theme-light .btn {
-        background: #1b1204;
-        color: #fff;
-      }
-
-      /* Segurança: não “estourar” no mobile */
-      @media (max-width: 420px) {
-        .wrap { padding: 56px 26px 34px; }
-        h1 { font-size: 50px; }
-        h2 { font-size: 44px; }
-        .text { font-size: 24px; }
-        .bullets { font-size: 22px; }
-      }
-    </style>
-  </head>
-
-  <body>
-    <amp-story
-      standalone
-      title="{{title}}"
-      publisher="{{publisherName}}"
-      publisher-logo-src="{{publisherLogoSrc}}"
-      poster-portrait-src="{{posterSrc}}"
-    >
-      {{pagesHtml}}
-    </amp-story>
-  </body>
+<body>
+  <amp-story
+    standalone
+    title="{{STORY_TITLE}}"
+    publisher="{{PUBLISHER_NAME}}"
+    publisher-logo-src="{{PUBLISHER_LOGO}}"
+    poster-portrait-src="{{POSTER_IMAGE}}"
+  >
+    {{PAGES_HTML}}
+  </amp-story>
+</body>
 </html>
