@@ -1,11 +1,29 @@
 // app/web-stories/[slug]/route.ts
 import { NextRequest } from "next/server";
 import { fetchLiturgiaByIsoDate } from "@/lib/liturgia/api";
-import { LiturgyStoryJson } from "@/app/lib/web-stories/story-types";
 import { buildLiturgiaStory } from "@/app/lib/web-stories/liturgia-story-builder";
+import { buildTercoStoryJson } from "@/app/lib/web-stories/terco-story-builder";
+import type { StoryPage } from "@/app/lib/web-stories/story-types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+/** ✅ Tipo mínimo comum (Liturgia e Terço) para o renderer AMP */
+type StoryJsonCommon = {
+  lang: string;
+  date: string; // yyyy-mm-dd
+  title: string;
+  description: string;
+  canonicalUrl: string;
+  storyUrl: string;
+
+  publisherName: string;
+  publisherLogoSrc: string;
+
+  poster: { src: string; alt: string; width?: number; height?: number };
+
+  pages: StoryPage[];
+};
 
 function htmlEscape(s: string) {
   return (s ?? "")
@@ -16,15 +34,28 @@ function htmlEscape(s: string) {
     .replace(/'/g, "&#39;");
 }
 
-function parseSlugToIsoDate(slug: string) {
-  // esperado: liturgia-26-01-2026
-  const m = slug.match(/^liturgia-(\d{2})-(\d{2})-(\d{4})$/);
-  if (!m) return null;
-  const [, dd, mm, yyyy] = m;
-  return `${yyyy}-${mm}-${dd}`;
+/** ✅ valida YYYY-MM-DD e garante que a data existe */
+function isValidIsoDate(iso: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(y, m - 1, d, 12, 0, 0);
+  return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
 }
 
-function renderPagesHtml(story: LiturgyStoryJson) {
+function parseSlug(slug: string): { kind: "liturgia" | "terco"; isoDate: string } | null {
+  // esperado: liturgia-26-01-2026  OU  terco-26-01-2026
+  const m = slug.match(/^(liturgia|terco)-(\d{2})-(\d{2})-(\d{4})$/);
+  if (!m) return null;
+
+  const [, kind, dd, mm, yyyy] = m;
+  const isoDate = `${yyyy}-${mm}-${dd}`;
+
+  if (!isValidIsoDate(isoDate)) return null;
+
+  return { kind: kind as "liturgia" | "terco", isoDate };
+}
+
+function renderPagesHtml(story: StoryJsonCommon) {
   const pages = story.pages ?? [];
   return pages
     .map((p, idx) => {
@@ -43,7 +74,7 @@ function renderPagesHtml(story: LiturgyStoryJson) {
       const refrain = p.refrain ? htmlEscape(p.refrain) : "";
       const prayer = p.prayer ? htmlEscape(p.prayer) : "";
 
-      const bullets = Array.isArray(p.bullets) ? p.bullets.slice(0, 3) : [];
+      const bullets = Array.isArray(p.bullets) ? p.bullets.slice(0, 5) : [];
       const bulletsHtml = bullets.length
         ? `<ul class="bullets">${bullets.map((b) => `<li>${htmlEscape(String(b))}</li>`).join("")}</ul>`
         : "";
@@ -87,7 +118,7 @@ function renderPagesHtml(story: LiturgyStoryJson) {
     .join("\n");
 }
 
-function buildJsonLd(story: LiturgyStoryJson) {
+function buildJsonLd(story: StoryJsonCommon) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -110,7 +141,7 @@ function buildJsonLd(story: LiturgyStoryJson) {
   return JSON.stringify(jsonLd);
 }
 
-function renderAmpHtml(story: LiturgyStoryJson) {
+function renderAmpHtml(story: StoryJsonCommon) {
   const pagesHtml = renderPagesHtml(story);
   const jsonLd = buildJsonLd(story);
 
@@ -139,35 +170,15 @@ function renderAmpHtml(story: LiturgyStoryJson) {
     -ms-animation: -amp-start 8s steps(1, end) 0s 1 normal both;
     animation: -amp-start 8s steps(1, end) 0s 1 normal both;
   }
-  @-webkit-keyframes -amp-start {
-    from { visibility: hidden; }
-    to { visibility: visible; }
-  }
-  @-moz-keyframes -amp-start {
-    from { visibility: hidden; }
-    to { visibility: visible; }
-  }
-  @-ms-keyframes -amp-start {
-    from { visibility: hidden; }
-    to { visibility: visible; }
-  }
-  @-o-keyframes -amp-start {
-    from { visibility: hidden; }
-    to { visibility: visible; }
-  }
-  @keyframes -amp-start {
-    from { visibility: hidden; }
-    to { visibility: visible; }
-  }
+  @-webkit-keyframes -amp-start { from { visibility: hidden; } to { visibility: visible; } }
+  @-moz-keyframes -amp-start { from { visibility: hidden; } to { visibility: visible; } }
+  @-ms-keyframes -amp-start { from { visibility: hidden; } to { visibility: visible; } }
+  @-o-keyframes -amp-start { from { visibility: hidden; } to { visibility: visible; } }
+  @keyframes -amp-start { from { visibility: hidden; } to { visibility: visible; } }
 </style>
 <noscript>
   <style amp-boilerplate>
-    body {
-      -webkit-animation: none;
-      -moz-animation: none;
-      -ms-animation: none;
-      animation: none;
-    }
+    body { -webkit-animation: none; -moz-animation: none; -ms-animation: none; animation: none; }
   </style>
 </noscript>
 
@@ -178,7 +189,6 @@ function renderAmpHtml(story: LiturgyStoryJson) {
         --pad-bottom: 56px;
       }
 
-      /* Fonte moderna sem serifa (AMP-friendly) */
       body, .pad, .brand, .h1, .h2, .meta, .ref, .text, .quote, .pill, .bullets, .prayer, .btn{
         font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
         -webkit-font-smoothing: antialiased;
@@ -188,10 +198,7 @@ function renderAmpHtml(story: LiturgyStoryJson) {
       .pad { padding: var(--pad-top) var(--pad-x) var(--pad-bottom); }
       .brand { font-size: 16px; letter-spacing: .3px; opacity: .95; font-weight: 700; }
 
-      /* CAPA maior e mais “impactante” */
       .h1 { font-size: 56px; line-height: 1.02; font-weight: 900; letter-spacing: -0.6px; }
-
-      /* Páginas internas */
       .h2 { font-size: 34px; line-height: 1.08; font-weight: 900; letter-spacing: -0.3px; }
 
       .meta { font-size: 20px; margin-top: 10px; opacity: .95; font-weight: 700; }
@@ -241,7 +248,6 @@ function renderAmpHtml(story: LiturgyStoryJson) {
         letter-spacing: .2px;
       }
 
-      /* Overlay mais limpo */
       .theme-dark .overlay {
         background: linear-gradient(180deg, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0.30) 45%, rgba(0,0,0,0.40) 100%);
       }
@@ -296,10 +302,10 @@ function renderAmpHtml(story: LiturgyStoryJson) {
 export async function GET(_req: NextRequest, ctx: { params: Promise<{ slug: string }> }) {
   const { slug } = await ctx.params;
 
-  const isoDate = parseSlugToIsoDate(slug);
-  if (!isoDate) {
-    return new Response("Not found", { status: 404 });
-  }
+  const parsed = parseSlug(slug);
+  if (!parsed) return new Response("Not found", { status: 404 });
+
+  const { kind, isoDate } = parsed;
 
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ||
@@ -307,21 +313,59 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ slug: stri
     "https://www.iatioben.com.br";
 
   const site = siteUrl.replace(/\/$/, "");
-  const canonicalUrl = `${site}/liturgia/${isoDate}`;
 
   // URL “oficial” do story (esta própria página)
   const storyUrl = `${site}/web-stories/${slug}/`;
 
-  const liturgia = await fetchLiturgiaByIsoDate(isoDate);
+  const publisherName = process.env.STORY_PUBLISHER_NAME || "Tio Ben IA";
+  const publisherLogoSrc =
+    process.env.STORY_PUBLISHER_LOGO || `${site}/images/logo-amp.png`;
 
-  // ✅ builder correto (sem buildLiturgiaStoryJson)
-  const storyJson = buildLiturgiaStory({
-    liturgia,
-    isoDate,
-    canonicalUrl,
-    storyUrl,
-    lang: "pt-BR",
-  });
+  let storyJson: StoryJsonCommon;
+
+  if (kind === "liturgia") {
+    const canonicalUrl = `${site}/liturgia/${isoDate}`;
+
+    const liturgia = await fetchLiturgiaByIsoDate(isoDate);
+
+    storyJson = buildLiturgiaStory({
+      liturgia,
+      isoDate,
+      canonicalUrl,
+      storyUrl,
+      lang: "pt-BR",
+    }) as unknown as StoryJsonCommon;
+  } else {
+    // ✅ TERÇO
+    const canonicalUrl = `${site}/terco/${isoDate}`;
+
+    // ✅ capa exclusiva do terço (terco-misterio)
+    const posterSrc =
+      process.env.STORY_TERCO_POSTER ||
+      `${site}/images/stories/terco-default.jpg`;
+
+    // ✅ reaproveitar claros/escuros (pode apontar para os mesmos da Liturgia se quiser)
+    const bgDarkSrc =
+      process.env.STORY_TERCO_BG_DARK ||
+      `${site}/images/stories/liturgia-bg-dark.jpg`;
+
+    const bgLightSrc =
+      process.env.STORY_TERCO_BG_LIGHT ||
+      `${site}/images/stories/liturgia-bg-light.jpg`;
+
+    storyJson = buildTercoStoryJson({
+      isoDate,
+      siteUrl: site,
+      canonicalUrl,
+      storyUrl,
+      publisherName,
+      publisherLogoSrc,
+      posterSrc,
+      bgDarkSrc,
+      bgLightSrc,
+      lang: "pt-BR",
+    }) as unknown as StoryJsonCommon;
+  }
 
   const html = renderAmpHtml(storyJson);
 
