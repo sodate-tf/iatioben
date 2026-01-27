@@ -1,0 +1,3 @@
+search: yes
+ai-input: no
+ai-train: no
