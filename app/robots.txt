@@ -1,5 +1,6 @@
-# Robots.txt – SEO & Performance (Mobile First)
+# robots.txt – SEO & Performance (Mobile First)
 # Projeto: IA Tio Ben
+# Compatível com Google Search Console (RFC 9309)
 
 # =========================
 # 1. REGRAS GERAIS
@@ -9,20 +10,49 @@ Disallow: /adminHome/
 Disallow: /_next/
 Disallow: /api/
 
-# Bloqueio opcional de parâmetros (evita conteúdo duplicado)
+# Evitar conteúdo duplicado por parâmetros
 Disallow: /*?utm_
 Disallow: /*&utm_
 Disallow: /*?ref=
 Disallow: /*&ref=
 
+Allow: /
+
 # =========================
-# 2. GOOGLEBOT (EXPLÍCITO)
+# 2. BOTS DE IA / TREINAMENTO (BLOQUEIO)
+# =========================
+User-agent: GPTBot
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: meta-externalagent
+Disallow: /
+
+# =========================
+# 3. GOOGLEBOT (EXPLÍCITO)
 # =========================
 User-agent: Googlebot
 Allow: /
 
 # =========================
-# 3. SITEMAP
+# 4. SITEMAPS
 # =========================
 Sitemap: https://www.iatioben.com.br/sitemap.xml
 Sitemap: https://www.iatioben.com.br/sitemap-en.xml
