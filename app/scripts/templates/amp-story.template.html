@@ -75,6 +75,9 @@
     .theme-light .btn{background: rgba(35,24,12,0.92); color: #fff;}
     .theme-light .pill{background: rgba(35,24,12,0.10); border:1px solid rgba(35,24,12,0.14); color: var(--textDark);}
   </style>
+   <script async custom-element="amp-auto-ads"
+    src="https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js"></script>
+    
 </head>
 
 <body>
@@ -85,6 +88,11 @@
     publisher-logo-src="{{PUBLISHER_LOGO}}"
     poster-portrait-src="{{POSTER_IMAGE}}"
   >
+  <!-- Anúncios automáticos para Web Stories -->
+    <amp-auto-ads type="adsense"
+      data-ad-client="ca-pub-8819996017476509">
+    </amp-auto-ads>
+
     {{PAGES_HTML}}
   </amp-story>
 </body>
