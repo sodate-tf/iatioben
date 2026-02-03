@@ -10,6 +10,8 @@ import { AdsenseSidebarMobile300x250 } from "@/components/ads/AdsenseBlocks";
 import { getBlogComplementByDateISO, slugifyBlogTitle } from "@/app/lib/liturgia/blogComplementoUtils";
 
 
+
+
 export const dynamic = "force-static";
 export const revalidate = 86400;
 
@@ -279,6 +281,10 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
       }
     : null;
 
+  const blogUrl = blogComplement
+  ? `https://www.iatioben.com.br/blog/${blogComplement.slug}`
+  : null;
+
 
   const celebration = getCelebrationFromAny(data);
   const color = getColorFromAny(data);
@@ -306,17 +312,37 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
     ],
   };
 
-  const articleJsonLd = {
-    "@context": "https://schema.org",
+  const articleJsonLd: any = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: buildTitle(day, month, year),
+  description: buildDescription(day, month, year),
+  mainEntityOfPage: canonical,
+  datePublished: `${dateISO}T06:00:00-03:00`,
+  dateModified: `${dateISO}T06:00:00-03:00`,
+  author: { "@type": "Organization", name: "IA Tio Ben" },
+  publisher: { "@type": "Organization", name: "IA Tio Ben" },
+};
+
+// 🔗 Liturgia ↔ Blog (quando houver)
+if (blogComplement && blogUrl) {
+  articleJsonLd.relatedLink = [blogUrl];
+
+  // Conteúdo editorial relacionado que aprofunda o tema do dia
+  articleJsonLd.subjectOf = {
     "@type": "Article",
-    headline: buildTitle(day, month, year),
-    description: buildDescription(day, month, year),
-    mainEntityOfPage: canonical,
-    datePublished: `${dateISO}T06:00:00-03:00`,
-    dateModified: `${dateISO}T06:00:00-03:00`,
-    author: { "@type": "Organization", name: "IA Tio Ben" },
-    publisher: { "@type": "Organization", name: "IA Tio Ben" },
+    "@id": blogUrl,
+    url: blogUrl,
+    headline: blogComplement.title,
+    description: blogComplement.paragraph,
+    isPartOf: {
+      "@type": "Blog",
+      name: "Blog IA Tio Ben",
+      url: `${SITE_URL}/blog`,
+    },
   };
+}
+
 
   const faqJsonLd = {
     "@context": "https://schema.org",

@@ -3,35 +3,70 @@
 import React from "react";
 
 interface LiturgiaJsonLdProps {
-  date: string; // formato dd-mm-yyyy
-  image?: string; // opcional, padrão definido
+  date: string; // dd-mm-yyyy
+  image?: string; // OG default
+  // 🔗 opcional: vincular artigo do blog (Liturgia ↔ Blog)
+  blog?: {
+    title: string; // sem data
+    slug: string;  // slug do título
+    description?: string; // opcional (use seu paragraph)
+  } | null;
 }
 
-export default function LiturgiaJsonLd({ date, image = "https://www.iatioben.com.br/og_image_liturgia.png" }: LiturgiaJsonLdProps) {
-  // Converter dd-mm-yyyy para Date
-  const [dd, mm, yyyy] = date.split("-");
+function safeDateParts(date: string) {
+  const [dd, mm, yyyy] = String(date || "").split("-");
+  const d = Number(dd);
+  const m = Number(mm);
+  const y = Number(yyyy);
+
+  // validação simples
+  if (!d || !m || !y) return null;
+  if (d < 1 || d > 31) return null;
+  if (m < 1 || m > 12) return null;
+  if (y < 2000 || y > 2100) return null;
+
+  return { dd: String(dd).padStart(2, "0"), mm: String(mm).padStart(2, "0"), yyyy: String(yyyy) };
+}
+
+function toIsoDate(date: string) {
+  const parts = safeDateParts(date);
+  if (!parts) return null;
+  return `${parts.yyyy}-${parts.mm}-${parts.dd}`; // yyyy-mm-dd
+}
+
+function formatPtLong(iso: string) {
+  const [yyyy, mm, dd] = iso.split("-");
   const dateObj = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+  // sem timezone: ok para exibição
+  return new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "long", year: "numeric" }).format(dateObj);
+}
 
-  // Formatar data para título e descrição
-  const day = dateObj.getDate();
-  const month = dateObj.toLocaleString("pt-BR", { month: "long" });
-  const year = dateObj.getFullYear();
+export default function LiturgiaJsonLd({
+  date,
+  image = "https://www.iatioben.com.br/og/liturgia.png",
+  blog = null,
+}: LiturgiaJsonLdProps) {
+  const isoDate = toIsoDate(date);
+  if (!isoDate) return null;
 
-  const title = `Liturgia Diária de ${day} de ${month} de ${year} - Tio Ben`;
-  const description = `Acompanhe a Liturgia Diária Católica de ${day} de ${month} de ${year} com o Tio Ben. Tenha acesso ao Evangelho do dia, leituras e reflexões para meditar a Palavra de Deus e fortalecer sua fé.`;
+  const dateLong = formatPtLong(isoDate);
 
-  // Data ISO para JSON-LD
-  const isoDate = `${year}-${String(Number(mm)).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-  const publishedAt = `${isoDate}T06:00:00+00:00`;
+  const canonical = `https://www.iatioben.com.br/liturgia-diaria/${date}`;
+  const title = `Liturgia Diária ${date.replaceAll("-", "/")} – Evangelho, Leituras e Salmo | IA Tio Ben`;
+  const description =
+    `Liturgia do dia ${date.replaceAll("-", "/")} com Evangelho, leituras e salmo. ` +
+    `Acesse e reze com a Liturgia Diária no IA Tio Ben.`;
+
+  // ISO com offset BR (-03:00). (Melhor que +00:00 para “dataPublished” local.)
+  const publishedAt = `${isoDate}T06:00:00-03:00`;
   const modifiedAt = publishedAt;
 
-  const articleJsonLd = {
+  const blogUrl = blog?.slug ? `https://www.iatioben.com.br/blog/${blog.slug}` : null;
+
+  const articleJsonLd: any = {
     "@context": "https://schema.org",
     "@type": "Article",
-    mainEntityOfPage: {
-      "@type": "WebPage",
-      "@id": `https://www.iatioben.com.br/liturgia-diaria/${date}`,
-    },
+    mainEntityOfPage: canonical,
     headline: title,
     description,
     image: {
@@ -43,12 +78,14 @@ export default function LiturgiaJsonLd({ date, image = "https://www.iatioben.com
     datePublished: publishedAt,
     dateModified: modifiedAt,
     author: {
-      "@type": "Person",
-      name: "Tio Ben",
+      "@type": "Organization",
+      name: "IA Tio Ben",
+      url: "https://www.iatioben.com.br",
     },
     publisher: {
       "@type": "Organization",
-      name: "Tio Ben",
+      name: "IA Tio Ben",
+      url: "https://www.iatioben.com.br",
       logo: {
         "@type": "ImageObject",
         url: "https://www.iatioben.com.br/logo.png",
@@ -57,6 +94,23 @@ export default function LiturgiaJsonLd({ date, image = "https://www.iatioben.com
       },
     },
   };
+
+  // 🔗 Liturgia ↔ Blog (subjectOf + relatedLink)
+  if (blogUrl) {
+    articleJsonLd.relatedLink = [blogUrl];
+    articleJsonLd.subjectOf = {
+      "@type": "Article",
+      "@id": blogUrl,
+      url: blogUrl,
+      headline: blog?.title,
+      description: blog?.description || undefined,
+      isPartOf: {
+        "@type": "Blog",
+        name: "Blog IA Tio Ben",
+        url: "https://www.iatioben.com.br/blog",
+      },
+    };
+  }
 
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
@@ -77,8 +131,8 @@ export default function LiturgiaJsonLd({ date, image = "https://www.iatioben.com
       {
         "@type": "ListItem",
         position: 3,
-        name: `Liturgia de ${day} de ${month} de ${year}`,
-        item: `https://www.iatioben.com.br/liturgia-diaria/${date}`,
+        name: `Liturgia de ${dateLong}`,
+        item: canonical,
       },
     ],
   };
@@ -87,11 +141,11 @@ export default function LiturgiaJsonLd({ date, image = "https://www.iatioben.com
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd, null, 2) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd, null, 2) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
     </>
   );
