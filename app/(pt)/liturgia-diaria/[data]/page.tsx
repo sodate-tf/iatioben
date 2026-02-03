@@ -7,6 +7,8 @@ import { parseSlugDate, slugFromDate, pad2 } from "@/lib/liturgia/date";
 import LiturgiaHubPerfect from "@/components/liturgia/LiturgiaHubPerfect";
 import LiturgiaAside from "@/components/liturgia/LiturgiaAside";
 import { AdsenseSidebarMobile300x250 } from "@/components/ads/AdsenseBlocks";
+import { getBlogComplementByDateISO, slugifyBlogTitle } from "@/app/lib/liturgia/blogComplementoUtils";
+
 
 export const dynamic = "force-static";
 export const revalidate = 86400;
@@ -266,6 +268,18 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
   // ✅ compatível com raw e normalizado
   const dateLabel = getDateLabelFromAny(data, dt);
   const dateISO = getDateISOFromAny({ data, dt, slug });
+
+  const blogData = getBlogComplementByDateISO(dateISO);
+
+  const blogComplement = blogData
+    ? {
+        title: blogData.title,
+        paragraph: blogData.paragraph,
+        slug: slugifyBlogTitle(blogData.title),
+      }
+    : null;
+
+
   const celebration = getCelebrationFromAny(data);
   const color = getColorFromAny(data);
 
@@ -379,6 +393,7 @@ export default async function LiturgiaDayPage({ params }: PageProps) {
               todaySlug={todaySlug}
               todayLabel={todayLabel}
               dailyParagraph={dailyParagraph}
+              blogComplement={blogComplement}
               className="max-w-none px-0 py-0"
             />
 

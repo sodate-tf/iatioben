@@ -22,6 +22,12 @@ type Props = {
 
   dailyParagraph?: string;
   className?: string;
+  
+  blogComplement?: {
+    title: string;
+    paragraph: string;
+    slug: string;
+  } | null;
 };
 
 type UiTab = {
@@ -1019,7 +1025,9 @@ export default function LiturgiaHubPerfect({
   todaySlug,
   todayLabel,
   dailyParagraph,
+  blogComplement,
   className,
+  
 }: Props) {
   const router = useRouter();
 
@@ -1099,6 +1107,29 @@ const shareText =
           {dailyParagraph}
         </p>
       ) : null}
+
+        {blogComplement ? (
+  <section className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
+    <p className="text-[11px] font-semibold text-amber-700 uppercase tracking-wide">
+      Reflexão do Blog IA Tio Ben
+    </p>
+
+    <h2 className="mt-1 text-base sm:text-lg font-extrabold text-slate-900">
+      {blogComplement.title}
+    </h2>
+
+    <p className="mt-2 text-sm sm:text-[15px] leading-7 text-slate-700">
+      {blogComplement.paragraph}
+    </p>
+
+    <Link
+      href={`/blog/${blogComplement.slug}`}
+      className="mt-3 inline-flex text-sm font-semibold text-amber-700 hover:text-amber-800"
+    >
+      Aprofundar a reflexão no blog →
+    </Link>
+  </section>
+) : null}
 
       <div className="mt-4 flex flex-wrap gap-2">
         <Link
