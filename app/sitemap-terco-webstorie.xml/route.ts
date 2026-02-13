@@ -4,19 +4,8 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Ajuste aqui o alcance do sitemap
-const PAST_DAYS = 180;   // inclui stories dos últimos 180 dias
-const FUTURE_DAYS = 14;  // inclui próximos 14 dias (opcional)
-
 function pad2(n: number) {
   return String(n).padStart(2, "0");
-}
-
-function toIso(d: Date) {
-  const y = d.getFullYear();
-  const m = pad2(d.getMonth() + 1);
-  const day = pad2(d.getDate());
-  return `${y}-${m}-${day}`;
 }
 
 function isoToSlug(iso: string) {
@@ -57,20 +46,23 @@ export async function GET() {
       process.env.SITE_URL ||
       "https://www.iatioben.com.br").replace(/\/$/, "");
 
-  // Base “hoje” em horário local do servidor; para estabilidade, travamos ao meio-dia.
-  const now = new Date();
-  const base = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+  // ✅ Ano vigente automático
+  const year = new Date().getFullYear();
+
+  // Intervalo completo do ano (com suporte a ano bissexto)
+  const start = new Date(Date.UTC(year, 0, 1, 12, 0, 0));
+  const end = new Date(Date.UTC(year, 11, 31, 12, 0, 0));
 
   const urls: Array<{ loc: string; lastmod: string }> = [];
 
-  for (let i = -PAST_DAYS; i <= FUTURE_DAYS; i++) {
-    const d = new Date(base);
-    d.setDate(base.getDate() + i);
+  for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+    const iso = `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(
+      d.getUTCDate()
+    )}`;
 
-    const iso = toIso(d);
     const slugDate = isoToSlug(iso);
 
-    // ✅ Liturgia diária (ajuste se mudar o padrão)
+    // ✅ Web Story diária do terço
     const loc = `${site}/web-stories/terco-${slugDate}/`;
 
     urls.push({ loc, lastmod: iso });
@@ -82,7 +74,6 @@ export async function GET() {
     status: 200,
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      // cache bom para Vercel/CDN
       "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
     },
   });

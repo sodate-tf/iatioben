@@ -4,10 +4,6 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Ajuste aqui o alcance do sitemap
-const PAST_DAYS = 180;   // inclui stories dos últimos 180 dias
-const FUTURE_DAYS = 14;  // inclui próximos 14 dias (opcional)
-
 function pad2(n: number) {
   return String(n).padStart(2, "0");
 }
@@ -57,20 +53,25 @@ export async function GET() {
       process.env.SITE_URL ||
       "https://www.iatioben.com.br").replace(/\/$/, "");
 
-  // Base “hoje” em horário local do servidor; para estabilidade, travamos ao meio-dia.
-  const now = new Date();
-  const base = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+  // ✅ Ano vigente (ex: 2026). Ano que vem vira 2027 automaticamente.
+  const year = new Date().getFullYear();
+
+  // ✅ Intervalo completo do ano vigente (inclui bissexto automaticamente)
+  // Usando UTC pra evitar "pular dia" por timezone/DST.
+  const start = new Date(Date.UTC(year, 0, 1, 12, 0, 0)); // 01/01
+  const end = new Date(Date.UTC(year, 11, 31, 12, 0, 0)); // 31/12
 
   const urls: Array<{ loc: string; lastmod: string }> = [];
 
-  for (let i = -PAST_DAYS; i <= FUTURE_DAYS; i++) {
-    const d = new Date(base);
-    d.setDate(base.getDate() + i);
+  for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+    // Monta ISO usando UTC (estável)
+    const iso = `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(
+      d.getUTCDate()
+    )}`;
 
-    const iso = toIso(d);
     const slugDate = isoToSlug(iso);
 
-    // ✅ Liturgia diária (ajuste se mudar o padrão)
+    // ✅ Web Story diária
     const loc = `${site}/web-stories/liturgia-${slugDate}/`;
 
     urls.push({ loc, lastmod: iso });
@@ -82,7 +83,6 @@ export async function GET() {
     status: 200,
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      // cache bom para Vercel/CDN
       "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
     },
   });
